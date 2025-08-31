@@ -1,0 +1,296 @@
+/* VideoPlayer specific styles */
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.line-clamp-3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* YouTube-like video player styling */
+.youtube-video-container {
+  position: relative;
+}
+
+.youtube-video-player {
+  outline: none;
+}
+
+/* Hide default video controls on hover to prevent dark overlay */
+.youtube-video-player::-webkit-media-controls-panel {
+  background: linear-gradient(transparent, transparent, rgba(0, 0, 0, 0.6));
+  transition: opacity 0.3s ease;
+}
+
+.youtube-video-player::-webkit-media-controls-enclosure {
+  background: transparent;
+}
+
+/* YouTube-style play button overlay for thumbnails */
+.youtube-thumbnail-container {
+  background: #000;
+}
+
+.youtube-play-overlay {
+  transition: all 0.2s ease;
+}
+
+/* Play button styling */
+.youtube-play-overlay .bg-red-600 {
+  background: #ff0000;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  transition: all 0.2s ease;
+}
+
+.youtube-play-overlay:hover .bg-red-600 {
+  background: #cc0000;
+  transform: scale(1.05);
+}
+
+/* Custom video controls that appear on hover */
+.youtube-video-player::-webkit-media-controls {
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.youtube-video-player:hover::-webkit-media-controls {
+  opacity: 1;
+}
+
+.youtube-video-player:focus::-webkit-media-controls {
+  opacity: 1;
+}
+
+/* Ensure controls appear smoothly */
+.youtube-video-container:hover .youtube-video-player::-webkit-media-controls-panel {
+  opacity: 1;
+}
+
+/* Make controls more YouTube-like */
+.youtube-video-player::-webkit-media-controls-panel {
+  background: linear-gradient(transparent 0%, transparent 70%, rgba(0, 0, 0, 0.8) 100%);
+}
+
+.youtube-video-player::-webkit-media-controls-play-button {
+  filter: brightness(1.2);
+}
+
+.youtube-video-player::-webkit-media-controls-start-playback-button {
+  filter: brightness(1.2);
+}
+
+/* Smooth transitions for interactive elements */
+.video-action-button {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.video-action-button:hover {
+  transform: translateY(-1px);
+}
+
+/* Custom scrollbar for comments */
+.comments-container {
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 #f1f5f9;
+}
+
+.comments-container::-webkit-scrollbar {
+  width: 6px;
+}
+
+.comments-container::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 3px;
+}
+
+.comments-container::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+}
+
+.comments-container::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* YouTube-like button styling */
+.yt-button {
+  position: relative;
+  overflow: hidden;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.yt-button::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  transition: width 0.3s, height 0.3s;
+}
+
+.yt-button:active::before {
+  width: 300px;
+  height: 300px;
+}
+
+.yt-button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* Loading animation */
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.loading-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Enhanced focus states */
+.focus-ring:focus {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+/* Video thumbnail - no hover effect */
+.video-thumbnail {
+  transition: none;
+}
+
+/* YouTube-like video player - no hover effects */
+.video-player-overlay {
+  background: transparent;
+}
+
+.youtube-play-button {
+  background: rgba(0, 0, 0, 0.8);
+}
+
+/* Subscribe button animation */
+.subscribe-button {
+  position: relative;
+  overflow: hidden;
+}
+
+.subscribe-button::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s;
+}
+
+.subscribe-button:hover::after {
+  left: 100%;
+}
+
+/* Comment input focus animation */
+.comment-input {
+  transition: border-color 0.3s ease;
+}
+
+.comment-input:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* Responsive video container */
+.video-container {
+  position: relative;
+  width: 100%;
+  height: 0;
+  padding-bottom: 56.25%; /* 16:9 aspect ratio */
+}
+
+.video-container video {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+/* Mobile optimizations */
+@media (max-width: 768px) {
+  .video-stats {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+  
+  .video-actions {
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    gap: 0.5rem;
+  }
+  
+  .video-actions button {
+    font-size: 0.75rem;
+    padding: 0.5rem 0.75rem;
+  }
+  
+  .related-videos {
+    margin-top: 2rem;
+  }
+  
+  .channel-info {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+  
+  .subscribe-button {
+    align-self: flex-start;
+  }
+  
+  .video-container {
+    border-radius: 0.5rem;
+  }
+  
+  .comment-input {
+    font-size: 16px; /* Prevents zoom on iOS */
+  }
+}
+
+@media (max-width: 480px) {
+  .video-title {
+    font-size: 1.25rem;
+    line-height: 1.4;
+  }
+  
+  .video-actions {
+    justify-content: center;
+  }
+  
+  .related-video-item {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .related-video-thumbnail {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 16/9;
+  }
+}
