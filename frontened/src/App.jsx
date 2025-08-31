@@ -8,6 +8,7 @@ import MyChannel from "./pages/MyChannel"
 import Subscriptions from "./pages/Subscriptions"
 import LikedVideos from "./pages/LikedVideos"
 import Downloads from "./pages/Downloads"
+import Tweets from "./pages/Tweets"
 import Settings from "./pages/Settings"
 import Profile from "./pages/Profile"
 import Search from "./components/Search"
@@ -68,6 +69,7 @@ function AppContent() {
             <Route path="/" element={<Home onVideoSelect={handleVideoSelect} />} />
             <Route path="/search" element={<Search />} />
             <Route path="/subscriptions" element={<Subscriptions onVideoSelect={handleVideoSelect} />} />
+            <Route path="/tweets" element={<Tweets />} />
             <Route path="/liked-videos" element={<LikedVideos onVideoSelect={handleVideoSelect} />} />
             <Route path="/downloads" element={<Downloads onVideoSelect={handleVideoSelect} />} />
             <Route path="/profile/:userId" element={<Profile onVideoSelect={handleVideoSelect} />} />

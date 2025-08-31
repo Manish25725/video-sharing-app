@@ -4,16 +4,16 @@ import apiClient from './api.js';
 export const tweetService = {
   // Create a new tweet
   async createTweet(content) {
-    const response = await apiClient.makeRequest('/tweet', {
+    const response = await apiClient.makeRequest('/tweet/create-tweet', {
       method: 'POST',
       body: JSON.stringify({ content }),
     });
     return await response.json();
   },
 
-  // Get tweets by user ID
-  async getUserTweets(userId) {
-    const response = await apiClient.makeRequest(`/tweet/${userId}`);
+  // Get current user's tweets
+  async getUserTweets(page = 1, limit = 10) {
+    const response = await apiClient.makeRequest(`/tweet/get-tweet?page=${page}&limit=${limit}`);
     if (response.ok) {
       return await response.json();
     }
@@ -22,7 +22,7 @@ export const tweetService = {
 
   // Update a tweet
   async updateTweet(tweetId, content) {
-    const response = await apiClient.makeRequest(`/tweet/${tweetId}`, {
+    const response = await apiClient.makeRequest(`/tweet/update-tweet/${tweetId}`, {
       method: 'PATCH',
       body: JSON.stringify({ content }),
     });
@@ -31,7 +31,7 @@ export const tweetService = {
 
   // Delete a tweet
   async deleteTweet(tweetId) {
-    const response = await apiClient.makeRequest(`/tweet/${tweetId}`, {
+    const response = await apiClient.makeRequest(`/tweet/remove-tweet/${tweetId}`, {
       method: 'DELETE',
     });
     return await response.json();
@@ -45,15 +45,8 @@ export const transformTweetData = (backendTweet) => {
   return {
     id: backendTweet._id,
     content: backendTweet.content,
-    user: {
-      id: backendTweet.owner?._id,
-      name: backendTweet.owner?.fullName || backendTweet.owner?.userName || 'Unknown User',
-      userName: backendTweet.owner?.userName || 'unknown',
-      avatar: backendTweet.owner?.avatar || '',
-    },
     createdAt: backendTweet.createdAt,
-    likesCount: backendTweet.likesCount || 0,
-    isLiked: backendTweet.isLiked || false,
+    updatedAt: backendTweet.updatedAt,
   };
 };
 

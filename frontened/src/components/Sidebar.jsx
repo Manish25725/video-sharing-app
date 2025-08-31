@@ -15,7 +15,8 @@ import {
   Users,
   Settings,
   Shield,
-  User
+  User,
+  MessageSquare
 } from "lucide-react"
 import { Link, useLocation } from "react-router-dom"
 import { useAuth } from "../contexts/AuthContext"
@@ -27,6 +28,7 @@ const Sidebar = ({ isOpen }) => {
   const menuItems = [
     { icon: Home, label: "Home", path: "/" },
     { icon: Users, label: "Subscriptions", path: "/subscriptions" },
+    { icon: MessageSquare, label: "Tweets", path: "/tweets" },
     { icon: TrendingUp, label: "Trending", path: "/trending" },
     { icon: Music, label: "Music", path: "/music" },
     { icon: Film, label: "Movies", path: "/movies" },
