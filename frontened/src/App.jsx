@@ -9,6 +9,7 @@ import Subscriptions from "./pages/Subscriptions"
 import LikedVideos from "./pages/LikedVideos"
 import Downloads from "./pages/Downloads"
 import Tweets from "./pages/Tweets"
+import TrendingVideos from "./pages/TrendingVideos"
 import Settings from "./pages/Settings"
 import Profile from "./pages/Profile"
 import Search from "./components/Search"
@@ -68,6 +69,7 @@ function AppContent() {
           <Routes>
             <Route path="/" element={<Home onVideoSelect={handleVideoSelect} />} />
             <Route path="/search" element={<Search />} />
+            <Route path="/trending" element={<TrendingVideos onVideoSelect={handleVideoSelect} />} />
             <Route path="/subscriptions" element={<Subscriptions onVideoSelect={handleVideoSelect} />} />
             <Route path="/tweets" element={<Tweets />} />
             <Route path="/liked-videos" element={<LikedVideos onVideoSelect={handleVideoSelect} />} />

@@ -129,6 +129,16 @@ export const videoService = {
       return { success: false };
     }
   },
+
+  async getTrendingVideos() {
+    try {
+      const response = await apiClient.get('/videos/get-trending-videos');
+      return response;
+    } catch (error) {
+      console.log("get trending video error", error);
+      return { success: false, data: [] };
+    }
+  }
 };
 
 // Transform backend video data to frontend format
@@ -142,6 +152,7 @@ export const transformVideoData = (backendVideo) => {
     uploadDate: backendVideo.uploadDate,
     createdAtType: typeof backendVideo.createdAt
   });
+
 
   // Use createdAt as the primary date source, fallback to uploadDate
   let uploadTime = backendVideo.createdAt || backendVideo.uploadDate;
@@ -182,3 +193,5 @@ export const transformVideosArray = (backendVideos) => {
   if (!Array.isArray(backendVideos)) return [];
   return backendVideos.map(transformVideoData).filter(Boolean);
 };
+
+

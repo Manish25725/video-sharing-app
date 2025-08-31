@@ -22,7 +22,15 @@ const getTrendingVideos=asyncHandler(async (req,res)=>{
     }
 
      const trendingVideos = await Video.aggregate([
-      // 1. Calculate hours since the video was uploaded
+      // 1. Match only published videos
+      {
+        $match: {
+          isPublished: true,
+          isBlocked: { $ne: true }
+        }
+      },
+
+      // 2. Calculate hours since the video was uploaded
       {
         $addFields: {
           hoursSinceUpload: {
@@ -34,19 +42,18 @@ const getTrendingVideos=asyncHandler(async (req,res)=>{
         }
       },
 
-      // 2. Calculate trending score
+      // 3. Calculate trending score (simplified to use only views and recency)
       {
         $addFields: {
           score: {
             $add: [
-              { $multiply: ["$views", 0.7] }, // weight for views
-              { $multiply: ["$likes", 0.3] }, // weight for likes
+              { $multiply: [{ $ifNull: ["$views", 0] }, 1] }, // weight for views
 
               // Freshness bonus: newer videos rank higher
               {
                 $multiply: [
                   { $divide: [1, { $add: ["$hoursSinceUpload", 1] }] },
-                  100
+                  50
                 ]
               }
             ]
@@ -54,11 +61,51 @@ const getTrendingVideos=asyncHandler(async (req,res)=>{
         }
       },
 
-      // 3. Sort videos by score
+      // 4. Lookup owner details
+      {
+        $lookup: {
+          from: "users",
+          localField: "owner",
+          foreignField: "_id",
+          as: "owner",
+          pipeline: [
+            {
+              $project: {
+                userName: 1,
+                fullName: 1,
+                avatar: 1
+              }
+            }
+          ]
+        }
+      },
+
+      // 5. Unwind owner array
+      { $unwind: "$owner" },
+
+      // 6. Sort videos by score
       { $sort: { score: -1 } },
 
-      // 4. Limit to top 20
-      { $limit: 20 }
+      // 7. Limit to top 20
+      { $limit: 20 },
+
+      // 8. Project final fields
+      {
+        $project: {
+          _id: 1,
+          videoFile: 1,
+          thumbnail: 1,
+          title: 1,
+          description: 1,
+          duration: 1,
+          views: 1,
+          isPublished: 1,
+          owner: 1,
+          createdAt: 1,
+          updatedAt: 1,
+          score: 1
+        }
+      }
     ]);
 
     return res
