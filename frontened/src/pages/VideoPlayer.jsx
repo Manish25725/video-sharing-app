@@ -1,4 +1,24 @@
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { 
+  Play, 
+  Pause, 
+  Volume2, 
+  VolumeX, 
+  Maximize, 
+  SkipBack, 
+  SkipForward, 
+  ThumbsUp, 
+  ThumbsDown, 
+  Share2, 
+  Download,
+  MoreVertical,
+  MessageCircle
+} from 'lucide-react';
+import { videoService } from '../services/videoService';
+import { likeService } from '../services/likeService';
+import { commentService } from '../services/commentService';
+import DownloadModal from '../components/DownloadModal';{ useState, useEffect } from "react"
 import { useParams } from "react-router-dom"
 import { ThumbsUp, ThumbsDown, Share, Download, MoreHorizontal, Bell, Play, Eye, MessageCircle, Scissors, Bookmark, Flag } from "lucide-react"
 import { videoService } from "../services/videoService"
