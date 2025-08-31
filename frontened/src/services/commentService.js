@@ -4,37 +4,46 @@ import apiClient from './api.js';
 export const commentService = {
   // Get all comments for a video
   async getVideoComments(videoId, page = 1, limit = 10) {
-    const response = await apiClient.makeRequest(`/comment/get-video-comment/${videoId}?page=${page}&limit=${limit}`);
-    if (response.ok) {
-      return await response.json();
+    try {
+      const response = await apiClient.get(`/comment/get-video-comment/${videoId}?page=${page}&limit=${limit}`);
+      return response;
+    } catch (error) {
+      console.error('Get video comments error:', error);
+      return { success: false, data: [] };
     }
-    return { data: [] };
   },
 
   // Add a new comment to a video
   async addComment(videoId, content) {
-    const response = await apiClient.makeRequest(`/comment/add-comment/${videoId}`, {
-      method: 'POST',
-      body: JSON.stringify({ content }),
-    });
-    return await response.json();
+    try {
+      const response = await apiClient.post(`/comment/add-comment/${videoId}`, { content });
+      return response;
+    } catch (error) {
+      console.error('Add comment error:', error);
+      throw error;
+    }
   },
 
   // Update an existing comment
   async updateComment(commentId, content) {
-    const response = await apiClient.makeRequest(`/comment/update-comment/${commentId}`, {
-      method: 'PATCH',
-      body: JSON.stringify({ content }),
-    });
-    return await response.json();
+    try {
+      const response = await apiClient.patch(`/comment/update-comment/${commentId}`, { content });
+      return response;
+    } catch (error) {
+      console.error('Update comment error:', error);
+      throw error;
+    }
   },
 
   // Delete a comment
   async deleteComment(commentId) {
-    const response = await apiClient.makeRequest(`/comment/delete-comment/${commentId}`, {
-      method: 'DELETE',
-    });
-    return await response.json();
+    try {
+      const response = await apiClient.delete(`/comment/delete-comment/${commentId}`);
+      return response;
+    } catch (error) {
+      console.error('Delete comment error:', error);
+      throw error;
+    }
   },
 };
 

@@ -18,13 +18,26 @@ export const downloadService = {
       
       if (onProgress) onProgress({ stage: 'starting', progress: 0, message: 'Starting download...' });
       
-      // For online download - fetch the video blob
-      const response = await fetch(videoUrl);
-      if (!response.ok) throw new Error('Failed to download video');
+      // For online download - fetch the video blob using axios
+      const response = await apiClient.get(videoUrl, {
+        responseType: 'blob',
+        onDownloadProgress: (progressEvent) => {
+          if (progressEvent.lengthComputable && onProgress) {
+            const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+            onProgress({ 
+              stage: 'downloading', 
+              progress: Math.min(percentCompleted, 80), 
+              message: `Downloading video... ${percentCompleted}%` 
+            });
+          }
+        }
+      });
       
-      if (onProgress) onProgress({ stage: 'downloading', progress: 50, message: 'Downloading video...' });
+      if (!response.success || !response.data) {
+        throw new Error('Failed to download video');
+      }
       
-      const blob = await response.blob();
+      const blob = response.data;
       
       if (onProgress) onProgress({ stage: 'processing', progress: 80, message: 'Processing download...' });
       

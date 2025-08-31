@@ -5,80 +5,101 @@ import { formatDuration } from '../utils/formatters.js';
 export const videoService = {
   // Get all videos with pagination
   async getAllVideos(page = 1, limit = 10, query = '', sortBy = 'createdAt', sortType = 'desc', userId = '') {
-    const queryParams = new URLSearchParams({
-      page,
-      limit,
-      query,
-      sortBy,
-      sortType,
-    });
-    
-    if (userId) {
-      queryParams.append('userId', userId);
+    try {
+      const queryParams = new URLSearchParams({
+        page,
+        limit,
+        query,
+        sortBy,
+        sortType,
+      });
+      
+      if (userId) {
+        queryParams.append('userId', userId);
+      }
+      
+      const response = await apiClient.get(`/videos/get-all-videos?${queryParams.toString()}`);
+      return response;
+    } catch (error) {
+      console.error('Get all videos error:', error);
+      return { success: false, data: [] };
     }
-    
-    const response = await apiClient.makeRequest(`/videos/get-all-videos?${queryParams.toString()}`);
-
-    if (response.ok) {
-      return await response.json();
-    }
-    return { data: [] };
   },
 
   // Get video by ID
   async getVideoById(videoId) {
-    const response = await apiClient.makeRequest(`/videos/getvideo/${videoId}`);
-    if (response.ok) {
-      return await response.json();
+    try {
+      const response = await apiClient.get(`/videos/getvideo/${videoId}`);
+      return response;
+    } catch (error) {
+      console.error('Get video by ID error:', error);
+      return null;
     }
-    return null;
   },
 
   // Toggle publish status
   async togglePublishStatus(videoId, isPublished = true) {
-    const response = await apiClient.makeRequest(`/videos/toggle-status/${videoId}?isPublished=${isPublished}`, {
-      method: 'PATCH',
-    });
-    return await response.json();
+    try {
+      const response = await apiClient.patch(`/videos/toggle-status/${videoId}?isPublished=${isPublished}`);
+      return response;
+    } catch (error) {
+      console.error('Toggle publish status error:', error);
+      throw error;
+    }
   },
 
   // Publish new video
   async publishVideo(videoData, videoFile, thumbnailFile) {
-    const formData = new FormData();
-    formData.append('title', videoData.title);
-    formData.append('description', videoData.description);
-    
-    if (videoFile) {
-      formData.append('video', videoFile);
-    }
-    if (thumbnailFile) {
-      formData.append('thumbnail', thumbnailFile);
-    }
+    try {
+      const formData = new FormData();
+      formData.append('title', videoData.title);
+      formData.append('description', videoData.description);
+      
+      if (videoFile) {
+        formData.append('video', videoFile);
+      }
+      if (thumbnailFile) {
+        formData.append('thumbnail', thumbnailFile);
+      }
 
-    const response = await apiClient.makeFormDataRequest('/videos/publish-video', formData);
-    return await response.json();
+      const response = await apiClient.post('/videos/publish-video', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      return response;
+    } catch (error) {
+      console.error('Publish video error:', error);
+      throw error;
+    }
   },
 
   // Update video details
   async updateVideo(videoId, updateData, thumbnailFile = null) {
-    const formData = new FormData();
-    
-    if (updateData.title) formData.append('title', updateData.title);
-    if (updateData.description) formData.append('description', updateData.description);
-    if (thumbnailFile) formData.append('thumbnail', thumbnailFile);
+    try {
+      const formData = new FormData();
+      
+      if (updateData.title) formData.append('title', updateData.title);
+      if (updateData.description) formData.append('description', updateData.description);
+      if (thumbnailFile) formData.append('thumbnail', thumbnailFile);
 
-    const response = await apiClient.makeFormDataRequest(`/videos/update-video-details/${videoId}`, formData, {
-      method: 'PATCH',
-    });
-    return await response.json();
+      const response = await apiClient.patch(`/videos/update-video-details/${videoId}`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      return response;
+    } catch (error) {
+      console.error('Update video error:', error);
+      throw error;
+    }
   },
 
   // Delete video
   async deleteVideo(videoId) {
-    const response = await apiClient.makeRequest(`/videos/delete-video/${videoId}`, {
-      method: 'DELETE',
-    });
-    return await response.json();
+    try {
+      const response = await apiClient.delete(`/videos/delete-video/${videoId}`);
+      return response;
+    } catch (error) {
+      console.error('Delete video error:', error);
+      throw error;
+    }
   },
 
   // Search videos
@@ -90,10 +111,8 @@ export const videoService = {
   // Increment video views
   async incrementViews(videoId) {
     try {
-      const response = await apiClient.makeRequest(`/videos/increment-views/${videoId}`, {
-        method: 'PATCH',
-      });
-      return await response.json();
+      const response = await apiClient.patch(`/videos/increment-views/${videoId}`);
+      return response;
     } catch (error) {
       console.error("Error incrementing views:", error);
       return { success: false };
@@ -103,11 +122,8 @@ export const videoService = {
   // Get video stats (views, likes, user's like status)
   async getVideoStats(videoId) {
     try {
-      const response = await apiClient.makeRequest(`/videos/video-stats/${videoId}`);
-      if (response.ok) {
-        return await response.json();
-      }
-      return { success: false };
+      const response = await apiClient.get(`/videos/video-stats/${videoId}`);
+      return response;
     } catch (error) {
       console.error("Error fetching video stats:", error);
       return { success: false };

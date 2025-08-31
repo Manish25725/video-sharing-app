@@ -4,70 +4,83 @@ import apiClient from './api.js';
 export const authService = {
   // Register new user
   async register(userData, avatarFile, coverImageFile) {
-    const formData = new FormData();
-    formData.append('fullName', userData.fullName);
-    formData.append('email', userData.email);
-    formData.append('userName', userData.userName);
-    formData.append('password', userData.password);
-    
-    if (avatarFile) {
-      formData.append('avatar', avatarFile);
-    }
-    if (coverImageFile) {
-      formData.append('coverImage', coverImageFile);
-    }
+    try {
+      const formData = new FormData();
+      formData.append('fullName', userData.fullName);
+      formData.append('email', userData.email);
+      formData.append('userName', userData.userName);
+      formData.append('password', userData.password);
+      
+      if (avatarFile) {
+        formData.append('avatar', avatarFile);
+      }
+      if (coverImageFile) {
+        formData.append('coverImage', coverImageFile);
+      }
 
-    const response = await apiClient.makeFormDataRequest('/users/register', formData);
-    return await response.json();
+      const response = await apiClient.post('/users/register', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      return response;
+    } catch (error) {
+      console.error('Register error:', error);
+      throw error;
+    }
   },
 
   // Login user
   async login(email, password) {
-    const response = await apiClient.makeRequest('/users/login', {
-      method: 'POST',
-      body: JSON.stringify({ email, password }),
-    });
-
-    if (response.ok) {
-      const data = await response.json();
-      // Store tokens
-      localStorage.setItem('accessToken', data.data.accessToken);
-      localStorage.setItem('user', JSON.stringify(data.data.user));
-      return data;
+    try {
+      const response = await apiClient.post('/users/login', { email, password });
+      
+      // Store tokens if login successful
+      if (response.success && response.data) {
+        localStorage.setItem('accessToken', response.data.accessToken);
+        localStorage.setItem('refreshToken', response.data.refreshToken);
+        localStorage.setItem('user', JSON.stringify(response.data.user));
+      }
+      
+      return response;
+    } catch (error) {
+      console.error('Login error:', error);
+      throw error;
     }
-    
-    throw new Error('Login failed');
   },
 
   // Logout user
   async logout() {
     try {
-      await apiClient.makeRequest('/users/logout', {
-        method: 'POST',
-      });
+      await apiClient.post('/users/logout');
+    } catch (error) {
+      console.error('Logout error:', error);
     } finally {
       // Clear local storage regardless of API response
       localStorage.removeItem('accessToken');
+      localStorage.removeItem('refreshToken');
       localStorage.removeItem('user');
     }
   },
 
   // Get current user
   async getCurrentUser() {
-    const response = await apiClient.makeRequest('/users/current-user');
-    if (response.ok) {
-      return await response.json();
+    try {
+      const response = await apiClient.get('/users/current-user');
+      return response;
+    } catch (error) {
+      console.error('Get current user error:', error);
+      return null;
     }
-    return null;
   },
 
   // Get user channel profile
   async getUserChannelProfile(userName) {
-    const response = await apiClient.makeRequest(`/users/c/${userName}`);
-    if (response.ok) {
-      return await response.json();
+    try {
+      const response = await apiClient.get(`/users/c/${userName}`);
+      return response;
+    } catch (error) {
+      console.error('Get user channel profile error:', error);
+      return null;
     }
-    return null;
   },
   
   // Get user profile by ID or username
@@ -77,21 +90,16 @@ export const authService = {
       const currentUser = getCurrentUserFromStorage();
       if (currentUser && currentUser._id === userId) {
         // If requesting current user, use the current-user endpoint for freshest data
-        const response = await apiClient.makeRequest('/users/current-user');
-        if (response.ok) {
-          const data = await response.json();
-          return { success: true, data: data.data };
+        const response = await apiClient.get('/users/current-user');
+        if (response.success) {
+          return { success: true, data: response.data };
         }
       }
       
-      // Try to get user by ID or username from the backend
-      // Since we don't have a direct getUserById endpoint, we'll need to use the channel endpoint
-      
       // Try with channel endpoint (using user ID or username)
-      const channelResponse = await apiClient.makeRequest(`/users/c/${userId}`);
-      if (channelResponse.ok) {
-        const data = await channelResponse.json();
-        return { success: true, data: data.data };
+      const channelResponse = await apiClient.get(`/users/c/${userId}`);
+      if (channelResponse.success) {
+        return { success: true, data: channelResponse.data };
       }
       
       // If we're here, the user wasn't found with direct ID approach
@@ -112,40 +120,54 @@ export const authService = {
 
   // Update user details
   async updateUserDetails(userData) {
-    const response = await apiClient.makeRequest('/users/update-account', {
-      method: 'PATCH',
-      body: JSON.stringify(userData),
-    });
-    return await response.json();
+    try {
+      const response = await apiClient.patch('/users/update-account', userData);
+      return response;
+    } catch (error) {
+      console.error('Update user details error:', error);
+      throw error;
+    }
   },
 
   // Update avatar
   async updateAvatar(avatarFile) {
-    const formData = new FormData();
-    formData.append('avatar', avatarFile);
+    try {
+      const formData = new FormData();
+      formData.append('avatar', avatarFile);
 
-    const response = await apiClient.makeFormDataRequest('/users/avatar', formData, {
-      method: 'PATCH',
-    });
-    return await response.json();
+      const response = await apiClient.patch('/users/avatar', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      return response;
+    } catch (error) {
+      console.error('Update avatar error:', error);
+      throw error;
+    }
   },
 
   // Get watch history
   async getWatchHistory() {
-    const response = await apiClient.makeRequest('/users/history');
-    if (response.ok) {
-      return await response.json();
+    try {
+      const response = await apiClient.get('/users/history');
+      return response;
+    } catch (error) {
+      console.error('Get watch history error:', error);
+      return { success: false, data: [] };
     }
-    return { data: [] };
   },
 
   // Change password
   async changePassword(oldPassword, newPassword) {
-    const response = await apiClient.makeRequest('/users/change-password', {
-      method: 'POST',
-      body: JSON.stringify({ oldPassword, newPassword }),
-    });
-    return await response.json();
+    try {
+      const response = await apiClient.post('/users/change-password', { 
+        oldPassword, 
+        newPassword 
+      });
+      return response;
+    } catch (error) {
+      console.error('Change password error:', error);
+      throw error;
+    }
   },
 };
 

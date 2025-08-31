@@ -2,10 +2,71 @@ import mongoose, { isValidObjectId } from "mongoose";
 import { Video } from "../models/video.model.js";
 import { User } from "../models/user.model.js";
 import { ApiError } from "../utils/ApiError.js";
-import { ApiResponse } from "../utils/ApiResponse.js";
+import { ApiResponse } from "../utils/Apiresponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { uploadOnCloudinary,deleteOnCloudinary } from "../utils/cloudinary.js";
 
+
+//for trending ..
+
+const getTrendingVideos=asyncHandler(async (req,res)=>{
+
+    //user is logged in or not ....
+
+    if(!req.user){
+        throw new ApiError(400,"user not logged in ")
+    }
+
+    if(!mongoose.Types.ObjectId.isValid(String(req.user._id))){
+            throw new ApiError(400,"User Id is invalid")
+    }
+
+     const trendingVideos = await Video.aggregate([
+      // 1. Calculate hours since the video was uploaded
+      {
+        $addFields: {
+          hoursSinceUpload: {
+            $divide: [
+              { $subtract: ["$$NOW", "$createdAt"] }, // time difference
+              1000 * 60 * 60                      // convert ms → hours
+            ]
+          }
+        }
+      },
+
+      // 2. Calculate trending score
+      {
+        $addFields: {
+          score: {
+            $add: [
+              { $multiply: ["$views", 0.7] }, // weight for views
+              { $multiply: ["$likes", 0.3] }, // weight for likes
+
+              // Freshness bonus: newer videos rank higher
+              {
+                $multiply: [
+                  { $divide: [1, { $add: ["$hoursSinceUpload", 1] }] },
+                  100
+                ]
+              }
+            ]
+          }
+        }
+      },
+
+      // 3. Sort videos by score
+      { $sort: { score: -1 } },
+
+      // 4. Limit to top 20
+      { $limit: 20 }
+    ]);
+
+    return res
+    .status(201)
+    .json(
+        new ApiResponse(201,trendingVideos,"trending videos succuessfully")
+    )
+})
 
 const getAllVideos = asyncHandler(async (req, res) => {
   // Handle both POST (with body) and GET (with query) requests
@@ -43,7 +104,7 @@ const getAllVideos = asyncHandler(async (req, res) => {
 
   if(userId){
     if(mongoose.Types.ObjectId.isValid(userId)){
-      filter.owner = new mongoose.Types.ObjectId(userId)
+      filter.owner = new mongoose.Types.ObjectId(String(userId))
     }
     else{
       const axd = await User.findOne({userName:userId}).select("_id");
@@ -565,5 +626,7 @@ const getDownloadInfo = asyncHandler(async (req, res) => {
 });
 
 
-export {getAllVideos,publishVideo,getVideoById,updateVideo,deleteVideo,togglePublishStatus,incrementVideoViews,getVideoStats,downloadVideo,getDownloadInfo}
+export {getAllVideos,publishVideo,getVideoById,updateVideo,deleteVideo,togglePublishStatus,incrementVideoViews,getVideoStats,downloadVideo,getDownloadInfo
+    ,getTrendingVideos
+}
 

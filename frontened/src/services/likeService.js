@@ -4,44 +4,46 @@ import apiClient from './api.js';
 export const likeService = {
   // Toggle like on a video
   async toggleVideoLike(videoId) {
-    const response = await apiClient.makeRequest(`/like/toggle-video-like/${videoId}`, {
-      method: 'GET',
-    });
-    if (response.ok) {
-      return await response.json();
+    try {
+      const response = await apiClient.get(`/like/toggle-video-like/${videoId}`);
+      return response;
+    } catch (error) {
+      console.error('Toggle video like error:', error);
+      return null;
     }
-    return null;
   },
 
   // Toggle like on a comment
   async toggleCommentLike(commentId) {
-    const response = await apiClient.makeRequest(`/like/toggle-comment-like/${commentId}`, {
-      method: 'GET',
-    });
-    if (response.ok) {
-      return await response.json();
+    try {
+      const response = await apiClient.get(`/like/toggle-comment-like/${commentId}`);
+      return response;
+    } catch (error) {
+      console.error('Toggle comment like error:', error);
+      return null;
     }
-    return null;
   },
 
   // Toggle like on a tweet
   async toggleTweetLike(tweetId) {
-    const response = await apiClient.makeRequest(`/like/toggle-tweet-like/${tweetId}`, {
-      method: 'GET',
-    });
-    if (response.ok) {
-      return await response.json();
+    try {
+      const response = await apiClient.get(`/like/toggle-tweet-like/${tweetId}`);
+      return response;
+    } catch (error) {
+      console.error('Toggle tweet like error:', error);
+      return null;
     }
-    return null;
   },
 
   // Get all videos liked by the user
   async getLikedVideos() {
-    const response = await apiClient.makeRequest('/like/get-liked-videos');
-    if (response.ok) {
-      return await response.json();
+    try {
+      const response = await apiClient.get('/like/get-liked-videos');
+      return response;
+    } catch (error) {
+      console.error('Get liked videos error:', error);
+      return { success: false, data: [] };
     }
-    return { data: [] };
   },
 };
 

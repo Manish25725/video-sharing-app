@@ -4,62 +4,79 @@ import apiClient from './api.js';
 export const playlistService = {
   // Create a new playlist
   async createPlaylist(name, description = '') {
-    const response = await apiClient.makeRequest('/playlist', {
-      method: 'POST',
-      body: JSON.stringify({ name, description }),
-    });
-    return await response.json();
+    try {
+      const response = await apiClient.post('/playlist', { name, description });
+      return response;
+    } catch (error) {
+      console.error('Create playlist error:', error);
+      throw error;
+    }
   },
 
   // Get user playlists
   async getUserPlaylists(userId) {
-    const response = await apiClient.makeRequest(`/playlist/${userId}`);
-    if (response.ok) {
-      return await response.json();
+    try {
+      const response = await apiClient.get(`/playlist/${userId}`);
+      return response;
+    } catch (error) {
+      console.error('Get user playlists error:', error);
+      return { success: false, data: [] };
     }
-    return { data: [] };
   },
 
   // Get a specific playlist
   async getPlaylistById(playlistId) {
-    const response = await apiClient.makeRequest(`/playlist/get/${playlistId}`);
-    if (response.ok) {
-      return await response.json();
+    try {
+      const response = await apiClient.get(`/playlist/get/${playlistId}`);
+      return response;
+    } catch (error) {
+      console.error('Get playlist by ID error:', error);
+      return null;
     }
-    return null;
   },
 
   // Add video to playlist
   async addVideoToPlaylist(playlistId, videoId) {
-    const response = await apiClient.makeRequest(`/playlist/add/${playlistId}/${videoId}`, {
-      method: 'POST',
-    });
-    return await response.json();
+    try {
+      const response = await apiClient.post(`/playlist/add/${playlistId}/${videoId}`);
+      return response;
+    } catch (error) {
+      console.error('Add video to playlist error:', error);
+      throw error;
+    }
   },
 
   // Remove video from playlist
   async removeVideoFromPlaylist(playlistId, videoId) {
-    const response = await apiClient.makeRequest(`/playlist/remove/${playlistId}/${videoId}`, {
-      method: 'DELETE',
-    });
-    return await response.json();
+    try {
+      const response = await apiClient.delete(`/playlist/remove/${playlistId}/${videoId}`);
+      return response;
+    } catch (error) {
+      console.error('Remove video from playlist error:', error);
+      throw error;
+    }
   },
 
   // Delete playlist
   async deletePlaylist(playlistId) {
-    const response = await apiClient.makeRequest(`/playlist/${playlistId}`, {
-      method: 'DELETE',
-    });
-    return await response.json();
+    try {
+      const response = await apiClient.delete(`/playlist/${playlistId}`);
+      return response;
+    } catch (error) {
+      console.error('Delete playlist error:', error);
+      throw error;
+    }
   },
 
   // Update playlist details
   async updatePlaylist(playlistId, name, description) {
-    const response = await apiClient.makeRequest(`/playlist/${playlistId}`, {
-      method: 'PATCH',
-      body: JSON.stringify({ name, description }),
-    });
-    return await response.json();
+    try {
+      const response = await apiClient.patch(`/playlist/${playlistId}`, { name, description });
+      return response;
+    } catch (error) {
+      console.error('Update playlist error:', error);
+      throw error;
+    }
   },
 
   // Add video to queue (temporary playlist)
@@ -80,14 +97,10 @@ export const playlistService = {
   // Add to Watch Later
   async addToWatchLater(videoId) {
     try {
-      const response = await apiClient.makeRequest('/playlist/add-to-watch-later', {
-        method: 'POST',
-        body: JSON.stringify({ videoId })
-      });
+      const response = await apiClient.post('/playlist/add-to-watch-later', { videoId });
       
-      if (response.ok) {
-        const result = await response.json();
-        return { success: true, message: 'Added to Watch Later', data: result.data };
+      if (response.success) {
+        return { success: true, message: 'Added to Watch Later', data: response.data };
       } else {
         // Fallback to localStorage if API not available
         const watchLater = JSON.parse(localStorage.getItem('watchLater') || '[]');
@@ -142,12 +155,9 @@ export const playlistService = {
   // Report video
   async reportVideo(videoId, reason) {
     try {
-      const response = await apiClient.makeRequest('/report/video', {
-        method: 'POST',
-        body: JSON.stringify({ videoId, reason })
-      });
+      const response = await apiClient.post('/report/video', { videoId, reason });
       
-      if (response.ok) {
+      if (response.success) {
         return { success: true, message: 'Video reported successfully' };
       }
       return { success: false, message: 'Failed to report video' };

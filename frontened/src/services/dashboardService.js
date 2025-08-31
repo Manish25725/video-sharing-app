@@ -4,20 +4,24 @@ import apiClient from './api.js';
 export const dashboardService = {
   // Get channel statistics
   async getChannelStats() {
-    const response = await apiClient.makeRequest('/dashboard/access-channel-details');
-    if (response.ok) {
-      return await response.json();
+    try {
+      const response = await apiClient.get('/dashboard/access-channel-details');
+      return response;
+    } catch (error) {
+      console.error('Get channel stats error:', error);
+      return { success: false, data: { totalViews: 0, totalVideos: 0, totalSubscribers: 0, totalLikes: 0 } };
     }
-    return { data: { totalViews: 0, totalVideos: 0, totalSubscribers: 0, totalLikes: 0 } };
   },
 
   // Get channel videos
   async getChannelVideos() {
-    const response = await apiClient.makeRequest('/dashboard/get-channel-videos');
-    if (response.ok) {
-      return await response.json();
+    try {
+      const response = await apiClient.get('/dashboard/get-channel-videos');
+      return response;
+    } catch (error) {
+      console.error('Get channel videos error:', error);
+      return { success: false, data: [] };
     }
-    return { data: [] };
   },
 };
 
