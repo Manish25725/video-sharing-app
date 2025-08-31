@@ -95,21 +95,22 @@ const Subscriptions = ({ onVideoSelect }) => {
 
   return (
     <div className="p-6">
+      {error && (
+        <div className="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded">
+          {error}
+        </div>
+      )}
+
       <h1 className="text-3xl font-bold text-gray-900 mb-8">Subscriptions</h1>
       
       {/* Loading State */}
       {loading && (
-        <div className="flex justify-center items-center py-12">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600"></div>
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="text-lg text-gray-600">Loading subscriptions...</div>
         </div>
       )}
 
       {/* Error State */}
-      {error && (
-        <div className="text-center py-12">
-          <p className="text-red-600 text-lg">{error}</p>
-        </div>
-      )}
 
       {/* Not Authenticated */}
       {!isAuthenticated && (

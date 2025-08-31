@@ -11,6 +11,13 @@ const MyChannel = () => {
   const [videos, setVideos] = useState([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
+  const [analyticsData, setAnalyticsData] = useState({
+    totalViews: 0,
+    totalSubscribers: 0,
+    totalVideos: 0,
+    totalLikes: 0
+  })
+  const [analyticsLoading, setAnalyticsLoading] = useState(false)
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -55,6 +62,7 @@ const MyChannel = () => {
   useEffect(() => {
     if (user) {
       fetchUserVideos()
+      fetchAnalyticsData()
     }
   }, [user])
 
@@ -131,6 +139,28 @@ const MyChannel = () => {
       setError("Failed to load videos")
     } finally {
       setLoading(false)
+    }
+  }
+
+  const fetchAnalyticsData = async () => {
+    try {
+      setAnalyticsLoading(true)
+      const response = await dashboardService.getChannelStats()
+      console.log("Analytics response:", response)
+      
+      if (response.success !== false && response.data) {
+        setAnalyticsData({
+          totalViews: response.data.totalViews || 0,
+          totalSubscribers: response.data.totalSubscribers || 0,
+          totalVideos: response.data.totalVideos || 0,
+          totalLikes: response.data.totalLikes || 0
+        })
+      }
+    } catch (err) {
+      console.error("Error fetching analytics:", err)
+      // Keep default values on error
+    } finally {
+      setAnalyticsLoading(false)
     }
   }
 
@@ -297,8 +327,9 @@ const MyChannel = () => {
           video: null,
           playlist: ""
         })
-        // Refresh video list
+        // Refresh video list and analytics
         fetchUserVideos()
+        fetchAnalyticsData()
       } else {
         alert("Failed to upload video: " + (response.message || "Unknown error"))
       }
@@ -594,40 +625,102 @@ const MyChannel = () => {
     </div>
   )
 
-  const renderAnalytics = () => (
-    <div className="bg-white rounded-lg shadow-md p-6">
-      <h2 className="text-2xl font-bold text-gray-900 mb-6">Analytics</h2>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <div className="bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg p-6 text-white">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-blue-100">Total Views</p>
-              <p className="text-3xl font-bold">221,234</p>
-            </div>
-            <Eye className="w-12 h-12 text-blue-200" />
-          </div>
+  const renderAnalytics = () => {
+    // Format numbers with commas for better readability
+    const formatNumber = (num) => {
+      if (num >= 1000000) {
+        return (num / 1000000).toFixed(1) + 'M';
+      } else if (num >= 1000) {
+        return (num / 1000).toFixed(1) + 'K';
+      }
+      return num.toLocaleString();
+    };
+
+    return (
+      <div className="bg-white rounded-lg shadow-md p-6">
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-2xl font-bold text-gray-900">Analytics</h2>
+          <button
+            onClick={fetchAnalyticsData}
+            disabled={analyticsLoading}
+            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+          >
+            {analyticsLoading ? "Refreshing..." : "Refresh"}
+          </button>
         </div>
-        <div className="bg-gradient-to-r from-green-500 to-green-600 rounded-lg p-6 text-white">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-green-100">Total Subscribers</p>
-              <p className="text-3xl font-bold">4,053</p>
-            </div>
-            <Users className="w-12 h-12 text-green-200" />
+
+        {analyticsLoading ? (
+          <div className="flex items-center justify-center py-12">
+            <div className="text-lg text-gray-600">Loading analytics...</div>
           </div>
-        </div>
-        <div className="bg-gradient-to-r from-purple-500 to-purple-600 rounded-lg p-6 text-white">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-purple-100">Total Videos</p>
-              <p className="text-3xl font-bold">63</p>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <div className="bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg p-6 text-white">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-blue-100">Total Views</p>
+                  <p className="text-3xl font-bold">{formatNumber(analyticsData.totalViews)}</p>
+                </div>
+                <Eye className="w-12 h-12 text-blue-200" />
+              </div>
             </div>
-            <Video className="w-12 h-12 text-purple-200" />
+            <div className="bg-gradient-to-r from-green-500 to-green-600 rounded-lg p-6 text-white">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-green-100">Total Subscribers</p>
+                  <p className="text-3xl font-bold">{formatNumber(analyticsData.totalSubscribers)}</p>
+                </div>
+                <Users className="w-12 h-12 text-green-200" />
+              </div>
+            </div>
+            <div className="bg-gradient-to-r from-purple-500 to-purple-600 rounded-lg p-6 text-white">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-purple-100">Total Videos</p>
+                  <p className="text-3xl font-bold">{formatNumber(analyticsData.totalVideos)}</p>
+                </div>
+                <Video className="w-12 h-12 text-purple-200" />
+              </div>
+            </div>
+            <div className="bg-gradient-to-r from-red-500 to-red-600 rounded-lg p-6 text-white">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-red-100">Total Likes</p>
+                  <p className="text-3xl font-bold">{formatNumber(analyticsData.totalLikes)}</p>
+                </div>
+                <Heart className="w-12 h-12 text-red-200" />
+              </div>
+            </div>
+          </div>
+        )}
+        
+        {/* Additional Analytics Section */}
+        <div className="border-t pt-6">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Stats</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="bg-gray-50 rounded-lg p-4">
+              <div className="text-sm text-gray-600">Average views per video</div>
+              <div className="text-2xl font-bold text-gray-900">
+                {analyticsData.totalVideos > 0 
+                  ? formatNumber(Math.round(analyticsData.totalViews / analyticsData.totalVideos))
+                  : '0'
+                }
+              </div>
+            </div>
+            <div className="bg-gray-50 rounded-lg p-4">
+              <div className="text-sm text-gray-600">Average likes per video</div>
+              <div className="text-2xl font-bold text-gray-900">
+                {analyticsData.totalVideos > 0 
+                  ? formatNumber(Math.round(analyticsData.totalLikes / analyticsData.totalVideos))
+                  : '0'
+                }
+              </div>
+            </div>
           </div>
         </div>
       </div>
-    </div>
-  )
+    )
+  }
 
   return (
     <div className="p-6">

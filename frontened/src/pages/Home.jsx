@@ -1,19 +1,16 @@
 import VideoCard from "../components/VideoCard.jsx";
 import { useState, useEffect } from "react";
 import { videoService, transformVideosArray } from "../services/videoService.js";
-import { subscriptionService } from "../services/subscriptionService.js";
 import { useAuth } from "../contexts/AuthContext.jsx";
 
 const Home = ({ onVideoSelect }) => {
   const { user, isAuthenticated } = useAuth();
   const [activeCategory, setActiveCategory] = useState("All");
   const [videos, setVideos] = useState([]);
-  const [subscribedChannels, setSubscribedChannels] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const [showOnlySubscribed, setShowOnlySubscribed] = useState(false);
 
   const categories = [
     "All",
@@ -28,24 +25,6 @@ const Home = ({ onVideoSelect }) => {
     "Fashion",
   ];
 
-  // Fetch subscribed channels
-  useEffect(() => {
-    const fetchSubscribedChannels = async () => {
-      if (isAuthenticated && user) {
-        try {
-          const response = await subscriptionService.getSubscribedChannels(user._id);
-          if (response.success) {
-            setSubscribedChannels(response.data);
-          }
-        } catch (err) {
-          console.error('Error fetching subscriptions:', err);
-        }
-      }
-    };
-
-    fetchSubscribedChannels();
-  }, [isAuthenticated, user]);
-
   // Fetch videos from backend
   useEffect(() => {
     const fetchVideos = async () => {
@@ -53,52 +32,23 @@ const Home = ({ onVideoSelect }) => {
         setLoading(true);
         setError(null);
         
-        let allVideos = [];
-        
-        // If showing only subscribed content and user is logged in
-        if (showOnlySubscribed && isAuthenticated && subscribedChannels.length > 0) {
-          // Fetch videos from each subscribed channel
-          for (const channel of subscribedChannels) {
-            const userId = channel._id;
-            const response = await videoService.getAllVideos(
-              1, // page
-              5, // limit per channel
-              activeCategory === "All" ? "" : activeCategory.toLowerCase(),
-              'createdAt',
-              'desc',
-              userId
-            );
-            
-            if (response.success && response.data.length > 0) {
-              const transformedVideos = transformVideosArray(response.data);
-              allVideos = [...allVideos, ...transformedVideos];
-            }
-          }
-          
-          // Sort videos by creation date
-          allVideos.sort((a, b) => new Date(b.uploadTime) - new Date(a.uploadTime));
-          setVideos(allVideos);
-          setTotalPages(1); // No pagination when showing subscribed content
-          
-        } else {
-          // Fetch all videos or by category
-          const response = await videoService.getAllVideos(
-            currentPage,
-            20, // limit
-            activeCategory === "All" ? "" : activeCategory.toLowerCase(),
-            'createdAt',
-            'desc'
-          );
+        // Fetch all videos or by category
+        const response = await videoService.getAllVideos(
+          currentPage,
+          20, // limit
+          activeCategory === "All" ? "" : activeCategory.toLowerCase(),
+          'createdAt',
+          'desc'
+        );
 
-          if (response.success) {
-            const transformedVideos = transformVideosArray(response.data);
-            console.log('Transformed videos:', transformedVideos);
-            setVideos(transformedVideos);
-            setTotalPages(Math.ceil(transformedVideos.length / 20) || 1);
-          } else {
-            setError('Failed to load videos');
-            setVideos([]);
-          }
+        if (response.success) {
+          const transformedVideos = transformVideosArray(response.data);
+          console.log('Transformed videos:', transformedVideos);
+          setVideos(transformedVideos);
+          setTotalPages(Math.ceil(transformedVideos.length / 20) || 1);
+        } else {
+          setError('Failed to load videos');
+          setVideos([]);
         }
       } catch (err) {
         console.error('Error fetching videos:', err);
@@ -110,7 +60,7 @@ const Home = ({ onVideoSelect }) => {
     };
 
     fetchVideos();
-  }, [activeCategory, currentPage, showOnlySubscribed, subscribedChannels, isAuthenticated]);
+  }, [activeCategory, currentPage]);
 
   const handleCategoryChange = (category) => {
     setActiveCategory(category);
@@ -135,22 +85,6 @@ const Home = ({ onVideoSelect }) => {
         </div>
       )}
 
-      {/* Subscriptions Toggle */}
-      {isAuthenticated && (
-        <div className="mb-4 flex items-center">
-          <button
-            onClick={() => setShowOnlySubscribed(!showOnlySubscribed)}
-            className={`flex items-center px-4 py-2 rounded-lg text-sm font-medium ${
-              showOnlySubscribed
-                ? "bg-red-600 text-white"
-                : "bg-gray-200 text-gray-800 hover:bg-gray-300"
-            }`}
-          >
-            {showOnlySubscribed ? "Showing: Subscriptions" : "Showing: All Videos"}
-          </button>
-        </div>
-      )}
-      
       {/* Category Pills */}
       <div className="mb-6 overflow-x-auto">
         <div className="flex space-x-3 pb-2">

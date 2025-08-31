@@ -15,7 +15,6 @@ import {
   Users,
   Settings,
   Shield,
-  BarChart3,
   User
 } from "lucide-react"
 import { Link, useLocation } from "react-router-dom"
@@ -47,7 +46,6 @@ const Sidebar = ({ isOpen }) => {
 
   const adminItems = [
     { icon: Shield, label: "My Channel", path: "/admin" },
-    { icon: BarChart3, label: "Analytics", path: "/analytics" },
   ]
 
   return (

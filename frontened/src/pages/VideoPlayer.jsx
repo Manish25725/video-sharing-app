@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react"
 import { useParams } from "react-router-dom"
-import { ThumbsUp, ThumbsDown, Share, Download, MoreHorizontal, Bell, Play, Eye, MessageCircle } from "lucide-react"
+import { ThumbsUp, ThumbsDown, Share, Download, MoreHorizontal, Bell, Play, Eye, MessageCircle, Scissors, Bookmark, Flag } from "lucide-react"
 import { videoService } from "../services/videoService"
 import { likeService } from "../services/likeService"
 import { subscriptionService } from "../services/subscriptionService"
@@ -23,6 +23,7 @@ const VideoPlayer = () => {
   const [commentsLoading, setCommentsLoading] = useState(false)
   const [hasViewBeenCounted, setHasViewBeenCounted] = useState(false) // Track if view was already counted
   const [isIncrementingView, setIsIncrementingView] = useState(false) // Prevent multiple simultaneous calls
+  const [showMoreMenu, setShowMoreMenu] = useState(false) // For dropdown menu
 
   useEffect(() => {
     if (videoId) {
@@ -35,6 +36,20 @@ const VideoPlayer = () => {
       setIsIncrementingView(false)
     }
   }, [videoId])
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (showMoreMenu && !event.target.closest('.more-options-container')) {
+        setShowMoreMenu(false)
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [showMoreMenu])
 
   const fetchVideoData = async () => {
     try {
@@ -138,7 +153,104 @@ const VideoPlayer = () => {
 
   // Handle more options
   const handleMoreOptions = () => {
-    alert('More options coming soon!')
+    setShowMoreMenu(!showMoreMenu)
+  }
+
+  // Handle download video
+  const handleDownloadVideo = async () => {
+    if (!video) {
+      alert('Video not loaded')
+      setShowMoreMenu(false)
+      return
+    }
+
+    try {
+      // Use the download service for better functionality
+      const { downloadService } = await import('../services/downloadService')
+      
+      console.log('Downloading video with data:', {
+        id: video._id || video.id,
+        title: video.title,
+        videoFile: video.videoFile,
+        thumbnail: video.thumbnail
+      });
+      
+      const result = await downloadService.downloadVideo(
+        video._id || video.id,
+        video.title,
+        video.videoFile,
+        video.thumbnail
+      )
+
+      if (result.success) {
+        alert(`Video download started! \n\n💡 Save to: Downloads/videotubedownloads/\n\nThis will make it easy to find when you're offline!`)
+      } else {
+        alert(result.message || 'Failed to download video')
+      }
+    } catch (error) {
+      console.error('Download error:', error)
+      // Fallback to simple download
+      if (video.videoFile) {
+        const link = document.createElement('a')
+        link.href = video.videoFile
+        link.download = `${video.title}.mp4`
+        document.body.appendChild(link)
+        link.click()
+        document.body.removeChild(link)
+      } else {
+        alert('Video file not available for download')
+      }
+    }
+    
+    setShowMoreMenu(false)
+  }
+
+  // Handle clip creation
+  const handleCreateClip = () => {
+    alert('Clip creation feature coming soon!')
+    setShowMoreMenu(false)
+  }
+
+  // Handle save to playlist
+  const handleSaveVideo = () => {
+    if (!user) {
+      alert('Please log in to save videos')
+      setShowMoreMenu(false)
+      return
+    }
+
+    // For now, just save to localStorage as a simple implementation
+    try {
+      const savedVideos = JSON.parse(localStorage.getItem('savedVideos') || '[]')
+      const videoToSave = {
+        id: video._id || video.id,
+        title: video.title,
+        thumbnail: video.thumbnail,
+        savedAt: new Date().toISOString()
+      }
+
+      // Check if already saved
+      if (savedVideos.some(v => v.id === videoToSave.id)) {
+        alert('Video is already saved!')
+      } else {
+        savedVideos.push(videoToSave)
+        localStorage.setItem('savedVideos', JSON.stringify(savedVideos))
+        alert('Video saved to your list!')
+      }
+    } catch (error) {
+      console.error('Error saving video:', error)
+      alert('Failed to save video')
+    }
+    
+    setShowMoreMenu(false)
+  }
+
+  // Handle report video
+  const handleReportVideo = () => {
+    if (window.confirm('Are you sure you want to report this video?')) {
+      alert('Report submitted. Thank you for helping keep our platform safe.')
+      setShowMoreMenu(false)
+    }
   }
 
   // Handle comment like/dislike
@@ -399,13 +511,52 @@ const VideoPlayer = () => {
                 </button>
 
                 {/* More Options */}
-                <button 
-                  onClick={handleMoreOptions}
-                  className="p-2 bg-gray-100 rounded-full hover:bg-gray-200 transition-colors text-gray-700 yt-button"
-                  title="More options"
-                >
-                  <MoreHorizontal className="w-5 h-5" />
-                </button>
+                <div className="relative more-options-container">
+                  <button 
+                    onClick={handleMoreOptions}
+                    className="p-2 bg-gray-100 rounded-full hover:bg-gray-200 transition-colors text-gray-700 yt-button"
+                    title="More options"
+                  >
+                    <MoreHorizontal className="w-5 h-5" />
+                  </button>
+
+                  {/* Dropdown Menu */}
+                  {showMoreMenu && (
+                    <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-50">
+                      <div className="py-2">
+                        <button
+                          onClick={handleDownloadVideo}
+                          className="w-full flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
+                        >
+                          <Download className="w-4 h-4 mr-3" />
+                          Download
+                        </button>
+                        <button
+                          onClick={handleCreateClip}
+                          className="w-full flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
+                        >
+                          <Scissors className="w-4 h-4 mr-3" />
+                          Clip
+                        </button>
+                        <button
+                          onClick={handleSaveVideo}
+                          className="w-full flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
+                        >
+                          <Bookmark className="w-4 h-4 mr-3" />
+                          Save
+                        </button>
+                        <hr className="my-1" />
+                        <button
+                          onClick={handleReportVideo}
+                          className="w-full flex items-center px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                        >
+                          <Flag className="w-4 h-4 mr-3" />
+                          Report
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
 
@@ -426,32 +577,37 @@ const VideoPlayer = () => {
                   </p>
                 </div>
               </div>
-              {user && user._id !== video.owner?._id ? (
-                <button 
-                  onClick={handleSubscribe}
-                  className={`px-6 py-2 rounded-full font-medium text-sm transition-colors subscribe-button ${
-                    isSubscribed 
-                      ? 'bg-gray-200 text-gray-700 hover:bg-gray-300' 
-                      : 'bg-red-600 text-white hover:bg-red-700'
-                  }`}
-                  title={isSubscribed ? 'Unsubscribe' : 'Subscribe to this channel'}
-                >
-                  {isSubscribed ? (
-                    <div className="flex items-center space-x-2">
-                      <Bell className="w-4 h-4" />
-                      <span>Subscribed</span>
-                    </div>
-                  ) : (
-                    'Subscribe'
-                  )}
-                </button>
-              ) : user && user._id === video.owner?._id ? (
-                <div className="flex items-center">
-                  <span className="px-4 py-2 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">
-                    Your Video
-                  </span>
-                </div>
-              ) : null}
+              
+              {/* Action buttons container */}
+              <div className="flex items-center space-x-3">
+                {/* Subscribe Button */}
+                {user && user._id !== video.owner?._id ? (
+                  <button 
+                    onClick={handleSubscribe}
+                    className={`px-6 py-2 rounded-full font-medium text-sm transition-colors subscribe-button ${
+                      isSubscribed 
+                        ? 'bg-gray-200 text-gray-700 hover:bg-gray-300' 
+                        : 'bg-red-600 text-white hover:bg-red-700'
+                    }`}
+                    title={isSubscribed ? 'Unsubscribe' : 'Subscribe to this channel'}
+                  >
+                    {isSubscribed ? (
+                      <div className="flex items-center space-x-2">
+                        <Bell className="w-4 h-4" />
+                        <span>Subscribed</span>
+                      </div>
+                    ) : (
+                      'Subscribe'
+                    )}
+                  </button>
+                ) : user && user._id === video.owner?._id ? (
+                  <div className="flex items-center">
+                    <span className="px-4 py-2 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">
+                      Your Video
+                    </span>
+                  </div>
+                ) : null}
+              </div>
             </div>
 
             {/* Description */}
