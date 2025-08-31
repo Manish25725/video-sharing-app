@@ -75,6 +75,7 @@ export const useDownload = () => {
     removeDownload,
     isVideoDownloaded,
     isDownloading,
-    loadDownloadedVideos
+    loadDownloadedVideos,
+    refreshDownloads: loadDownloadedVideos // Alias for consistency
   };
 };

@@ -83,44 +83,38 @@ const Downloads = ({ onVideoSelect }) => {
         onVideoSelect(download.id, download);
       }
     } else {
-      // Automatically browse for videotubedownloads folder when offline
-      try {
-        setLoading(true);
-        const result = await downloadService.browseVideotubedownloadsFolder();
-        if (result.success && result.files.length > 0) {
-          // Try to find matching file by title or filename
-          const matchingFile = result.files.find(file => {
-            const fileName = file.name.toLowerCase().replace('.mp4', '');
-            const downloadTitle = download.title.toLowerCase();
-            const originalFilename = download.originalFilename?.toLowerCase().replace('.mp4', '') || '';
-            
-            return fileName.includes(downloadTitle) || 
-                   downloadTitle.includes(fileName) ||
-                   fileName === originalFilename;
-          });
-          
-          if (matchingFile) {
-            await handlePlayLocalVideo(matchingFile);
-          } else {
-            // Show all files if no match found
-            setLocalFiles(result.files);
-            alert(`Could not find "${download.title}" in the selected folder. Please select the correct file from the list.`);
-          }
-        } else {
-          alert(result.message || 'No video files found. Please ensure you select the correct videotubedownloads folder.');
-        }
-      } catch (error) {
-        console.error('Error browsing for local file:', error);
-        alert('Failed to browse local files');
-      } finally {
-        setLoading(false);
-      }
+      // When offline, just show a message or do nothing
+      alert('You are offline. Please use the "Browse for Video File" button above to select your downloaded video file.');
     }
   };
 
-  const handleRemoveDownload = (videoId, videoTitle) => {
-    if (window.confirm(`Are you sure you want to remove "${videoTitle}" from downloads?`)) {
-      removeDownload(videoId);
+  const handleRemoveDownload = async (videoId, videoTitle) => {
+    const confirmMessage = `Are you sure you want to remove "${videoTitle}" from downloads?\n\nThis will also help you delete the video file from your computer.`;
+    
+    if (window.confirm(confirmMessage)) {
+      setLoading(true);
+      try {
+        const result = await downloadService.removeDownloadWithFile(videoId, videoTitle);
+        
+        if (result.success) {
+          // Refresh the downloads list
+          loadDownloadedVideos();
+          
+          // Show appropriate message
+          if (result.fileDeleted) {
+            alert(`✅ ${result.message}`);
+          } else {
+            alert(`ℹ️ ${result.message}`);
+          }
+        } else {
+          alert(`❌ ${result.message}`);
+        }
+      } catch (error) {
+        console.error('Error removing download:', error);
+        alert('Failed to remove download. Please try again.');
+      } finally {
+        setLoading(false);
+      }
     }
   };
 
@@ -160,9 +154,30 @@ const Downloads = ({ onVideoSelect }) => {
           <div className="bg-blue-600 text-white rounded-lg p-4 mb-4">
             <div className="flex items-center mb-2">
               <FolderOpen className="w-5 h-5 mr-2" />
-              <h4 className="font-semibold">Find Your Downloaded Video</h4>
+              <h4 className="font-semibold">Find Your Downloaded Videos</h4>
             </div>
-            <p className="text-blue-100">Expected location: Downloads/videotubedownloads/</p>
+            <p className="text-blue-100 mb-2">Expected location: Downloads/videotubedownloads/</p>
+            <div className="text-blue-100 text-sm">
+              <p>💡 If this is your first download, create this folder in your Downloads directory</p>
+              <p>📁 All VideoTube downloads should be saved in this folder for easy access</p>
+            </div>
+            <button
+              onClick={async () => {
+                setLoading(true);
+                try {
+                  await downloadService.downloadFolderHelper();
+                  alert('Setup guide downloaded! Check your Downloads folder for instructions.');
+                } catch (error) {
+                  alert('Failed to download setup guide');
+                } finally {
+                  setLoading(false);
+                }
+              }}
+              disabled={loading}
+              className="mt-3 inline-flex items-center px-3 py-1 bg-blue-500 text-white text-sm rounded hover:bg-blue-400 transition-colors disabled:opacity-50"
+            >
+              📥 Download Setup Guide
+            </button>
           </div>
           
           <div className="text-center">
@@ -187,7 +202,16 @@ const Downloads = ({ onVideoSelect }) => {
           <div className="text-center py-12">
             <Download className="mx-auto h-16 w-16 text-gray-300 mb-4" />
             <h3 className="text-lg font-medium text-gray-900 mb-2">No downloaded videos</h3>
-            <p className="text-gray-500">Videos you download will appear here for offline viewing</p>
+            <p className="text-gray-500 mb-4">Videos you download will appear here for offline viewing</p>
+            
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 max-w-md mx-auto">
+              <h4 className="text-blue-800 font-semibold mb-2">📁 Setup Guide</h4>
+              <div className="text-blue-700 text-sm space-y-1">
+                <p>1. Create folder: Downloads/videotubedownloads/</p>
+                <p>2. Save all downloads in this folder</p>
+                <p>3. Easy offline access when you need it</p>
+              </div>
+            </div>
           </div>
         ) : (
           <div className="space-y-4">
@@ -252,17 +276,18 @@ const Downloads = ({ onVideoSelect }) => {
                       className="inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 transition-colors"
                     >
                       <Play className="w-4 h-4 mr-1" />
-                      {isOnline ? 'Play' : 'Find Local'}
+                      Play
                     </button>
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
                         handleRemoveDownload(download.id, download.title);
                       }}
-                      className="inline-flex items-center px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-md hover:bg-red-700 transition-colors"
+                      disabled={loading}
+                      className="inline-flex items-center px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-md hover:bg-red-700 transition-colors disabled:opacity-50"
                     >
                       <Trash2 className="w-4 h-4 mr-1" />
-                      Remove
+                      {loading ? 'Removing...' : 'Remove'}
                     </button>
                   </div>
                 </div>

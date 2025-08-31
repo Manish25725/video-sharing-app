@@ -13,21 +13,24 @@ import {
   Share2, 
   Download,
   MoreVertical,
-  MessageCircle
+  MessageCircle,
+  Share,
+  MoreHorizontal,
+  Bell,
+  Eye,
+  Scissors,
+  Bookmark,
+  Flag
 } from 'lucide-react';
 import { videoService } from '../services/videoService';
 import { likeService } from '../services/likeService';
 import { commentService } from '../services/commentService';
-import DownloadModal from '../components/DownloadModal';{ useState, useEffect } from "react"
-import { useParams } from "react-router-dom"
-import { ThumbsUp, ThumbsDown, Share, Download, MoreHorizontal, Bell, Play, Eye, MessageCircle, Scissors, Bookmark, Flag } from "lucide-react"
-import { videoService } from "../services/videoService"
-import { likeService } from "../services/likeService"
-import { subscriptionService } from "../services/subscriptionService"
-import { commentService, transformCommentsArray } from "../services/commentService"
-import { useAuth } from "../contexts/AuthContext"
-import { formatDate, formatTimeAgo } from "../utils/formatters"
-import '../styles/VideoPlayer.css'
+import { subscriptionService } from '../services/subscriptionService';
+import DownloadModal from '../components/DownloadModal';
+import { transformCommentsArray } from "../services/commentService";
+import { useAuth } from "../contexts/AuthContext";
+import { formatDate, formatTimeAgo } from "../utils/formatters";
+import '../styles/VideoPlayer.css';
 
 const VideoPlayer = () => {
   const { videoId } = useParams()
@@ -44,6 +47,10 @@ const VideoPlayer = () => {
   const [hasViewBeenCounted, setHasViewBeenCounted] = useState(false) // Track if view was already counted
   const [isIncrementingView, setIsIncrementingView] = useState(false) // Prevent multiple simultaneous calls
   const [showMoreMenu, setShowMoreMenu] = useState(false) // For dropdown menu
+  
+  // Download modal state
+  const [showDownloadModal, setShowDownloadModal] = useState(false)
+  const [downloadInfo, setDownloadInfo] = useState(null)
 
   useEffect(() => {
     if (videoId) {
@@ -185,44 +192,19 @@ const VideoPlayer = () => {
     }
 
     try {
-      // Use the download service for better functionality
-      const { downloadService } = await import('../services/downloadService')
-      
-      console.log('Downloading video with data:', {
-        id: video._id || video.id,
+      // Set up download info and show modal
+      setDownloadInfo({
+        videoId: video._id || video.id,
         title: video.title,
-        videoFile: video.videoFile,
+        videoUrl: video.videoFile,
         thumbnail: video.thumbnail
       });
-      
-      const result = await downloadService.downloadVideo(
-        video._id || video.id,
-        video.title,
-        video.videoFile,
-        video.thumbnail
-      )
-
-      if (result.success) {
-        alert(`Video download started! \n\n💡 Save to: Downloads/videotubedownloads/\n\nThis will make it easy to find when you're offline!`)
-      } else {
-        alert(result.message || 'Failed to download video')
-      }
+      setShowDownloadModal(true);
+      setShowMoreMenu(false);
     } catch (error) {
       console.error('Download error:', error)
-      // Fallback to simple download
-      if (video.videoFile) {
-        const link = document.createElement('a')
-        link.href = video.videoFile
-        link.download = `${video.title}.mp4`
-        document.body.appendChild(link)
-        link.click()
-        document.body.removeChild(link)
-      } else {
-        alert('Video file not available for download')
-      }
+      alert('Failed to prepare download. Please try again.')
     }
-    
-    setShowMoreMenu(false)
   }
 
   // Handle clip creation
@@ -798,6 +780,17 @@ const VideoPlayer = () => {
           </div>
         </div>
       </div>
+      
+      {/* Download Modal */}
+      <DownloadModal
+        isOpen={showDownloadModal}
+        onClose={() => setShowDownloadModal(false)}
+        downloadInfo={downloadInfo}
+        onDownloadComplete={() => {
+          setShowDownloadModal(false);
+          setDownloadInfo(null);
+        }}
+      />
     </div>
   )
 }
