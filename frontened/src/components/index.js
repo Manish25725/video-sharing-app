@@ -1,6 +1,4 @@
 export { default as AuthPage } from './AuthPage';
-export { default as DownloadButton } from './DownloadButton';
-export { default as DownloadModal } from './DownloadModal';
 export { default as Header } from './Header';
 export { default as HeaderNew } from './HeaderNew';
 export { default as Search } from './Search';

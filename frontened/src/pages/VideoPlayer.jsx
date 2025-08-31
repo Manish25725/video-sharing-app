@@ -26,7 +26,7 @@ import { videoService } from '../services/videoService';
 import { likeService } from '../services/likeService';
 import { commentService } from '../services/commentService';
 import { subscriptionService } from '../services/subscriptionService';
-import DownloadModal from '../components/DownloadModal';
+import { downloadService } from '../services/downloadService';
 import { transformCommentsArray } from "../services/commentService";
 import { useAuth } from "../contexts/AuthContext";
 import { formatDate, formatTimeAgo } from "../utils/formatters";
@@ -34,6 +34,7 @@ import '../styles/VideoPlayer.css';
 
 const VideoPlayer = () => {
   const { videoId } = useParams()
+  const navigate = useNavigate()
   const { user } = useAuth()
   const [video, setVideo] = useState(null)
   const [videoStats, setVideoStats] = useState({ views: 0, likesCount: 0, isLikedByUser: false })
@@ -48,10 +49,10 @@ const VideoPlayer = () => {
   const [isIncrementingView, setIsIncrementingView] = useState(false) // Prevent multiple simultaneous calls
   const [showMoreMenu, setShowMoreMenu] = useState(false) // For dropdown menu
   
-  // Download modal state
-  const [showDownloadModal, setShowDownloadModal] = useState(false)
-  const [downloadInfo, setDownloadInfo] = useState(null)
-
+  // Download state
+  const [isDownloading, setIsDownloading] = useState(false)
+  const [downloadProgress, setDownloadProgress] = useState(0)
+  
   useEffect(() => {
     if (videoId) {
       fetchVideoData()
@@ -191,19 +192,33 @@ const VideoPlayer = () => {
       return
     }
 
+    setIsDownloading(true)
+    setDownloadProgress(0)
+    setShowMoreMenu(false)
+
     try {
-      // Set up download info and show modal
-      setDownloadInfo({
-        videoId: video._id || video.id,
-        title: video.title,
-        videoUrl: video.videoFile,
-        thumbnail: video.thumbnail
-      });
-      setShowDownloadModal(true);
-      setShowMoreMenu(false);
+      const filename = downloadService.generateSafeFilename(video.title)
+      
+      await downloadService.downloadVideoWithProgress(
+        video.videoFile,
+        filename,
+        (progress) => {
+          setDownloadProgress(progress)
+        }
+      )
+      
+      // Success
+      setDownloadProgress(100)
+      setTimeout(() => {
+        setIsDownloading(false)
+        setDownloadProgress(0)
+      }, 1000)
+      
     } catch (error) {
       console.error('Download error:', error)
-      alert('Failed to prepare download. Please try again.')
+      alert('Download failed. Please try again.')
+      setIsDownloading(false)
+      setDownloadProgress(0)
     }
   }
 
@@ -528,10 +543,11 @@ const VideoPlayer = () => {
                       <div className="py-2">
                         <button
                           onClick={handleDownloadVideo}
-                          className="w-full flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
+                          disabled={isDownloading}
+                          className="w-full flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           <Download className="w-4 h-4 mr-3" />
-                          Download
+                          {isDownloading ? `Downloading ${downloadProgress}%` : 'Download'}
                         </button>
                         <button
                           onClick={handleCreateClip}
@@ -781,16 +797,31 @@ const VideoPlayer = () => {
         </div>
       </div>
       
-      {/* Download Modal */}
-      <DownloadModal
-        isOpen={showDownloadModal}
-        onClose={() => setShowDownloadModal(false)}
-        downloadInfo={downloadInfo}
-        onDownloadComplete={() => {
-          setShowDownloadModal(false);
-          setDownloadInfo(null);
-        }}
-      />
+      {/* Download Progress Overlay */}
+      {isDownloading && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-sm w-full mx-4">
+            <div className="text-center">
+              <Download className="w-12 h-12 text-blue-500 mx-auto mb-4" />
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">Downloading Video</h3>
+              <p className="text-gray-600 mb-4">Please wait while we download your video...</p>
+              
+              {/* Progress Bar */}
+              <div className="w-full bg-gray-200 rounded-full h-2 mb-2">
+                <div 
+                  className="bg-blue-500 h-2 rounded-full transition-all duration-300 ease-out"
+                  style={{ width: `${downloadProgress}%` }}
+                ></div>
+              </div>
+              <p className="text-sm text-gray-500">{downloadProgress}% Complete</p>
+              
+              {downloadProgress === 100 && (
+                <p className="text-green-600 text-sm mt-2 font-medium">✅ Download Complete!</p>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

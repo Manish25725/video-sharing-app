@@ -49,8 +49,14 @@ const videoSchema = new Schema(
         owner: {
             type: Schema.Types.ObjectId,
             ref: "User"
-        }
+        },
 
+        isDownload:{
+            type:Boolean,
+        },
+        typeofVideo:{
+            type:String,
+        }
     }, 
     {
         timestamps: true

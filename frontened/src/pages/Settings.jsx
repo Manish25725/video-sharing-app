@@ -6,7 +6,6 @@ import {
   Globe, 
   Monitor, 
   Volume2, 
-  Download, 
   Smartphone,
   Wifi,
   HardDrive

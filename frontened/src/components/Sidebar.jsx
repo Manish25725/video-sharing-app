@@ -11,7 +11,6 @@ import {
   History,
   Clock,
   ThumbsUp,
-  Download,
   Users,
   Settings,
   Shield,
@@ -43,7 +42,6 @@ const Sidebar = ({ isOpen }) => {
     { icon: History, label: "History", path: "/history" },
     { icon: Clock, label: "Watch later", path: "/watch-later" },
     { icon: ThumbsUp, label: "Liked videos", path: "/liked-videos" },
-    { icon: Download, label: "Downloads", path: "/downloads" },
   ]
 
   const adminItems = [
