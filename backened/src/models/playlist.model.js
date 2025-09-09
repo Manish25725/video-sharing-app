@@ -9,7 +9,8 @@ const playlistSchema=new Schema({
 
     description:{
         type:String,
-        required:true
+        required:false,
+        default: ""
     },
 
     videos:[
@@ -22,6 +23,17 @@ const playlistSchema=new Schema({
     owner:{
         type:mongoose.Schema.Types.ObjectId,
         ref:"User"
+    },
+
+    type: {
+        type: String,
+        enum: ["creator", "user"],  // creator → grouped uploads, user → personal
+        default: "user"
+    },
+
+    isPrivate: {
+        type: Boolean,
+        default: false
     }
 
 

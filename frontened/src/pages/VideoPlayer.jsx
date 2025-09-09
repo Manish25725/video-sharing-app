@@ -21,7 +21,8 @@ import {
   Scissors,
   Bookmark,
   Clock,
-  Flag
+  Flag,
+  Plus
 } from 'lucide-react';
 import { videoService } from '../services/videoService';
 import { likeService } from '../services/likeService';
@@ -32,6 +33,7 @@ import watchLaterService from '../services/watchLaterService';
 import { transformCommentsArray } from "../services/commentService";
 import { useAuth } from "../contexts/AuthContext";
 import { formatDate, formatTimeAgo } from "../utils/formatters";
+import AddToPlaylistModal from '../components/AddToPlaylistModal';
 import '../styles/VideoPlayer.css';
 
 const VideoPlayer = () => {
@@ -58,6 +60,9 @@ const VideoPlayer = () => {
   // Watch Later state
   const [isInWatchLater, setIsInWatchLater] = useState(false)
   const [watchLaterLoading, setWatchLaterLoading] = useState(false)
+  
+  // Playlist Modal state
+  const [showPlaylistModal, setShowPlaylistModal] = useState(false)
   
   useEffect(() => {
     if (videoId) {
@@ -588,6 +593,16 @@ const VideoPlayer = () => {
                               : 'Save to Watch Later'
                           }
                         </button>
+                        <button
+                          onClick={() => {
+                            setShowPlaylistModal(true);
+                            setShowMoreMenu(false);
+                          }}
+                          className="w-full flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
+                        >
+                          <Plus className="w-4 h-4 mr-3" />
+                          Add to Playlist
+                        </button>
                         <hr className="my-1" />
                         <button
                           onClick={handleReportVideo}
@@ -847,6 +862,14 @@ const VideoPlayer = () => {
           </div>
         </div>
       )}
+
+      {/* Add to Playlist Modal */}
+      <AddToPlaylistModal
+        isOpen={showPlaylistModal}
+        onClose={() => setShowPlaylistModal(false)}
+        videoId={videoId}
+        videoTitle={video?.title}
+      />
     </div>
   )
 }

@@ -1,0 +1,31 @@
+.test-dropdown-menu {
+  position: absolute !important;
+  top: 100% !important;
+  right: 0 !important;
+  z-index: 9999 !important;
+  background: white !important;
+  border-radius: 8px !important;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05) !important;
+  border: 1px solid #e5e7eb !important;
+  padding: 8px 0 !important;
+  min-width: 220px !important;
+  max-height: none !important;
+  overflow: visible !important;
+  display: block !important;
+  visibility: visible !important;
+}
+
+.video-card-container {
+  overflow: visible !important;
+  position: relative !important;
+}
+
+.video-card-info {
+  overflow: visible !important;
+  position: relative !important;
+}
+
+.dropdown-menu-container {
+  position: relative !important;
+  overflow: visible !important;
+}

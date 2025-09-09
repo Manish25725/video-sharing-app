@@ -7,8 +7,6 @@ import watchLaterService from '../services/watchLaterService';
 import { downloadService } from '../services/downloadService';
 import Toast from './Toast';
 import AddToPlaylistModal from './AddToPlaylistModal';
-import './VideoCard.css';
-import './VideoCard.css';
 
 const VideoCard = ({ video, onVideoSelect }) => {
   const navigate = useNavigate();
@@ -224,7 +222,7 @@ const VideoCard = ({ video, onVideoSelect }) => {
   const channelAvatar = video.owner?.avatar || video.ownerDetails?.avatar;
 
   return (
-    <div className="bg-white rounded-lg hover:shadow-lg transition-shadow duration-200 cursor-pointer group relative video-card-container" style={{ overflow: 'visible' }}>
+    <div className="bg-white rounded-lg overflow-hidden hover:shadow-lg transition-shadow duration-200 cursor-pointer group">
       {/* Video Thumbnail */}
       <div className="relative aspect-video bg-gray-200" onClick={handleVideoClick}>
         <img
@@ -244,7 +242,7 @@ const VideoCard = ({ video, onVideoSelect }) => {
       </div>
 
       {/* Video Info */}
-      <div className="p-3 video-card-info" style={{ overflow: 'visible', position: 'relative' }}>
+      <div className="p-3">
         <div className="flex items-start justify-between">
           <div className="flex-1 min-w-0">
             {/* Title */}
@@ -283,7 +281,7 @@ const VideoCard = ({ video, onVideoSelect }) => {
           </div>
 
           {/* Three-dot menu positioned in bottom right of info section */}
-          <div className="relative ml-2 dropdown-menu-container" ref={dropdownRef}>
+          <div className="relative ml-2" ref={dropdownRef}>
             <button
               onClick={handleDropdownToggle}
               className="opacity-0 group-hover:opacity-100 p-1 hover:bg-gray-100 rounded transition-opacity"
@@ -293,15 +291,7 @@ const VideoCard = ({ video, onVideoSelect }) => {
             
             {/* Dropdown Menu */}
             {showDropdown && (
-              <div className="absolute right-0 top-8 w-56 bg-white rounded-lg shadow-xl border border-gray-200 z-[9999] py-2 test-dropdown-menu max-h-none overflow-visible"
-                style={{ 
-                  position: 'absolute',
-                  top: '100%',
-                  right: 0,
-                  minWidth: '220px',
-                  maxHeight: 'none'
-                }}
-              >
+              <div className="absolute right-0 top-8 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-50 py-2">
                 <button
                   onClick={handleSaveToWatchLater}
                   disabled={isWatchLaterLoading}

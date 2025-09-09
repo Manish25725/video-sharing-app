@@ -3,9 +3,9 @@ import apiClient from './api.js';
 // Playlist Services
 export const playlistService = {
   // Create a new playlist
-  async createPlaylist(name, description = '') {
+  async createPlaylist(playlistData) {
     try {
-      const response = await apiClient.post('/playlist', { name, description });
+      const response = await apiClient.post('/playlist/create-playlist', playlistData);
       return response;
     } catch (error) {
       console.error('Create playlist error:', error);
@@ -13,10 +13,15 @@ export const playlistService = {
     }
   },
 
-  // Get user playlists
-  async getUserPlaylists(userId) {
+  // Get current user's playlists
+  async getUserPlaylists(userId = null) {
     try {
-      const response = await apiClient.get(`/playlist/${userId}`);
+      let endpoint = '/playlist/get-user-playlists';
+      if (userId) {
+        endpoint = `/playlist/get-user-playlists/${userId}`;
+      }
+      const response = await apiClient.get(endpoint);
+      console.log('Raw playlist service response:', response); // Debug log
       return response;
     } catch (error) {
       console.error('Get user playlists error:', error);
@@ -27,7 +32,7 @@ export const playlistService = {
   // Get a specific playlist
   async getPlaylistById(playlistId) {
     try {
-      const response = await apiClient.get(`/playlist/get/${playlistId}`);
+      const response = await apiClient.get(`/playlist/get-playlist/${playlistId}`);
       return response;
     } catch (error) {
       console.error('Get playlist by ID error:', error);
@@ -38,7 +43,14 @@ export const playlistService = {
   // Add video to playlist
   async addVideoToPlaylist(playlistId, videoId) {
     try {
-      const response = await apiClient.post(`/playlist/add/${playlistId}/${videoId}`);
+      console.log('Adding video to playlist:', { playlistId, videoId }); // Debug log
+      if (!playlistId || playlistId === 'undefined') {
+        throw new Error('Invalid playlist ID');
+      }
+      if (!videoId || videoId === 'undefined') {
+        throw new Error('Invalid video ID');
+      }
+      const response = await apiClient.post(`/playlist/add-video-to-playlist/${playlistId}/${videoId}`);
       return response;
     } catch (error) {
       console.error('Add video to playlist error:', error);
@@ -49,7 +61,14 @@ export const playlistService = {
   // Remove video from playlist
   async removeVideoFromPlaylist(playlistId, videoId) {
     try {
-      const response = await apiClient.delete(`/playlist/remove/${playlistId}/${videoId}`);
+      console.log('Removing video from playlist:', { playlistId, videoId }); // Debug log
+      if (!playlistId || playlistId === 'undefined') {
+        throw new Error('Invalid playlist ID');
+      }
+      if (!videoId || videoId === 'undefined') {
+        throw new Error('Invalid video ID');
+      }
+      const response = await apiClient.get(`/playlist/remove-video-playlist/${playlistId}/${videoId}`);
       return response;
     } catch (error) {
       console.error('Remove video from playlist error:', error);
@@ -60,7 +79,7 @@ export const playlistService = {
   // Delete playlist
   async deletePlaylist(playlistId) {
     try {
-      const response = await apiClient.delete(`/playlist/${playlistId}`);
+      const response = await apiClient.delete(`/playlist/delete-playlist/${playlistId}`);
       return response;
     } catch (error) {
       console.error('Delete playlist error:', error);
@@ -69,9 +88,9 @@ export const playlistService = {
   },
 
   // Update playlist details
-  async updatePlaylist(playlistId, name, description) {
+  async updatePlaylist(playlistId, updateData) {
     try {
-      const response = await apiClient.patch(`/playlist/${playlistId}`, { name, description });
+      const response = await apiClient.patch(`/playlist/update-playlist/${playlistId}`, updateData);
       return response;
     } catch (error) {
       console.error('Update playlist error:', error);

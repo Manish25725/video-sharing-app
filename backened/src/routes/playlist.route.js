@@ -7,6 +7,7 @@ const router=Router();
 
 router.route("/create-playlist").post(verifyJWT,createPlaylist)
 router.route("/get-user-playlists/:userId").get(verifyJWT,getUserPlaylists)
+router.route("/get-user-playlists").get(verifyJWT,getUserPlaylists) // For current user
 router.route("/get-playlist/:playlistId").get(verifyJWT,getPlaylistById)
 router.route("/add-video-to-playlist/:playlistId/:videoId").post(verifyJWT,addVideoToPlaylist)
 router.route("/remove-video-playlist/:playlistId/:videoId").get(verifyJWT,removeVideoFromPlaylist)

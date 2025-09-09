@@ -15,7 +15,8 @@ import {
   Settings,
   Shield,
   User,
-  MessageSquare
+  MessageSquare,
+  List
 } from "lucide-react"
 import { Link, useLocation } from "react-router-dom"
 import { useAuth } from "../contexts/AuthContext"
@@ -42,6 +43,7 @@ const Sidebar = ({ isOpen }) => {
     { icon: History, label: "History", path: "/history" },
     { icon: Clock, label: "Watch later", path: "/watch-later" },
     { icon: ThumbsUp, label: "Liked videos", path: "/liked-videos" },
+    { icon: List, label: "Playlists", path: "/playlists" },
   ]
 
   const adminItems = [

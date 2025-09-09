@@ -8,6 +8,8 @@ import MyChannel from "./pages/MyChannel"
 import Subscriptions from "./pages/Subscriptions"
 import LikedVideos from "./pages/LikedVideos"
 import WatchLater from "./pages/WatchLater"
+import Playlists from "./pages/Playlists"
+import PlaylistDetail from "./pages/PlaylistDetail"
 import Tweets from "./pages/Tweets"
 import TrendingVideos from "./pages/TrendingVideos"
 import CategoryVideos from "./pages/CategoryVideos"
@@ -85,6 +87,8 @@ function AppContent() {
             
             <Route path="/liked-videos" element={<LikedVideos onVideoSelect={handleVideoSelect} />} />
             <Route path="/watch-later" element={<WatchLater />} />
+            <Route path="/playlists" element={<Playlists />} />
+            <Route path="/playlist/:playlistId" element={<PlaylistDetail onVideoSelect={handleVideoSelect} />} />
             <Route path="/profile/:userId" element={<Profile onVideoSelect={handleVideoSelect} />} />
             <Route path="/profile" element={<Profile onVideoSelect={handleVideoSelect} />} />
             <Route path="/video/:videoId" element={<VideoPlayer />} />
