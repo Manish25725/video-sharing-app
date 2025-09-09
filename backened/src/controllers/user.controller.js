@@ -55,37 +55,38 @@ const registerUser= asyncHandler(async (req,res)=>{
     }
 
     const avatarLocalPath=req.files?.avatar[0]?.path;
-    //const coverImagePath=req.files?.coverImage[0]?.path;
+    const coverImageLocalPath=req.files?.coverImage[0]?.path;
 
-    let coverImageLocalPath;
-    if(req.files && Array.isArray(req.files.coverImage) && req.files.coverImage.length > 0){
-        coverImageLocalPath = req.files.coverImage[0].path;
-    }
-
-
-    console.log(req.files);
-    console.log(avatarLocalPath);
+    console.log("Files received:", req.files);
+    console.log("Avatar local path:", avatarLocalPath);
+    console.log("Cover image local path:", coverImageLocalPath);
 
     if(!avatarLocalPath){
         throw new ApiError(400,"Avatar file is required");
     }
 
-    // Cover image is optional, remove the required validation
-    // if(!coverImagePath){
-    //     throw new ApiError(400,"CoverImage is reqiured");
-    // }
+    if(!coverImageLocalPath){
+        throw new ApiError(400,"Cover image is required");
+    }
 
     const avatar=await uploadOnCloudinary(avatarLocalPath);
     const coverImage=await uploadOnCloudinary(coverImageLocalPath);
+
+    console.log("Avatar upload result:", avatar);
+    console.log("Cover image upload result:", coverImage);
 
     if(!avatar?.url){
         throw new ApiError(400,"Avatar file is required");
     }
 
+    if(!coverImage?.url){
+        throw new ApiError(400,"Cover image is required");
+    }
+
 
     const user= await User.create({
-        avatar:avatar?.url,
-        coverImage:coverImage?.url || "",
+        avatar:avatar.url,
+        coverImage:coverImage.url,
         email,
         password,
         userName:userName.toLowerCase(),

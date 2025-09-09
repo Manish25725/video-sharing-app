@@ -2,12 +2,14 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext.jsx';
 import { Eye, EyeOff, Upload } from 'lucide-react';
+import Toast from './Toast.jsx';
 
 const AuthPage = ({ onAuthSuccess }) => {
   const [isLogin, setIsLogin] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
   const navigate = useNavigate();
   
   const { login, register } = useAuth();
@@ -39,6 +41,10 @@ const AuthPage = ({ onAuthSuccess }) => {
     });
   };
 
+  const showToast = (message, type = 'success') => {
+    setToast({ show: true, message, type });
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -48,9 +54,12 @@ const AuthPage = ({ onAuthSuccess }) => {
       if (isLogin) {
         const result = await login(formData.email, formData.password);
         if (result.success) {
+          showToast('Login successful! Welcome back.', 'success');
           // Redirect to home page after successful login
-          navigate('/');
-          onAuthSuccess?.();
+          setTimeout(() => {
+            navigate('/');
+            onAuthSuccess?.();
+          }, 1000); // Small delay to show the toast
         } else {
           setError(result.error);
         }
@@ -58,6 +67,12 @@ const AuthPage = ({ onAuthSuccess }) => {
         // Registration validation
         if (!files.avatar) {
           setError('Avatar image is required');
+          setLoading(false);
+          return;
+        }
+
+        if (!files.coverImage) {
+          setError('Cover image is required');
           setLoading(false);
           return;
         }
@@ -81,7 +96,7 @@ const AuthPage = ({ onAuthSuccess }) => {
         if (result.success) {
           setError('');
           setIsLogin(true); // Switch to login after successful registration
-          alert('Registration successful! Please login with your credentials.');
+          showToast('Registration successful! Please login with your credentials.', 'success');
           resetForm();
         } else {
           setError(result.error || 'Registration failed');
@@ -188,7 +203,7 @@ const AuthPage = ({ onAuthSuccess }) => {
 
                 <div>
                   <label htmlFor="coverImage" className="block text-sm font-medium text-gray-700">
-                    Cover Image (Optional)
+                    Cover Image *
                   </label>
                   <div className="mt-1 flex items-center space-x-2">
                     <input
@@ -196,6 +211,7 @@ const AuthPage = ({ onAuthSuccess }) => {
                       name="coverImage"
                       type="file"
                       accept="image/*"
+                      required={!isLogin}
                       onChange={handleFileChange}
                       className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
                     />
@@ -282,6 +298,15 @@ const AuthPage = ({ onAuthSuccess }) => {
           </div>
         </form>
       </div>
+
+      {/* Toast notification */}
+      {toast.show && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast({ show: false, message: '', type: 'success' })}
+        />
+      )}
     </div>
   );
 };

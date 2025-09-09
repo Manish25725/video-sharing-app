@@ -6,7 +6,10 @@ const storage = multer.diskStorage({
     cb(null, './public/temp');
   },
   filename: function (req, file, cb) {
-    cb(null, file.originalname);
+    // Create unique filename with timestamp and fieldname
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    const extension = file.originalname.split('.').pop();
+    cb(null, file.fieldname + '-' + uniqueSuffix + '.' + extension);
   }
 })
 
