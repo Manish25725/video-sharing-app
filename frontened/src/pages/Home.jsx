@@ -15,14 +15,12 @@ const Home = ({ onVideoSelect }) => {
   const categories = [
     "All",
     "Music",
+    "Movies", 
     "Gaming",
     "News",
     "Sports",
-    "Entertainment",
-    "Technology",
-    "Cooking",
-    "Travel",
-    "Fashion",
+    "Learning",
+    "Fashion"
   ];
 
   // Fetch videos from backend
@@ -33,12 +31,21 @@ const Home = ({ onVideoSelect }) => {
         setError(null);
         
         // Fetch all videos or by category
+        let videoTypeFilter = activeCategory;
+        
+        // Handle "All" category - show all videos regardless of type
+        if (activeCategory === "All") {
+          videoTypeFilter = ""; // No type filter for all videos
+        }
+
         const response = await videoService.getAllVideos(
           currentPage,
           20, // limit
-          activeCategory === "All" ? "" : activeCategory.toLowerCase(),
+          "", // query - empty since we're filtering by type
           'createdAt',
-          'desc'
+          'desc',
+          '', // userId
+          videoTypeFilter // videoType
         );
 
         if (response.success) {

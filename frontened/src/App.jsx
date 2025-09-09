@@ -10,6 +10,7 @@ import LikedVideos from "./pages/LikedVideos"
 import WatchLater from "./pages/WatchLater"
 import Tweets from "./pages/Tweets"
 import TrendingVideos from "./pages/TrendingVideos"
+import CategoryVideos from "./pages/CategoryVideos"
 import Settings from "./pages/Settings"
 import Profile from "./pages/Profile"
 import Search from "./components/Search"
@@ -72,6 +73,16 @@ function AppContent() {
             <Route path="/trending" element={<TrendingVideos onVideoSelect={handleVideoSelect} />} />
             <Route path="/subscriptions" element={<Subscriptions onVideoSelect={handleVideoSelect} />} />
             <Route path="/tweets" element={<Tweets />} />
+            
+            {/* Category Routes */}
+            <Route path="/music" element={<CategoryVideos onVideoSelect={handleVideoSelect} />} />
+            <Route path="/movies" element={<CategoryVideos onVideoSelect={handleVideoSelect} />} />
+            <Route path="/gaming" element={<CategoryVideos onVideoSelect={handleVideoSelect} />} />
+            <Route path="/news" element={<CategoryVideos onVideoSelect={handleVideoSelect} />} />
+            <Route path="/sports" element={<CategoryVideos onVideoSelect={handleVideoSelect} />} />
+            <Route path="/learning" element={<CategoryVideos onVideoSelect={handleVideoSelect} />} />
+            <Route path="/fashion" element={<CategoryVideos onVideoSelect={handleVideoSelect} />} />
+            
             <Route path="/liked-videos" element={<LikedVideos onVideoSelect={handleVideoSelect} />} />
             <Route path="/watch-later" element={<WatchLater />} />
             <Route path="/profile/:userId" element={<Profile onVideoSelect={handleVideoSelect} />} />

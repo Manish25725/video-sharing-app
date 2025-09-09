@@ -6,13 +6,9 @@ import { ApiResponse } from "../utils/Apiresponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { uploadOnCloudinary,deleteOnCloudinary } from "../utils/cloudinary.js";
 
-
 //for trending ..
-
 const getTrendingVideos=asyncHandler(async (req,res)=>{
-
     //user is logged in or not ....
-
     if(!req.user){
         throw new ApiError(400,"user not logged in ")
     }
@@ -21,13 +17,24 @@ const getTrendingVideos=asyncHandler(async (req,res)=>{
             throw new ApiError(400,"User Id is invalid")
     }
 
+    const { videoType } = req.query;
+    const matchStage = {
+      isPublished: true,
+      isBlocked: { $ne: true }
+    };
+
+    // Add videoType filter if provided
+    if (videoType && videoType.toLowerCase() !== "all" && videoType.toLowerCase() !== "new") {
+      matchStage.videoType = {
+        $regex: videoType,
+        $options: "i"
+      };
+    }
+
      const trendingVideos = await Video.aggregate([
-      // 1. Match only published videos
+      // 1. Match only published videos with optional type filter
       {
-        $match: {
-          isPublished: true,
-          isBlocked: { $ne: true }
-        }
+        $match: matchStage
       },
 
       // 2. Calculate hours since the video was uploaded
@@ -118,11 +125,12 @@ const getTrendingVideos=asyncHandler(async (req,res)=>{
 const getAllVideos = asyncHandler(async (req, res) => {
   // Handle both POST (with body) and GET (with query) requests
   const requestData = req.method === 'POST' ? req.body : req.query;
-  let { page = 1, limit = 10, query="", sortBy="createdAt", sortType="desc", userId=""} = requestData;
+  let { page = 1, limit = 10, query="", sortBy="createdAt", sortType="desc", userId="", videoType=""} = requestData;
   
   //TODO: get all videos based on query, sort, pagination
   userId = userId ? userId.trim() : "";
   query = query ? query.trim() : "";
+  videoType = videoType ? videoType.trim() : "";
 
   // Optional authentication - user may or may not be logged in
   // if (!req.user) {
@@ -131,6 +139,14 @@ const getAllVideos = asyncHandler(async (req, res) => {
 
   const skip = (parseInt(page) - 1) * parseInt(limit);
   const filter = { isPublished: true }; // Always filter for published videos
+
+  // Add videoType filter
+  if (videoType && videoType.toLowerCase() !== "all") {
+    filter.videoType = {
+      $regex: videoType,
+      $options: "i"
+    };
+  }
 
   if (query){
     filter.$or = [
@@ -240,11 +256,19 @@ const getAllVideos = asyncHandler(async (req, res) => {
 
 
 const publishVideo = asyncHandler(async (req, res) => {
-    const { title, description} = req.body
+    const { title, description, videoType} = req.body
     // TODO: get video, upload to cloudinary, create video
 
     if(!req.user){
         throw new ApiError(400,"User needs to be logged in");
+    }
+
+    if(!title || !description){
+        throw new ApiError(400,"Title and description are required");
+    }
+
+    if(!videoType){
+        throw new ApiError(400,"Video type is required");
     }
 
     const videoLocalPath=req.files?.video[0]?.path;
@@ -280,7 +304,8 @@ const publishVideo = asyncHandler(async (req, res) => {
         views:0,
         isPublished:true,
         title:title,
-        description:description
+        description:description,
+        videoType:videoType
     })
 
     if(!video){

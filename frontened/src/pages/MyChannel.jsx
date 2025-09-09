@@ -4,6 +4,7 @@ import { videoService, transformVideosArray } from "../services/videoService"
 import { dashboardService } from "../services/dashboardService"
 import { likeService } from "../services/likeService"
 import { useAuth } from "../contexts/AuthContext"
+import Toast from "../components/Toast"
 
 const MyChannel = () => {
   const { user } = useAuth()
@@ -23,8 +24,16 @@ const MyChannel = () => {
     description: "",
     thumbnail: null,
     video: null,
-    playlist: ""
+    playlist: "",
+    videoType: ""
   })
+
+  // Upload progress states
+  const [uploadProgress, setUploadProgress] = useState(0)
+  const [isUploading, setIsUploading] = useState(false)
+  
+  // Toast state
+  const [toast, setToast] = useState({ show: false, message: '', type: 'success' })
 
   // Edit modal state
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
@@ -179,11 +188,11 @@ const MyChannel = () => {
           )
         )
       } else {
-        alert("Failed to update video status")
+        showToast("Failed to update video status", "error")
       }
     } catch (error) {
       console.error("Error toggling publish status:", error)
-      alert("Failed to update video status")
+      showToast("Failed to update video status", "error")
     }
   }
 
@@ -193,13 +202,13 @@ const MyChannel = () => {
         const response = await videoService.deleteVideo(videoId)
         if (response.success) {
           setVideos(prevVideos => prevVideos.filter(video => video.id !== videoId))
-          alert("Video deleted successfully")
+          showToast("Video deleted successfully", "success")
         } else {
-          alert("Failed to delete video")
+          showToast("Failed to delete video", "error")
         }
       } catch (error) {
         console.error("Error deleting video:", error)
-        alert("Failed to delete video")
+        showToast("Failed to delete video", "error")
       }
     }
   }
@@ -253,13 +262,13 @@ const MyChannel = () => {
           )
         )
         setIsEditModalOpen(false)
-        alert("Video updated successfully")
+        showToast("Video updated successfully", "success")
       } else {
-        alert("Failed to update video")
+        showToast("Failed to update video", "error")
       }
     } catch (error) {
       console.error("Error updating video:", error)
-      alert("Failed to update video")
+      showToast("Failed to update video", "error")
     } finally {
       setLoading(false)
     }
@@ -312,32 +321,67 @@ const MyChannel = () => {
     }))
   }
 
+  const showToast = (message, type = 'success') => {
+    setToast({ show: true, message, type })
+  }
+
   const handleSubmit = async (e) => {
     e.preventDefault()
     try {
+      setIsUploading(true)
+      setUploadProgress(0)
       setLoading(true)
-      const response = await videoService.publishVideo(formData, formData.video, formData.thumbnail)
+      
+      // Simulate progress steps
+      const progressInterval = setInterval(() => {
+        setUploadProgress(prev => {
+          if (prev >= 90) {
+            clearInterval(progressInterval)
+            return 90 // Stop at 90%, will complete when upload finishes
+          }
+          return prev + Math.random() * 15 // Random increment between 0-15%
+        })
+      }, 500)
+
+      const response = await videoService.publishVideoWithProgress(
+        formData, 
+        formData.video, 
+        formData.thumbnail,
+        (progress) => {
+          setUploadProgress(progress)
+        }
+      )
+      
+      clearInterval(progressInterval)
+      setUploadProgress(100)
       
       if (response.success) {
-        alert("Video uploaded successfully!")
+        showToast("Video uploaded successfully! 🎉", "success")
         setFormData({
           title: "",
           description: "",
           thumbnail: null,
           video: null,
-          playlist: ""
+          playlist: "",
+          videoType: ""
         })
+        // Reset file inputs
+        document.querySelector('input[name="video"]').value = ''
+        document.querySelector('input[name="thumbnail"]').value = ''
+        
         // Refresh video list and analytics
         fetchUserVideos()
         fetchAnalyticsData()
       } else {
-        alert("Failed to upload video: " + (response.message || "Unknown error"))
+        showToast("Failed to upload video: " + (response.message || "Unknown error"), "error")
       }
     } catch (error) {
       console.error("Error uploading video:", error)
-      alert("Failed to upload video")
+      showToast("Failed to upload video", "error")
     } finally {
       setLoading(false)
+      setIsUploading(false)
+      setUploadProgress(0)
     }
   }
 
@@ -427,30 +471,78 @@ const MyChannel = () => {
           </div>
         </div>
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Add to Playlist (Optional)
-          </label>
-          <select
-            name="playlist"
-            value={formData.playlist}
-            onChange={handleInputChange}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            <option value="">Select a playlist</option>
-            {playlists.map((playlist, index) => (
-              <option key={index} value={playlist}>{playlist}</option>
-            ))}
-          </select>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Video Type *
+            </label>
+            <select
+              name="videoType"
+              value={formData.videoType}
+              onChange={handleInputChange}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              required
+            >
+              <option value="">Select video type</option>
+              <option value="Music">Music</option>
+              <option value="Movies">Movies</option>
+              <option value="Gaming">Gaming</option>
+              <option value="News">News</option>
+              <option value="Sports">Sports</option>
+              <option value="Learning">Learning</option>
+              <option value="Fashion">Fashion</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Add to Playlist (Optional)
+            </label>
+            <select
+              name="playlist"
+              value={formData.playlist}
+              onChange={handleInputChange}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="">Select a playlist</option>
+              {playlists.map((playlist, index) => (
+                <option key={index} value={playlist}>{playlist}</option>
+              ))}
+            </select>
+          </div>
         </div>
 
         <button
           type="submit"
-          disabled={loading}
-          className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          disabled={loading || isUploading}
+          className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed relative"
         >
-          {loading ? "Uploading..." : "Upload Video"}
+          {isUploading ? (
+            <div className="flex items-center justify-center">
+              <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+              Uploading... {Math.round(uploadProgress)}%
+            </div>
+          ) : loading ? (
+            "Processing..."
+          ) : (
+            "Upload Video"
+          )}
         </button>
+
+        {/* Progress Bar */}
+        {isUploading && (
+          <div className="mt-3">
+            <div className="w-full bg-gray-200 rounded-full h-2">
+              <div 
+                className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                style={{ width: `${uploadProgress}%` }}
+              ></div>
+            </div>
+            <p className="text-sm text-gray-600 mt-1 text-center">
+              Upload Progress: {Math.round(uploadProgress)}%
+            </p>
+          </div>
+        )}
       </form>
     </div>
   )
@@ -578,7 +670,7 @@ const MyChannel = () => {
                             onClick={() => {
                               navigator.clipboard.writeText(`${window.location.origin}/video/${video.id}`)
                               setOpenDropdown(null)
-                              alert("Video link copied to clipboard!")
+                              showToast("Video link copied to clipboard!", "success")
                             }}
                             className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                           >
@@ -856,6 +948,15 @@ const MyChannel = () => {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Toast notification */}
+      {toast.show && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast({ show: false, message: '', type: 'success' })}
+        />
       )}
     </div>
   )

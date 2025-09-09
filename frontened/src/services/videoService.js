@@ -4,7 +4,7 @@ import { formatDuration } from '../utils/formatters.js';
 // Video Services
 export const videoService = {
   // Get all videos with pagination
-  async getAllVideos(page = 1, limit = 10, query = '', sortBy = 'createdAt', sortType = 'desc', userId = '') {
+  async getAllVideos(page = 1, limit = 10, query = '', sortBy = 'createdAt', sortType = 'desc', userId = '', videoType = '') {
     try {
       const queryParams = new URLSearchParams({
         page,
@@ -16,6 +16,10 @@ export const videoService = {
       
       if (userId) {
         queryParams.append('userId', userId);
+      }
+
+      if (videoType) {
+        queryParams.append('videoType', videoType);
       }
       
       const response = await apiClient.get(`/videos/get-all-videos?${queryParams.toString()}`);
@@ -48,12 +52,48 @@ export const videoService = {
     }
   },
 
+  // Publish new video with progress tracking
+  async publishVideoWithProgress(videoData, videoFile, thumbnailFile, onProgress) {
+    try {
+      const formData = new FormData();
+      formData.append('title', videoData.title);
+      formData.append('description', videoData.description);
+      
+      if (videoData.videoType) {
+        formData.append('videoType', videoData.videoType);
+      }
+      
+      if (videoFile) {
+        formData.append('video', videoFile);
+      }
+      if (thumbnailFile) {
+        formData.append('thumbnail', thumbnailFile);
+      }
+
+      const response = await apiClient.post('/videos/publish-video', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+        onUploadProgress: (progressEvent) => {
+          const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+          onProgress(percentCompleted);
+        }
+      });
+      return response;
+    } catch (error) {
+      console.error('Publish video error:', error);
+      throw error;
+    }
+  },
+
   // Publish new video
   async publishVideo(videoData, videoFile, thumbnailFile) {
     try {
       const formData = new FormData();
       formData.append('title', videoData.title);
       formData.append('description', videoData.description);
+      
+      if (videoData.videoType) {
+        formData.append('videoType', videoData.videoType);
+      }
       
       if (videoFile) {
         formData.append('video', videoFile);
@@ -130,9 +170,10 @@ export const videoService = {
     }
   },
 
-  async getTrendingVideos() {
+  async getTrendingVideos(videoType = '') {
     try {
-      const response = await apiClient.get('/videos/get-trending-videos');
+      const queryParams = videoType ? `?videoType=${encodeURIComponent(videoType)}` : '';
+      const response = await apiClient.get(`/videos/get-trending-videos${queryParams}`);
       return response;
     } catch (error) {
       console.log("get trending video error", error);
