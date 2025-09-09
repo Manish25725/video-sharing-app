@@ -1,9 +1,11 @@
 import { asyncHandler } from "../utils/asyncHandler.js";
 import {ApiError} from "../utils/ApiError.js"
 import {User} from "../models/user.model.js"
+import {Video} from "../models/video.model.js"
 import { deleteOnCloudinary, uploadOnCloudinary } from "../utils/cloudinary.js";
 import { ApiResponse } from "../utils/Apiresponse.js";
 import jwt from "jsonwebtoken"
+import mongoose from "mongoose"
 
 
 const generateAccessAndRefreshToken =async(userId)=>{
@@ -430,7 +432,7 @@ const getUserChannelProfile=asyncHandler(async(req,res)=>{
 const getWatchHistory=asyncHandler(async (req,res)=>{
 
     if(!req.user){
-        throw new ApiError(400,"User must be loggedin");
+        throw new ApiError(401,"User must be logged in");
     }
 
     const user=await User.aggregate([
@@ -466,30 +468,159 @@ const getWatchHistory=asyncHandler(async (req,res)=>{
                     {
                         $addFields:{
                             owner:{
-                                $arrayElemAt : ["$owner",0]
+                                $first: "$owner"
                             }
                         }
                     }
                 ]
             }
-        },
-        {
-            $addFields:{
-                watchHistory:{
-                    $arrayElemAt:["$watchHistory",0]
-                }
-            }
         }
     ])
+
+    if(!user?.length){
+        throw new ApiError(404,"User not found");
+    }
 
     return res
     .status(200)
     .json(
-        new ApiResponse(200,user.watchHistory || {},"Watch history fetched successfully")
+        new ApiResponse(200,user[0].watchHistory || [],"Watch history fetched successfully")
     )
 })
 
 
+const getWatchLater=asyncHandler(async(req,res)=>{
+
+    if(!req.user || !req.user?._id){
+        throw new ApiError(401,"User is not logged in");
+    }
+
+    // First get the user with watchLater IDs
+    const user = await User.findById(req.user._id).select("watchLater");
+    
+    if (!user) {
+        throw new ApiError(404, "User not found");
+    }
+
+    console.log("User watchLater IDs:", user.watchLater);
+
+    // If no watch later videos, return empty array
+    if (!user.watchLater || user.watchLater.length === 0) {
+        return res
+        .status(200)
+        .json(
+            new ApiResponse(200, [], "Watch later videos fetched successfully")
+        )
+    }
+
+    // Get the actual video documents
+    const watchLaterVideos = await Video.find({
+        _id: { $in: user.watchLater },
+        isPublished: true
+    }).populate({
+        path: "owner",
+        select: "fullName userName avatar"
+    });
+
+    console.log("Found watch later videos:", watchLaterVideos.length);
+
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(200, watchLaterVideos, "Watch later videos fetched successfully")
+    )
+})
+
+// Get just the video IDs in watch later list (for frontend state checking)
+const getWatchLaterIds = asyncHandler(async (req, res) => {
+    if (!req.user || !req.user?._id) {
+        throw new ApiError(401, "User is not logged in");
+    }
+
+    const user = await User.findById(req.user._id).select("watchLater");
+    
+    if (!user) {
+        throw new ApiError(404, "User not found");
+    }
+
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(200, user.watchLater || [], "Watch later video IDs fetched successfully")
+    )
+})
+
+
+const addToWatchLater = asyncHandler(async (req, res) => {
+    const { videoId } = req.params;
+
+    if (!videoId) {
+        throw new ApiError(400, "Video ID is required");
+    }
+
+    if (!req.user){
+        throw new ApiError(401, "User must be logged in");
+    }
+
+    // Fetch fresh user data to get the most up-to-date watchLater array
+    const currentUser = await User.findById(req.user._id).select("watchLater");
+    
+    if (!currentUser) {
+        throw new ApiError(404, "User not found");
+    }
+
+    // Check if video is already in watch later using fresh data
+    if (currentUser.watchLater && currentUser.watchLater.includes(videoId)) {
+        throw new ApiError(400, "Video already in watch later list");
+    }
+
+    // Add video to watch later
+    const updatedUser = await User.findByIdAndUpdate(
+        req.user._id,
+        {
+            $addToSet: { watchLater: videoId }
+        },
+        { new: true }
+    ).select("-password -refreshToken");
+
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(200, updatedUser, "Video added to watch later successfully")
+    );
+});
+
+
+const removeFromWatchLater = asyncHandler(async (req, res) => {
+    const { videoId } = req.params;
+
+    if (!videoId) {
+        throw new ApiError(400, "Video ID is required");
+    }
+
+    if (!req.user) {
+        throw new ApiError(401, "User must be logged in");
+    }
+
+    // Remove video from watch later
+    const updatedUser = await User.findByIdAndUpdate(
+        req.user._id,
+        {
+            $pull: { watchLater: videoId }
+        },
+        { new: true }
+    ).select("-password -refreshToken");
+
+    if (!updatedUser) {
+        throw new ApiError(404, "User not found");
+    }
+
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(200, updatedUser, "Video removed from watch later successfully")
+    );
+});
 
 export {registerUser,
     loginUser,
@@ -501,7 +632,11 @@ export {registerUser,
     updateUserAvatar,
     updateUserCoverImage,
     getUserChannelProfile,
-    getWatchHistory
+    getWatchHistory,
+    getWatchLater,
+    getWatchLaterIds,
+    addToWatchLater,
+    removeFromWatchLater
 };
 
 

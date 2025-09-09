@@ -32,6 +32,12 @@ const videoSchema = new Schema(
             type: Boolean,
             default: true
         },
+        
+        videoType:{
+            type:String,
+            required:true,
+        },
+
         isBlocked: {
             type: Boolean,
             default: false

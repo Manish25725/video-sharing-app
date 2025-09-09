@@ -7,6 +7,7 @@ import VideoPlayer from "./pages/VideoPlayer"
 import MyChannel from "./pages/MyChannel"
 import Subscriptions from "./pages/Subscriptions"
 import LikedVideos from "./pages/LikedVideos"
+import WatchLater from "./pages/WatchLater"
 import Tweets from "./pages/Tweets"
 import TrendingVideos from "./pages/TrendingVideos"
 import Settings from "./pages/Settings"
@@ -72,6 +73,7 @@ function AppContent() {
             <Route path="/subscriptions" element={<Subscriptions onVideoSelect={handleVideoSelect} />} />
             <Route path="/tweets" element={<Tweets />} />
             <Route path="/liked-videos" element={<LikedVideos onVideoSelect={handleVideoSelect} />} />
+            <Route path="/watch-later" element={<WatchLater />} />
             <Route path="/profile/:userId" element={<Profile onVideoSelect={handleVideoSelect} />} />
             <Route path="/profile" element={<Profile onVideoSelect={handleVideoSelect} />} />
             <Route path="/video/:videoId" element={<VideoPlayer />} />

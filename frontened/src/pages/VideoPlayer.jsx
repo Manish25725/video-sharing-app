@@ -20,6 +20,7 @@ import {
   Eye,
   Scissors,
   Bookmark,
+  Clock,
   Flag
 } from 'lucide-react';
 import { videoService } from '../services/videoService';
@@ -27,6 +28,7 @@ import { likeService } from '../services/likeService';
 import { commentService } from '../services/commentService';
 import { subscriptionService } from '../services/subscriptionService';
 import { downloadService } from '../services/downloadService';
+import watchLaterService from '../services/watchLaterService';
 import { transformCommentsArray } from "../services/commentService";
 import { useAuth } from "../contexts/AuthContext";
 import { formatDate, formatTimeAgo } from "../utils/formatters";
@@ -53,17 +55,25 @@ const VideoPlayer = () => {
   const [isDownloading, setIsDownloading] = useState(false)
   const [downloadProgress, setDownloadProgress] = useState(0)
   
+  // Watch Later state
+  const [isInWatchLater, setIsInWatchLater] = useState(false)
+  const [watchLaterLoading, setWatchLaterLoading] = useState(false)
+  
   useEffect(() => {
     if (videoId) {
       fetchVideoData()
       fetchVideoStats()
       fetchRelatedVideos()
       fetchComments()
+      // Check if video is in watch later list
+      if (user) {
+        checkWatchLaterStatus()
+      }
       // Reset view tracking for new video
       setHasViewBeenCounted(false)
       setIsIncrementingView(false)
     }
-  }, [videoId])
+  }, [videoId, user])
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -229,37 +239,33 @@ const VideoPlayer = () => {
   }
 
   // Handle save to playlist
-  const handleSaveVideo = () => {
+  const handleSaveVideo = async () => {
     if (!user) {
       alert('Please log in to save videos')
       setShowMoreMenu(false)
       return
     }
 
-    // For now, just save to localStorage as a simple implementation
     try {
-      const savedVideos = JSON.parse(localStorage.getItem('savedVideos') || '[]')
-      const videoToSave = {
-        id: video._id || video.id,
-        title: video.title,
-        thumbnail: video.thumbnail,
-        savedAt: new Date().toISOString()
-      }
-
-      // Check if already saved
-      if (savedVideos.some(v => v.id === videoToSave.id)) {
-        alert('Video is already saved!')
+      setWatchLaterLoading(true)
+      if (isInWatchLater) {
+        // Remove from watch later
+        await watchLaterService.removeFromWatchLater(videoId)
+        setIsInWatchLater(false)
+        alert('Video removed from Watch Later!')
       } else {
-        savedVideos.push(videoToSave)
-        localStorage.setItem('savedVideos', JSON.stringify(savedVideos))
-        alert('Video saved to your list!')
+        // Add to watch later
+        await watchLaterService.addToWatchLater(videoId)
+        setIsInWatchLater(true)
+        alert('Video added to Watch Later!')
       }
     } catch (error) {
-      console.error('Error saving video:', error)
-      alert('Failed to save video')
+      console.error('Error toggling watch later:', error)
+      alert('Failed to update Watch Later list')
+    } finally {
+      setWatchLaterLoading(false)
+      setShowMoreMenu(false)
     }
-    
-    setShowMoreMenu(false)
   }
 
   // Handle report video
@@ -334,6 +340,19 @@ const VideoPlayer = () => {
     } catch (err) {
       console.error("Error checking subscription:", err);
       setIsSubscribed(false);
+    }
+  }
+
+  const checkWatchLaterStatus = async () => {
+    try {
+      const response = await watchLaterService.getWatchLaterVideos()
+      if (response && response.data) {
+        const isInList = response.data.some(video => video._id === videoId)
+        setIsInWatchLater(isInList)
+      }
+    } catch (err) {
+      console.error("Error checking watch later status:", err)
+      setIsInWatchLater(false)
     }
   }
 
@@ -558,10 +577,16 @@ const VideoPlayer = () => {
                         </button>
                         <button
                           onClick={handleSaveVideo}
-                          className="w-full flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
+                          disabled={watchLaterLoading}
+                          className="w-full flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                          <Bookmark className="w-4 h-4 mr-3" />
-                          Save
+                          <Clock className="w-4 h-4 mr-3" />
+                          {watchLaterLoading 
+                            ? 'Updating...' 
+                            : isInWatchLater 
+                              ? 'Remove from Watch Later' 
+                              : 'Save to Watch Later'
+                          }
                         </button>
                         <hr className="my-1" />
                         <button
