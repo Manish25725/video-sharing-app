@@ -155,10 +155,18 @@ const PlaylistDetail = ({ onVideoSelect }) => {
   };
 
   const formatDuration = (seconds) => {
-    if (!seconds) return '0:00';
-    const minutes = Math.floor(seconds / 60);
-    const remainingSeconds = seconds % 60;
-    return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+    if (!seconds || isNaN(seconds)) return '0:00';
+    
+    const totalSeconds = Math.floor(Number(seconds));
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const remainingSeconds = totalSeconds % 60;
+    
+    if (hours > 0) {
+      return `${hours}:${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
+    } else {
+      return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+    }
   };
 
   const formatTimeAgo = (date) => {
@@ -236,19 +244,56 @@ const PlaylistDetail = ({ onVideoSelect }) => {
 
             {/* Playlist Thumbnail */}
             <div className="relative mb-6">
-              <div className="aspect-video bg-black/20 rounded-lg flex items-center justify-center">
-                {videos.length > 0 && videos[0].thumbnail ? (
-                  <img 
-                    src={videos[0].thumbnail} 
-                    alt="Playlist thumbnail"
-                    className="w-full h-full object-cover rounded-lg"
-                  />
+              <div className="aspect-video bg-gray-900 rounded-lg overflow-hidden">
+                {videos.length > 0 ? (
+                  <div className="relative w-full h-full">
+                    {/* Main thumbnail area */}
+                    {videos[0].thumbnail ? (
+                      <img 
+                        src={videos[0].thumbnail} 
+                        alt="Playlist thumbnail"
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-gradient-to-br from-gray-800 to-gray-900 flex items-center justify-center">
+                        {/* Stacked effect for playlist */}
+                        <div className="relative">
+                          <div className="absolute inset-0 bg-gray-700 rounded transform rotate-1 translate-x-1 translate-y-1"></div>
+                          <div className="absolute inset-0 bg-gray-600 rounded transform -rotate-1"></div>
+                          <div className="relative bg-gray-500 rounded p-8 flex items-center justify-center">
+                            <Play className="w-12 h-12 text-white" />
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                    
+                    {/* Overlay gradient for better text visibility */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent"></div>
+                    
+                    {/* Video count overlay */}
+                    <div className="absolute bottom-3 right-3 bg-black/80 text-white text-sm px-3 py-1 rounded-full flex items-center backdrop-blur-sm">
+                      <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z" />
+                      </svg>
+                      {videos.length} video{videos.length !== 1 ? 's' : ''}
+                    </div>
+
+                    {/* Play overlay on hover */}
+                    <div className="absolute inset-0 bg-black/0 hover:bg-black/20 transition-all duration-200 flex items-center justify-center opacity-0 hover:opacity-100 cursor-pointer"
+                         onClick={handlePlayAll}>
+                      <div className="bg-red-600 rounded-full p-4 shadow-xl transform scale-90 hover:scale-100 transition-transform">
+                        <Play className="w-8 h-8 text-white fill-current" />
+                      </div>
+                    </div>
+                  </div>
                 ) : (
-                  <Play className="w-16 h-16 text-white/60" />
+                  <div className="w-full h-full bg-gray-100 rounded-lg flex items-center justify-center">
+                    <div className="text-center text-gray-400">
+                      <Play className="w-16 h-16 mx-auto mb-4 opacity-60" />
+                      <p className="text-sm">No videos yet</p>
+                    </div>
+                  </div>
                 )}
-                <div className="absolute bottom-2 right-2 bg-black/70 text-white text-sm px-2 py-1 rounded">
-                  {videos.length} videos
-                </div>
               </div>
             </div>
 
@@ -351,20 +396,33 @@ const PlaylistDetail = ({ onVideoSelect }) => {
                 {videos.map((video, index) => (
                   <div
                     key={video._id}
-                    className={`flex items-start p-3 rounded-lg hover:bg-gray-50 cursor-pointer group transition-colors ${
-                      index === currentVideoIndex ? 'bg-blue-50 border-l-4 border-blue-600' : ''
+                    className={`flex items-start p-3 rounded-lg hover:bg-gray-50 cursor-pointer group transition-colors relative ${
+                      index === currentVideoIndex ? 'bg-gray-50 border-l-4 border-red-600' : ''
                     }`}
                     onClick={() => handleVideoClick(video, index)}
                   >
+                    {/* Current video indicator */}
+                    {index === currentVideoIndex && (
+                      <div className="absolute left-0 top-0 bottom-0 w-1 bg-red-600"></div>
+                    )}
+
                     {/* Video Index */}
-                    <div className="w-8 flex items-center justify-center mr-4 text-gray-500">
-                      <span className="group-hover:hidden">{index + 1}</span>
-                      <Play className="w-4 h-4 hidden group-hover:block" />
+                    <div className="w-8 flex items-center justify-center mr-3 text-gray-500">
+                      {index === currentVideoIndex ? (
+                        <div className="w-4 h-4 bg-red-600 rounded-full flex items-center justify-center">
+                          <Play className="w-2.5 h-2.5 text-white fill-current" />
+                        </div>
+                      ) : (
+                        <>
+                          <span className="group-hover:hidden text-sm">{index + 1}</span>
+                          <Play className="w-4 h-4 hidden group-hover:block text-gray-600" />
+                        </>
+                      )}
                     </div>
 
                     {/* Video Thumbnail */}
                     <div className="relative flex-shrink-0">
-                      <div className="w-32 h-18 bg-gray-200 rounded overflow-hidden">
+                      <div className="w-40 h-24 bg-gray-200 rounded overflow-hidden">
                         {video.thumbnail ? (
                           <img 
                             src={video.thumbnail} 
@@ -372,28 +430,37 @@ const PlaylistDetail = ({ onVideoSelect }) => {
                             className="w-full h-full object-cover"
                           />
                         ) : (
-                          <div className="w-full h-full flex items-center justify-center">
+                          <div className="w-full h-full flex items-center justify-center bg-gray-100">
                             <Play className="w-6 h-6 text-gray-400" />
                           </div>
                         )}
                       </div>
                       {video.duration && (
-                        <div className="absolute bottom-1 right-1 bg-black/80 text-white text-xs px-1 rounded">
+                        <div className="absolute bottom-1 right-1 bg-black/80 text-white text-xs px-1.5 py-0.5 rounded">
                           {formatDuration(video.duration)}
                         </div>
                       )}
+                      
+                      {/* Play overlay on hover */}
+                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all duration-200 flex items-center justify-center opacity-0 group-hover:opacity-100">
+                        <div className="bg-white/90 rounded-full p-2">
+                          <Play className="w-4 h-4 text-gray-900 fill-current" />
+                        </div>
+                      </div>
                     </div>
 
                     {/* Video Info */}
                     <div className="flex-1 ml-4 min-w-0">
-                      <h3 className="font-medium text-gray-900 line-clamp-2 mb-1">
+                      <h3 className="font-medium text-gray-900 line-clamp-2 mb-1 text-sm leading-5">
                         {video.title}
                       </h3>
-                      <div className="text-sm text-gray-600">
-                        <p className="line-clamp-1 mb-1">{video.owner?.fullName || 'Unknown Channel'}</p>
-                        <div className="flex items-center">
+                      <div className="text-xs text-gray-600 space-y-1">
+                        <p className="line-clamp-1 text-gray-700 hover:text-gray-900 cursor-pointer">
+                          {video.owner?.fullName || 'Unknown Channel'}
+                        </p>
+                        <div className="flex items-center text-gray-500">
                           <span>{(video.views || 0).toLocaleString()} views</span>
-                          <span className="mx-1">•</span>
+                          <span className="mx-1.5">•</span>
                           <span>{formatTimeAgo(video.createdAt)}</span>
                         </div>
                       </div>
@@ -406,10 +473,12 @@ const PlaylistDetail = ({ onVideoSelect }) => {
                           e.stopPropagation();
                           handleRemoveFromPlaylist(video._id);
                         }}
-                        className="opacity-0 group-hover:opacity-100 p-2 text-gray-400 hover:text-red-600 transition-all"
+                        className="opacity-0 group-hover:opacity-100 p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-all ml-2"
                         title="Remove from playlist"
                       >
-                        <Trash2 className="w-4 h-4" />
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
                       </button>
                     )}
                   </div>

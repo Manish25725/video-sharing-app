@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plus, Play, MoreVertical, Trash2, Edit, List } from 'lucide-react';
 import { playlistService } from '../services/playlistService';
+import { videoService } from '../services/videoService';
 import { useAuth } from '../contexts/AuthContext';
 import Toast from '../components/Toast';
 
@@ -9,11 +10,11 @@ const Playlists = () => {
   const { user, isLoggedIn } = useAuth();
   const navigate = useNavigate();
   const [playlists, setPlaylists] = useState([]);
+  const [playlistThumbnails, setPlaylistThumbnails] = useState({});
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [newPlaylistName, setNewPlaylistName] = useState('');
   const [newPlaylistDescription, setNewPlaylistDescription] = useState('');
-  const [isPrivate, setIsPrivate] = useState(false);
   const [creating, setCreating] = useState(false);
   const [toast, setToast] = useState({ show: false, message: '', type: '' });
 
@@ -40,6 +41,33 @@ const Playlists = () => {
         // Filter to show only user playlists (not creator playlists)
         const userPlaylists = response.data.filter(playlist => playlist.type === 'user');
         setPlaylists(userPlaylists);
+        
+        // Fetch thumbnails for playlists with videos
+        const thumbnailPromises = userPlaylists.map(async (playlist) => {
+          if (playlist.videos && playlist.videos.length > 0) {
+            try {
+              // Fetch actual video data to get proper thumbnail
+              const firstVideoId = playlist.videos[0]._id || playlist.videos[0];
+              const videoResponse = await videoService.getVideoById(firstVideoId);
+              
+              return {
+                playlistId: playlist._id,
+                thumbnail: videoResponse?.data?.thumbnail
+              };
+            } catch (error) {
+              console.error('Error fetching video thumbnail:', error);
+              return { playlistId: playlist._id, thumbnail: null };
+            }
+          }
+          return { playlistId: playlist._id, thumbnail: null };
+        });
+        
+        const thumbnailResults = await Promise.all(thumbnailPromises);
+        const thumbnailMap = {};
+        thumbnailResults.forEach(({ playlistId, thumbnail }) => {
+          thumbnailMap[playlistId] = thumbnail;
+        });
+        setPlaylistThumbnails(thumbnailMap);
       }
     } catch (error) {
       console.error('Error fetching playlists:', error);
@@ -62,7 +90,6 @@ const Playlists = () => {
       const playlistData = {
         name: newPlaylistName.trim(),
         description: newPlaylistDescription.trim(),
-        isPrivate: isPrivate,
         type: 'user' // Explicitly set type as user playlist
       };
 
@@ -72,7 +99,6 @@ const Playlists = () => {
         setShowCreateModal(false);
         setNewPlaylistName('');
         setNewPlaylistDescription('');
-        setIsPrivate(false);
         showToast('Playlist created successfully!', 'success');
       }
     } catch (error) {
@@ -171,43 +197,70 @@ const Playlists = () => {
                 onClick={() => handlePlaylistClick(playlist._id)}
               >
                 {/* Playlist Thumbnail */}
-                <div className="relative aspect-video bg-gradient-to-br from-gray-200 to-gray-300">
+                <div className="relative aspect-video bg-gray-900 overflow-hidden">
                   {playlist.videos && playlist.videos.length > 0 ? (
-                    <div className="relative w-full h-full bg-gray-900">
-                      {/* Placeholder for video thumbnail - in real app you'd fetch first video's thumbnail */}
-                      <div className="absolute inset-0 bg-gradient-to-br from-blue-500 to-purple-600 opacity-80"></div>
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <Play className="w-12 h-12 text-white" />
+                    <div className="relative w-full h-full">
+                      {/* Main thumbnail - show actual first video thumbnail */}
+                      <div className="absolute inset-0">
+                        {playlistThumbnails[playlist._id] ? (
+                          <img 
+                            src={playlistThumbnails[playlist._id]} 
+                            alt={`${playlist.name} thumbnail`}
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              e.target.style.display = 'none';
+                              e.target.nextSibling.style.display = 'flex';
+                            }}
+                          />
+                        ) : null}
+                        
+                        {/* Fallback gradient background */}
+                        <div className="w-full h-full bg-gradient-to-br from-gray-800 to-gray-900 flex items-center justify-center" style={{display: playlistThumbnails[playlist._id] ? 'none' : 'flex'}}>
+                          <div className="bg-red-600 rounded-full p-3 shadow-lg">
+                            <Play className="w-6 h-6 text-white fill-current" />
+                          </div>
+                        </div>
+                        
+                        {/* Overlay gradient for better text readability */}
+                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-transparent to-black/60"></div>
+                      </div>
+                      
+                      {/* Sidebar showing video count */}
+                      <div className="absolute right-0 top-0 bottom-0 w-1/3 bg-black/80 flex flex-col justify-center items-center text-white">
+                        <div className="text-center">
+                          <div className="text-lg font-semibold">{playlist.videos?.length || 0}</div>
+                          <div className="text-xs opacity-80">
+                            {(playlist.videos?.length || 0) === 1 ? 'video' : 'videos'}
+                          </div>
+                        </div>
                       </div>
                     </div>
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center bg-gray-100">
-                      <List className="w-12 h-12 text-gray-400" />
+                    <div className="w-full h-full flex items-center justify-center bg-gray-100 relative">
+                      {/* Empty playlist design */}
+                      <div className="text-center text-gray-400">
+                        <List className="w-12 h-12 mx-auto mb-2" />
+                        <div className="text-xs">No videos</div>
+                      </div>
                     </div>
                   )}
                   
-                  {/* Video Count Overlay */}
-                  <div className="absolute bottom-2 right-2 bg-black/80 text-white text-xs px-2 py-1 rounded flex items-center">
-                    <List className="w-3 h-3 mr-1" />
+                  {/* Video Count Overlay (bottom right) */}
+                  <div className="absolute bottom-1 right-1 bg-black/80 text-white text-xs px-2 py-0.5 rounded flex items-center">
+                    <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z" />
+                    </svg>
                     {playlist.videos?.length || 0}
                   </div>
 
-                  {/* Privacy Badge */}
-                  {playlist.isPrivate && (
-                    <div className="absolute top-2 left-2 bg-black/80 text-white text-xs px-2 py-1 rounded flex items-center">
-                      <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
-                      </svg>
-                      Private
-                    </div>
-                  )}
+
 
                   {/* Hover Overlay */}
-                  <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                    <button className="bg-white/20 backdrop-blur-sm border border-white/30 text-white px-4 py-2 rounded-full font-medium flex items-center">
+                  <div className="absolute inset-0 bg-black/0 hover:bg-black/20 transition-all duration-200 flex items-center justify-center opacity-0 hover:opacity-100">
+                    <div className="bg-white/90 backdrop-blur-sm text-gray-900 px-4 py-2 rounded-full font-medium flex items-center shadow-lg transform scale-95 hover:scale-100 transition-transform">
                       <Play className="w-4 h-4 mr-2" />
                       Play all
-                    </button>
+                    </div>
                   </div>
                   
                   {/* Options Menu */}
@@ -217,7 +270,7 @@ const Playlists = () => {
                         e.stopPropagation();
                         // Add dropdown logic here if needed
                       }}
-                      className="bg-black/50 hover:bg-black/70 text-white p-1.5 rounded-full"
+                      className="bg-black/60 hover:bg-black/80 text-white p-1.5 rounded-full backdrop-blur-sm"
                     >
                       <MoreVertical className="w-4 h-4" />
                     </button>
@@ -315,37 +368,7 @@ const Playlists = () => {
                 </div>
               </div>
 
-              <div className="mb-6">
-                <label className="block text-sm font-medium text-gray-700 mb-3">
-                  Visibility
-                </label>
-                <div className="space-y-3">
-                  <label className="flex items-start cursor-pointer">
-                    <input
-                      type="radio"
-                      checked={!isPrivate}
-                      onChange={() => setIsPrivate(false)}
-                      className="mt-1 mr-3 text-red-600 focus:ring-red-500"
-                    />
-                    <div>
-                      <div className="font-medium text-gray-900">Public</div>
-                      <div className="text-sm text-gray-600">Anyone can search for and view</div>
-                    </div>
-                  </label>
-                  <label className="flex items-start cursor-pointer">
-                    <input
-                      type="radio"
-                      checked={isPrivate}
-                      onChange={() => setIsPrivate(true)}
-                      className="mt-1 mr-3 text-red-600 focus:ring-red-500"
-                    />
-                    <div>
-                      <div className="font-medium text-gray-900">Private</div>
-                      <div className="text-sm text-gray-600">Only you can view</div>
-                    </div>
-                  </label>
-                </div>
-              </div>
+
 
               {/* Modal Footer */}
               <div className="flex justify-end space-x-3">

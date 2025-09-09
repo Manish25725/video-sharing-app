@@ -29,11 +29,6 @@ const playlistSchema=new Schema({
         type: String,
         enum: ["creator", "user"],  // creator → grouped uploads, user → personal
         default: "user"
-    },
-
-    isPrivate: {
-        type: Boolean,
-        default: false
     }
 
 

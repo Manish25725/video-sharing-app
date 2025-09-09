@@ -59,8 +59,7 @@ const AddToPlaylistModal = ({ isOpen, onClose, videoId, videoTitle }) => {
       const playlistData = {
         name: newPlaylistName.trim(),
         description: newPlaylistDescription.trim(),
-        type: "user",
-        isPrivate: false
+        type: "user"
       };
 
       const response = await playlistService.createPlaylist(playlistData);

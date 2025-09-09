@@ -7,7 +7,7 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 
 
 const createPlaylist = asyncHandler(async (req, res) => {
-    const {name, description = "", type = "user", isPrivate = false} = req.body
+    const {name, description = "", type = "user"} = req.body
 
     //TODO: create playlist
     if(!req.user){
@@ -23,8 +23,7 @@ const createPlaylist = asyncHandler(async (req, res) => {
         description:description.trim(),
         videos:[],
         owner:req.user._id,
-        type: type,
-        isPrivate: isPrivate
+        type: type
     })
 
     if(!asd){
@@ -190,14 +189,14 @@ const deletePlaylist = asyncHandler(async (req, res) => {
 
 const updatePlaylist = asyncHandler(async (req, res) => {
     const {playlistId} = req.params
-    const {name, description, type, isPrivate} = req.body
+    const {name, description, type} = req.body
     //TODO: update playlist
 
     if(!req.user){
         throw new ApiError(401,"user must be logged in")
     }
 
-     if (!name && !description && type === undefined && isPrivate === undefined) {
+     if (!name && !description && type === undefined) {
         throw new ApiError(400, "Nothing to update");
     }
 
@@ -205,7 +204,6 @@ const updatePlaylist = asyncHandler(async (req, res) => {
     if(name) data.name=name
     if(description) data.description=description
     if(type !== undefined) data.type=type
-    if(isPrivate !== undefined) data.isPrivate=isPrivate
 
 
     
