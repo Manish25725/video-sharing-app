@@ -159,8 +159,8 @@ const VideoPlayer = () => {
         // Add to watch history if user is logged in
         if (user) {
           try {
-            await watchHistoryService.addToWatchHistory(videoId);
-            console.log('Video added to watch history');
+            const re=await watchHistoryService.addToWatchHistory(videoId);
+            console.log('Video added to watch history',re);
           } catch (historyError) {
             console.error('Error adding to watch history:', historyError);
             // Don't fail the entire operation if watch history fails

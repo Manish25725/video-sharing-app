@@ -410,7 +410,7 @@ const getWatchHistory = asyncHandler(async (req, res) => {
     }
 
     // Use req.user directly and populate watch history
-    const user = await req.user.populate({
+    await req.user.populate({
         path: "watchHistory.videoDetail",
         populate: {
             path: "owner",
@@ -420,9 +420,12 @@ const getWatchHistory = asyncHandler(async (req, res) => {
     });
 
     // Filter out any videos that might have been deleted or unpublished
-    const validWatchHistory = user.watchHistory.filter(
+    const validWatchHistory = req.user.watchHistory.filter(
         entry => entry.videoDetail && entry.videoDetail.isPublished
     );
+
+    // Sort by watchedAt in descending order (most recent first)
+    validWatchHistory.sort((a, b) => new Date(b.watchedAt) - new Date(a.watchedAt));
 
     return res
         .status(200)
