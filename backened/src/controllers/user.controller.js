@@ -355,138 +355,34 @@ const updateUserCoverImage=asyncHandler(async (req,res)=>{
 
 
 
-const getUserChannelProfile=asyncHandler(async(req,res)=>{
-    const {userName} = req.params
+const addToWatchHistory=asyncHandler(async(req,res)=>{
+    const {videoId}=req.params;
+    if(!req.user || !req.user?._id) throw new ApiError(400,"User not logged in");
 
-    if(!userName?.trim()){
-        throw new ApiError(400,"username is missing");
-    }
-    
-    const channel=await User.aggregate([
-        {
-            $match:{
-                userName:userName?.toLowerCase()
-            }
-        },
-        {
-            $lookup:{
-                from:"subscriptions",
-                localField:"_id",
-                foreignField:"channel",
-                as :"subscribers"
-            }
-        },
-        {
-            $lookup:{
-                from:"subscriptions",
-                localField:"_id",
-                foreignField:"subscriber",
-                as:"subscribedTo"
-            }
-        },
-        {
-            $addFields:{
-                subscribersCount:{
-                    $size:"$subscribers"
-                },
-                channelSubscribedToCount:{
-                    $size:"$subscribedTo"
-                },
+    const user=req.user;
 
-                isSubscribed:{
-                    $cond:{
-                        if : {$in : [req.user?._id,"$subscribers.subscriber"]},
-                        then :true,
-                        else :false 
-                    }
-                }
-            }
-        },
-        {
-            $project:{
-                fullName:1,
-                userName:1,
-                subscribersCount:1,
-                channelSubscribedToCount:1,
-                isSubscribed:1,
-                email:1,
-                coverImage:1,
-                avatar:1
-            }
-        }
-    ])
+    let psh= {};
+    psh.watchLater=Date.now();
+    psh.videoDetail=videoId;
 
-    if(!channel?.length){
-        throw new ApiError(400,"channel does not ecen exist");
-    }
-    console.log(channel);
+    user.watchHistory.push(psh);
+    await user.save();
 
     return res
-    .status(200)
-    .json(
-        new ApiResponse(400,channel[0],"User channel fetched sucessfully")
-    )
-
+    .status(201)
+    .json(201,psh,"video added to watch history successfully");
 })
 
 
-const getWatchHistory=asyncHandler(async (req,res)=>{
+const getWatchHistory=asyncHandler(async(req,res)=>{
 
-    if(!req.user){
-        throw new ApiError(401,"User must be logged in");
-    }
+    if(!req.user || !req.user._id) throw new ApiError(400,"User not logged in");
 
-    const user=await User.aggregate([
-        {
-            $match:{
-                _id: new mongoose.Types.ObjectId(req.user._id)
-            }
-        },
-        {
-            $lookup:{
-                from:"videos",
-                localField:"watchHistory",
-                foreignField:"_id",
-                as:"watchHistory",
-                pipeline:[
-                    {
-                        $lookup:{
-                            from:"users",
-                            localField:"owner",
-                            foreignField:"_id",
-                            as:"owner",
-                            pipeline:[
-                                {
-                                    $project:{
-                                        fullName:1,
-                                        userName:1,
-                                        avatar:1
-                                    }
-                                }
-                            ]
-                        }
-                    },
-                    {
-                        $addFields:{
-                            owner:{
-                                $first: "$owner"
-                            }
-                        }
-                    }
-                ]
-            }
-        }
-    ])
-
-    if(!user?.length){
-        throw new ApiError(404,"User not found");
-    }
-
+    const user=req.user;
+    const re=await user.populate("watchHistory.videoDetail");
     return res
-    .status(200)
-    .json(
-        new ApiResponse(200,user[0].watchHistory || [],"Watch history fetched successfully")
-    )
+    .status(201)
+    .json(201,re.watchHistory,"user video history fetched sucessfully");
 })
 
 
@@ -623,6 +519,11 @@ const removeFromWatchLater = asyncHandler(async (req, res) => {
     );
 });
 
+const getUserChannelProfile=asyncHandler(async(req,res)=>{
+    return res
+    .status(201)
+    .json(201,{},"channel data fetched successfully");
+})
 export {registerUser,
     loginUser,
     logoutUser,
@@ -632,12 +533,13 @@ export {registerUser,
     updateDetails,
     updateUserAvatar,
     updateUserCoverImage,
-    getUserChannelProfile,
     getWatchHistory,
+    addToWatchHistory,
     getWatchLater,
     getWatchLaterIds,
     addToWatchLater,
-    removeFromWatchLater
+    removeFromWatchLater,
+    getUserChannelProfile
 };
 
 
