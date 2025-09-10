@@ -83,18 +83,6 @@ const WatchHistory = () => {
     }
   };
 
-  const clearWatchHistory = async () => {
-    // This would require a backend endpoint to clear history
-    // For now, we'll just clear locally
-    try {
-      setWatchHistory([]);
-      showToast('Watch history cleared', 'success');
-    } catch (error) {
-      console.error('Error clearing watch history:', error);
-      showToast('Failed to clear watch history', 'error');
-    }
-  };
-
   const formatWatchDate = (timestamp) => {
     const date = new Date(timestamp);
     const now = new Date();
@@ -183,25 +171,12 @@ const WatchHistory = () => {
   return (
     <div className="p-6">
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-3">
-          <History className="w-8 h-8 text-purple-600" />
-          <h1 className="text-3xl font-bold text-gray-900">Watch History</h1>
-          <span className="bg-gray-100 text-gray-600 text-sm px-3 py-1 rounded-full ml-2">
-            {watchHistory.length} video{watchHistory.length !== 1 ? 's' : ''}
-          </span>
-        </div>
-
-        {/* Clear History Button */}
-        {watchHistory.length > 0 && (
-          <button
-            onClick={clearWatchHistory}
-            className="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors duration-200"
-          >
-            <Trash2 className="w-4 h-4" />
-            Clear History
-          </button>
-        )}
+      <div className="flex items-center gap-3 mb-6">
+        <History className="w-8 h-8 text-purple-600" />
+        <h1 className="text-3xl font-bold text-gray-900">Watch History</h1>
+        <span className="bg-gray-100 text-gray-600 text-sm px-3 py-1 rounded-full ml-2">
+          {watchHistory.length} video{watchHistory.length !== 1 ? 's' : ''}
+        </span>
       </div>
 
       {/* Watch History Content */}
