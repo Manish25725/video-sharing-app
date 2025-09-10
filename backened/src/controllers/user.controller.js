@@ -355,35 +355,81 @@ const updateUserCoverImage=asyncHandler(async (req,res)=>{
 
 
 
-const addToWatchHistory=asyncHandler(async(req,res)=>{
-    const {videoId}=req.params;
-    if(!req.user || !req.user?._id) throw new ApiError(400,"User not logged in");
+const addToWatchHistory = asyncHandler(async (req, res) => {
+    const { videoId } = req.params;
+    
+    if (!videoId) {
+        throw new ApiError(400, "Video ID is required");
+    }
 
-    const user=req.user;
+    if (!req.user || !req.user?._id) {
+        throw new ApiError(401, "User not logged in");
+    }
 
-    let psh= {};
-    psh.watchLater=Date.now();
-    psh.videoDetail=videoId;
+    // Check if video exists
+    const video = await Video.findById(videoId);
+    if (!video) {
+        throw new ApiError(404, "Video not found");
+    }
 
-    user.watchHistory.push(psh);
+    // Use req.user directly - no need to fetch from database again
+    const user = req.user;
+
+    // Create watch history entry
+    const watchEntry = {
+        videoDetail: videoId,
+        watchedAt: new Date()
+    };
+
+    // Remove existing entry if present to avoid duplicates
+    user.watchHistory = user.watchHistory.filter(
+        entry => entry.videoDetail.toString() !== videoId
+    );
+
+    // Add new entry at the beginning (most recent first)
+    user.watchHistory.unshift(watchEntry);
+
+    // Keep only last 100 entries to prevent unlimited growth
+    if (user.watchHistory.length > 100) {
+        user.watchHistory = user.watchHistory.slice(0, 100);
+    }
+
     await user.save();
 
     return res
-    .status(201)
-    .json(201,psh,"video added to watch history successfully");
-})
+        .status(200)
+        .json(
+            new ApiResponse(200, watchEntry, "Video added to watch history successfully")
+        );
+});
 
 
-const getWatchHistory=asyncHandler(async(req,res)=>{
+const getWatchHistory = asyncHandler(async (req, res) => {
+    if (!req.user || !req.user._id) {
+        throw new ApiError(401, "User not logged in");
+    }
 
-    if(!req.user || !req.user._id) throw new ApiError(400,"User not logged in");
+    // Use req.user directly and populate watch history
+    const user = await req.user.populate({
+        path: "watchHistory.videoDetail",
+        populate: {
+            path: "owner",
+            select: "fullName userName avatar coverImage" 
+        },
+        select: "title description thumbnail duration views createdAt isPublished"
+    });
 
-    const user=req.user;
-    const re=await user.populate("watchHistory.videoDetail");
+    // Filter out any videos that might have been deleted or unpublished
+    const validWatchHistory = user.watchHistory.filter(
+        entry => entry.videoDetail && entry.videoDetail.isPublished
+    );
+
     return res
-    .status(201)
-    .json(201,re.watchHistory,"user video history fetched sucessfully");
-})
+        .status(200)
+        .json(
+            new ApiResponse(200, validWatchHistory, "Watch history fetched successfully")
+        );
+});
 
 
 const getWatchLater=asyncHandler(async(req,res)=>{
@@ -392,17 +438,8 @@ const getWatchLater=asyncHandler(async(req,res)=>{
         throw new ApiError(401,"User is not logged in");
     }
 
-    // First get the user with watchLater IDs
-    const user = await User.findById(req.user._id).select("watchLater");
-    
-    if (!user) {
-        throw new ApiError(404, "User not found");
-    }
-
-    console.log("User watchLater IDs:", user.watchLater);
-
     // If no watch later videos, return empty array
-    if (!user.watchLater || user.watchLater.length === 0) {
+    if (!req.user.watchLater || req.user.watchLater.length === 0) {
         return res
         .status(200)
         .json(
@@ -410,23 +447,27 @@ const getWatchLater=asyncHandler(async(req,res)=>{
         )
     }
 
-    // Get the actual video documents
-    const watchLaterVideos = await Video.find({
-        _id: { $in: user.watchLater },
-        isPublished: true
-    }).populate({
-        path: "owner",
-        select: "fullName userName avatar"
+    // Populate watchLater videos directly on req.user
+    await req.user.populate({
+        path: "watchLater",
+        match: { isPublished: true }, // Only get published videos
+        populate: {
+            path: "owner",
+            select: "fullName userName avatar coverImage"
+        },
+        select: "title description thumbnail duration views createdAt"
     });
 
-    console.log("Found watch later videos:", watchLaterVideos.length);
+    console.log("Found watch later videos:", req.user.watchLater.length);
 
     return res
     .status(200)
     .json(
-        new ApiResponse(200, watchLaterVideos, "Watch later videos fetched successfully")
+        new ApiResponse(200, req.user.watchLater, "Watch later videos fetched successfully")
     )
 })
+
+
 
 // Get just the video IDs in watch later list (for frontend state checking)
 const getWatchLaterIds = asyncHandler(async (req, res) => {
@@ -434,16 +475,10 @@ const getWatchLaterIds = asyncHandler(async (req, res) => {
         throw new ApiError(401, "User is not logged in");
     }
 
-    const user = await User.findById(req.user._id).select("watchLater");
-    
-    if (!user) {
-        throw new ApiError(404, "User not found");
-    }
-
     return res
     .status(200)
     .json(
-        new ApiResponse(200, user.watchLater || [], "Watch later video IDs fetched successfully")
+        new ApiResponse(200, req.user.watchLater || [], "Watch later video IDs fetched successfully")
     )
 })
 

@@ -40,7 +40,7 @@ const Sidebar = ({ isOpen }) => {
   ]
 
   const libraryItems = [
-    { icon: History, label: "History", path: "/history" },
+    { icon: History, label: "History", path: "/watch-history" },
     { icon: Clock, label: "Watch later", path: "/watch-later" },
     { icon: ThumbsUp, label: "Liked videos", path: "/liked-videos" },
     { icon: List, label: "Playlists", path: "/playlists" },

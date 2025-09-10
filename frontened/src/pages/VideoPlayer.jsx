@@ -30,6 +30,7 @@ import { commentService } from '../services/commentService';
 import { subscriptionService } from '../services/subscriptionService';
 import { downloadService } from '../services/downloadService';
 import watchLaterService from '../services/watchLaterService';
+import watchHistoryService from '../services/watchHistoryService';
 import { transformCommentsArray } from "../services/commentService";
 import { useAuth } from "../contexts/AuthContext";
 import { formatDate, formatTimeAgo } from "../utils/formatters";
@@ -154,6 +155,17 @@ const VideoPlayer = () => {
         }))
         
         console.log('View count incremented successfully');
+
+        // Add to watch history if user is logged in
+        if (user) {
+          try {
+            await watchHistoryService.addToWatchHistory(videoId);
+            console.log('Video added to watch history');
+          } catch (historyError) {
+            console.error('Error adding to watch history:', historyError);
+            // Don't fail the entire operation if watch history fails
+          }
+        }
       }
     } catch (err) {
       console.error("Error incrementing views:", err)
