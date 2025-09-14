@@ -230,11 +230,37 @@ const updatePlaylist = asyncHandler(async (req, res) => {
     )
 })
 
+const getCreatorPlaylists = asyncHandler(async (req, res) => {
+    const {userId} = req.params
+    
+    if(!req.user){
+        throw new ApiError(401,"user must be logged in ")
+    }
+
+    // If no userId provided, get current user's creator playlists
+    const targetUserId = userId || req.user._id
+
+    // Filter for creator-type playlists only
+    const re=await Playlist.find({
+        owner:targetUserId,
+        type: "creator"
+    }).sort({ createdAt: -1 })
+
+    if(!re){
+        throw new ApiError(400,"Error while fetching creator playlists")
+    }
+
+    return res
+    .status(200)
+    .json(new ApiResponse(200,re,"Creator playlists fetched successfully"))
+})
+
 
 export {
     createPlaylist,
     getPlaylistById,
     getUserPlaylists,
+    getCreatorPlaylists,
     addVideoToPlaylist,
     removeVideoFromPlaylist,
     deletePlaylist,

@@ -1,10 +1,12 @@
 import { useState, useEffect } from "react"
-import { Upload, Plus, List, BarChart3, Users, Video, Trash2, Edit, Eye, Play, MoreVertical, Settings, Bell, Heart, MessageCircle, Share2 } from "lucide-react"
+import { Upload, Plus, List, BarChart3, Users, Video, Trash2, Edit, Eye, Play, MoreVertical, Settings, Bell, Heart, MessageCircle, Share2, FolderPlus, FolderEdit } from "lucide-react"
 import { videoService, transformVideosArray } from "../services/videoService"
 import { dashboardService } from "../services/dashboardService"
 import { likeService } from "../services/likeService"
 import { useAuth } from "../contexts/AuthContext"
 import AddToPlaylistModal from "../components/AddToPlaylistModal"
+import CreatorPlaylistModal from "../components/CreatorPlaylistModal"
+import PlaylistEditModal from "../components/PlaylistEditModal"
 import Toast from "../components/Toast"
 
 const MyChannel = () => {
@@ -62,6 +64,7 @@ const MyChannel = () => {
   // Playlist modal state
   const [showPlaylistModal, setShowPlaylistModal] = useState(false)
   const [selectedVideoForPlaylist, setSelectedVideoForPlaylist] = useState(null)
+  const [showPlaylistEditModal, setShowPlaylistEditModal] = useState(false)
 
 
 
@@ -604,11 +607,11 @@ const MyChannel = () => {
                 </div>
 
                 {/* Action Buttons */}
-                <div className="flex items-center space-x-2 ml-4">
-                  {/* Publish/Unpublish Toggle */}
+                <div className="flex flex-col sm:flex-row items-end sm:items-center space-y-2 sm:space-y-0 sm:space-x-3 ml-4">
+                  {/* Status Badge */}
                   <button
                     onClick={() => handlePublishToggle(video.id, video.isPublished)}
-                    className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
+                    className={`px-3 py-1 rounded-full text-xs font-medium transition-colors whitespace-nowrap ${
                       video.isPublished
                         ? "bg-green-100 text-green-800 hover:bg-green-200"
                         : "bg-red-100 text-red-800 hover:bg-red-200"
@@ -617,23 +620,49 @@ const MyChannel = () => {
                     {video.isPublished ? "Published" : "Unpublished"}
                   </button>
 
-                  {/* Edit Button */}
-                  <button
-                    onClick={() => handleEditVideo(video)}
-                    className="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-colors"
-                    title="Edit video"
-                  >
-                    <Edit className="w-4 h-4" />
-                  </button>
+                  {/* Playlist Actions */}
+                  <div className="flex items-center space-x-1 bg-gray-50 rounded-lg p-1">
+                    <button
+                      onClick={() => {
+                        setSelectedVideoForPlaylist(video)
+                        setShowPlaylistModal(true)
+                      }}
+                      className="p-2 text-gray-500 hover:text-purple-600 hover:bg-purple-50 rounded-md transition-colors"
+                      title="Add to playlist"
+                    >
+                      <FolderPlus className="w-4 h-4" />
+                    </button>
 
-                  {/* Delete Button */}
-                  <button
-                    onClick={() => handleDeleteVideo(video.id)}
-                    className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors"
-                    title="Delete video"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
+                    <button
+                      onClick={() => {
+                        setSelectedVideoForPlaylist(video)
+                        setShowPlaylistEditModal(true)
+                      }}
+                      className="p-2 text-gray-500 hover:text-orange-600 hover:bg-orange-50 rounded-md transition-colors"
+                      title="Manage playlists"
+                    >
+                      <FolderEdit className="w-4 h-4" />
+                    </button>
+                  </div>
+
+                  {/* Video Actions */}
+                  <div className="flex items-center space-x-1 bg-gray-50 rounded-lg p-1">
+                    <button
+                      onClick={() => handleEditVideo(video)}
+                      className="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-md transition-colors"
+                      title="Edit video"
+                    >
+                      <Edit className="w-4 h-4" />
+                    </button>
+
+                    <button
+                      onClick={() => handleDeleteVideo(video.id)}
+                      className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors"
+                      title="Delete video"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
 
                   {/* More Options */}
                   <div className="relative">
@@ -675,16 +704,6 @@ const MyChannel = () => {
                             className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                           >
                             Edit Details
-                          </button>
-                          <button
-                            onClick={() => {
-                              setSelectedVideoForPlaylist(video)
-                              setShowPlaylistModal(true)
-                              setOpenDropdown(null)
-                            }}
-                            className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                          >
-                            Add to Playlist
                           </button>
                           <hr className="my-1" />
                           <button
@@ -951,10 +970,18 @@ const MyChannel = () => {
         />
       )}
 
-      {/* Add to Playlist Modal */}
-      <AddToPlaylistModal
+      {/* Add to Creator Playlist Modal */}
+      <CreatorPlaylistModal
         isOpen={showPlaylistModal}
         onClose={() => setShowPlaylistModal(false)}
+        videoId={selectedVideoForPlaylist?.id || selectedVideoForPlaylist?._id}
+        videoTitle={selectedVideoForPlaylist?.title}
+      />
+
+      {/* Playlist Edit Modal */}
+      <PlaylistEditModal
+        isOpen={showPlaylistEditModal}
+        onClose={() => setShowPlaylistEditModal(false)}
         videoId={selectedVideoForPlaylist?.id || selectedVideoForPlaylist?._id}
         videoTitle={selectedVideoForPlaylist?.title}
       />

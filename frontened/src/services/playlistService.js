@@ -29,6 +29,22 @@ export const playlistService = {
     }
   },
 
+  // Get current user's creator playlists (for channel management)
+  async getCreatorPlaylists(userId = null) {
+    try {
+      let endpoint = '/playlist/get-creator-playlists';
+      if (userId) {
+        endpoint = `/playlist/get-creator-playlists/${userId}`;
+      }
+      const response = await apiClient.get(endpoint);
+      console.log('Raw creator playlist service response:', response); // Debug log
+      return response;
+    } catch (error) {
+      console.error('Get creator playlists error:', error);
+      return { success: false, data: [] };
+    }
+  },
+
   // Get a specific playlist
   async getPlaylistById(playlistId) {
     try {
