@@ -90,7 +90,10 @@ const VideoCard = ({ video, onVideoSelect }) => {
 
   const handleChannelClick = (e) => {
     e.stopPropagation();
-    navigate(`/profile/${video.owner?.userName || video.ownerDetails?.userName}`);
+    const ownerId = video.owner?._id || video.ownerDetails?._id;
+    if (ownerId) {
+      navigate(`/profile/${ownerId}`);
+    }
   };
 
   const handleDropdownToggle = (e) => {

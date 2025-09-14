@@ -15,7 +15,6 @@ const Profile = ({ onVideoSelect }) => {
   const [activeTab, setActiveTab] = useState("videos");
   const [videos, setVideos] = useState([]);
   const [playlists, setPlaylists] = useState([]);
-  const [subscribers, setSubscribers] = useState([]);
   const [tweets, setTweets] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -62,7 +61,6 @@ const Profile = ({ onVideoSelect }) => {
           if (profileUserId) {
             const subscribersResponse = await subscriptionService.getChannelSubscribers(profileUserId);
             if (subscribersResponse.success) {
-              setSubscribers(subscribersResponse.data);
               setSubscriberCount(subscribersResponse.data.length);
             }
           }
@@ -249,16 +247,6 @@ const Profile = ({ onVideoSelect }) => {
               Playlists
             </button>
             <button
-              onClick={() => setActiveTab("subscribers")}
-              className={`px-6 py-3 text-sm font-medium whitespace-nowrap ${
-                activeTab === "subscribers"
-                  ? "border-b-2 border-red-600 text-red-600"
-                  : "text-gray-600 hover:text-gray-900"
-              }`}
-            >
-              Subscribers
-            </button>
-            <button
               onClick={() => setActiveTab("tweets")}
               className={`px-6 py-3 text-sm font-medium whitespace-nowrap ${
                 activeTab === "tweets"
@@ -310,47 +298,6 @@ const Profile = ({ onVideoSelect }) => {
                   We're working on bringing playlists to the platform. Stay tuned!
                 </p>
               </div>
-            )}
-
-            {/* Subscribers Tab */}
-            {activeTab === "subscribers" && (
-              <>
-                {subscribers.length > 0 ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {subscribers.map((subscriber) => (
-                      <div 
-                        key={subscriber._id}
-                        className="bg-white rounded-lg shadow p-4 flex items-center"
-                      >
-                        <div className="w-12 h-12 rounded-full bg-gray-200 overflow-hidden mr-3">
-                          {subscriber.avatar ? (
-                            <img 
-                              src={subscriber.avatar} 
-                              alt={`${subscriber.fullName || subscriber.userName} avatar`}
-                              className="w-full h-full object-cover" 
-                            />
-                          ) : (
-                            <div className="w-full h-full flex items-center justify-center bg-indigo-600 text-white font-bold">
-                              {(subscriber.fullName || subscriber.userName || "U").charAt(0)}
-                            </div>
-                          )}
-                        </div>
-                        <div className="flex-grow">
-                          <div className="font-medium">{subscriber.fullName || subscriber.userName}</div>
-                          <div className="text-sm text-gray-600">@{subscriber.userName}</div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="bg-white rounded-lg shadow p-6 text-center">
-                    <h3 className="text-lg font-medium text-gray-800 mb-2">No subscribers yet</h3>
-                    <p className="text-gray-600">
-                      Create great content to gain subscribers!
-                    </p>
-                  </div>
-                )}
-              </>
             )}
 
             {/* Tweets Tab */}
