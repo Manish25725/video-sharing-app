@@ -3,8 +3,10 @@ import { useParams, useNavigate } from "react-router-dom";
 import { videoService, transformVideosArray } from "../services/videoService";
 import { subscriptionService } from "../services/subscriptionService";
 import { authService } from "../services/authService";
+import { playlistService } from "../services/playlistService";
 import { useAuth } from "../contexts/AuthContext";
 import VideoCard from "../components/VideoCard";
+import { Play, Folder } from "lucide-react";
 
 const Profile = ({ onVideoSelect }) => {
   const { userId } = useParams();
@@ -14,7 +16,7 @@ const Profile = ({ onVideoSelect }) => {
   const [profileUser, setProfileUser] = useState(null);
   const [activeTab, setActiveTab] = useState("videos");
   const [videos, setVideos] = useState([]);
-  const [playlists, setPlaylists] = useState([]);
+  const [creatorPlaylists, setCreatorPlaylists] = useState([]);
   const [tweets, setTweets] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -96,8 +98,19 @@ const Profile = ({ onVideoSelect }) => {
             break;
             
           case "playlists":
-            // Fetch playlists (placeholder for now)
-            setPlaylists([]);
+            // Fetch only creator playlists created by this user
+            try {
+              const creatorResponse = await playlistService.getCreatorPlaylists(profileUser._id);
+              
+              if (creatorResponse.success) {
+                setCreatorPlaylists(creatorResponse.data || []);
+              } else {
+                setCreatorPlaylists([]);
+              }
+            } catch (err) {
+              console.error("Error fetching creator playlists:", err);
+              setCreatorPlaylists([]);
+            }
             break;
             
           case "tweets":
@@ -292,11 +305,57 @@ const Profile = ({ onVideoSelect }) => {
 
             {/* Playlists Tab */}
             {activeTab === "playlists" && (
-              <div className="bg-white rounded-lg shadow p-6 text-center">
-                <h3 className="text-lg font-medium text-gray-800 mb-2">Playlists feature coming soon</h3>
-                <p className="text-gray-600">
-                  We're working on bringing playlists to the platform. Stay tuned!
-                </p>
+              <div>
+                {/* Creator Playlists Only */}
+                {creatorPlaylists.length > 0 ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {creatorPlaylists.map((playlist) => (
+                      <div 
+                        key={playlist._id} 
+                        className="bg-white rounded-lg shadow-sm border hover:shadow-md transition-shadow cursor-pointer"
+                        onClick={() => navigate(`/playlist/${playlist._id}`)}
+                      >
+                        <div className="aspect-video bg-gradient-to-br from-purple-100 to-purple-200 rounded-t-lg flex items-center justify-center">
+                          {playlist.videos && playlist.videos.length > 0 ? (
+                            <div className="relative w-full h-full">
+                              <div className="absolute inset-0 flex items-center justify-center">
+                                <div className="bg-black bg-opacity-60 rounded-full p-3">
+                                  <Play className="w-6 h-6 text-white" fill="white" />
+                                </div>
+                              </div>
+                              <div className="absolute bottom-2 right-2 bg-black bg-opacity-70 text-white text-xs px-2 py-1 rounded">
+                                {playlist.videos.length} videos
+                              </div>
+                            </div>
+                          ) : (
+                            <Folder className="w-12 h-12 text-purple-400" />
+                          )}
+                        </div>
+                        <div className="p-4">
+                          <h4 className="font-semibold text-gray-900 truncate">{playlist.name}</h4>
+                          {playlist.description && (
+                            <p className="text-sm text-gray-600 mt-1 line-clamp-2">{playlist.description}</p>
+                          )}
+                          <div className="flex items-center mt-2 text-xs text-gray-500">
+                            <Folder className="w-3 h-3 mr-1" />
+                            Playlist • {playlist.videos?.length || 0} videos
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="bg-white rounded-lg shadow p-6 text-center">
+                    <Folder className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                    <h3 className="text-lg font-medium text-gray-800 mb-2">No playlists yet</h3>
+                    <p className="text-gray-600">
+                      {isOwnProfile 
+                        ? "Create your first playlist to organize your videos!" 
+                        : "This user hasn't created any playlists yet."
+                      }
+                    </p>
+                  </div>
+                )}
               </div>
             )}
 
