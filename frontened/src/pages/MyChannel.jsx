@@ -6,7 +6,6 @@ import { likeService } from "../services/likeService"
 import { useAuth } from "../contexts/AuthContext"
 import AddToPlaylistModal from "../components/AddToPlaylistModal"
 import Toast from "../components/Toast"
-import Toast from "../components/Toast"
 
 const MyChannel = () => {
   const { user } = useAuth()
