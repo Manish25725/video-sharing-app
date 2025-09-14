@@ -6,6 +6,7 @@ import { likeService } from "../services/likeService"
 import { useAuth } from "../contexts/AuthContext"
 import AddToPlaylistModal from "../components/AddToPlaylistModal"
 import Toast from "../components/Toast"
+import Toast from "../components/Toast"
 
 const MyChannel = () => {
   const { user } = useAuth()
@@ -676,6 +677,16 @@ const MyChannel = () => {
                           >
                             Edit Details
                           </button>
+                          <button
+                            onClick={() => {
+                              setSelectedVideoForPlaylist(video)
+                              setShowPlaylistModal(true)
+                              setOpenDropdown(null)
+                            }}
+                            className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                          >
+                            Add to Playlist
+                          </button>
                           <hr className="my-1" />
                           <button
                             onClick={() => {
@@ -940,6 +951,14 @@ const MyChannel = () => {
           onClose={() => setToast({ show: false, message: '', type: 'success' })}
         />
       )}
+
+      {/* Add to Playlist Modal */}
+      <AddToPlaylistModal
+        isOpen={showPlaylistModal}
+        onClose={() => setShowPlaylistModal(false)}
+        videoId={selectedVideoForPlaylist?.id || selectedVideoForPlaylist?._id}
+        videoTitle={selectedVideoForPlaylist?.title}
+      />
     </div>
   )
 }
