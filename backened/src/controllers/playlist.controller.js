@@ -240,11 +240,17 @@ const getCreatorPlaylists = asyncHandler(async (req, res) => {
     // If no userId provided, get current user's creator playlists
     const targetUserId = userId || req.user._id
 
-    // Filter for creator-type playlists only
+    // Filter for creator-type playlists only and populate first video for thumbnail
     const re=await Playlist.find({
         owner:targetUserId,
         type: "creator"
-    }).sort({ createdAt: -1 })
+    })
+    .populate({
+        path: 'videos',
+        select: 'title thumbnail',
+        options: { limit: 1 } // Only populate first video for thumbnail
+    })
+    .sort({ createdAt: -1 })
 
     if(!re){
         throw new ApiError(400,"Error while fetching creator playlists")

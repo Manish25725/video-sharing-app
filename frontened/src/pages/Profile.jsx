@@ -8,6 +8,38 @@ import { useAuth } from "../contexts/AuthContext";
 import VideoCard from "../components/VideoCard";
 import { Play, Folder } from "lucide-react";
 
+// Component to display playlist thumbnail using first video
+const PlaylistThumbnail = ({ playlist }) => {
+  const firstVideo = playlist.videos && playlist.videos.length > 0 ? playlist.videos[0] : null;
+  const thumbnailUrl = firstVideo && firstVideo.thumbnail ? firstVideo.thumbnail : null;
+
+  return (
+    <div className="relative w-full h-full">
+      {thumbnailUrl ? (
+        <>
+          <img
+            src={thumbnailUrl}
+            alt="Playlist thumbnail"
+            className="w-full h-full object-cover"
+          />
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="bg-black bg-opacity-60 rounded-full p-3">
+              <Play className="w-6 h-6 text-white" fill="white" />
+            </div>
+          </div>
+        </>
+      ) : (
+        <div className="w-full h-full flex items-center justify-center">
+          <Folder className="w-12 h-12 text-purple-400" />
+        </div>
+      )}
+      <div className="absolute bottom-2 right-2 bg-black bg-opacity-70 text-white text-xs px-2 py-1 rounded">
+        {playlist.videos?.length || 0} videos
+      </div>
+    </div>
+  );
+};
+
 const Profile = ({ onVideoSelect }) => {
   const { userId } = useParams();
   const navigate = useNavigate();
@@ -315,21 +347,8 @@ const Profile = ({ onVideoSelect }) => {
                         className="bg-white rounded-lg shadow-sm border hover:shadow-md transition-shadow cursor-pointer"
                         onClick={() => navigate(`/playlist/${playlist._id}`)}
                       >
-                        <div className="aspect-video bg-gradient-to-br from-purple-100 to-purple-200 rounded-t-lg flex items-center justify-center">
-                          {playlist.videos && playlist.videos.length > 0 ? (
-                            <div className="relative w-full h-full">
-                              <div className="absolute inset-0 flex items-center justify-center">
-                                <div className="bg-black bg-opacity-60 rounded-full p-3">
-                                  <Play className="w-6 h-6 text-white" fill="white" />
-                                </div>
-                              </div>
-                              <div className="absolute bottom-2 right-2 bg-black bg-opacity-70 text-white text-xs px-2 py-1 rounded">
-                                {playlist.videos.length} videos
-                              </div>
-                            </div>
-                          ) : (
-                            <Folder className="w-12 h-12 text-purple-400" />
-                          )}
+                        <div className="aspect-video bg-gradient-to-br from-purple-100 to-purple-200 rounded-t-lg flex items-center justify-center overflow-hidden">
+                          <PlaylistThumbnail playlist={playlist} />
                         </div>
                         <div className="p-4">
                           <h4 className="font-semibold text-gray-900 truncate">{playlist.name}</h4>
