@@ -4,6 +4,7 @@ import { videoService, transformVideosArray } from "../services/videoService"
 import { dashboardService } from "../services/dashboardService"
 import { likeService } from "../services/likeService"
 import { useAuth } from "../contexts/AuthContext"
+import AddToPlaylistModal from "../components/AddToPlaylistModal"
 import Toast from "../components/Toast"
 
 const MyChannel = () => {
@@ -24,7 +25,6 @@ const MyChannel = () => {
     description: "",
     thumbnail: null,
     video: null,
-    playlist: "",
     videoType: ""
   })
 
@@ -59,13 +59,11 @@ const MyChannel = () => {
   // More options dropdown state
   const [openDropdown, setOpenDropdown] = useState(null)
 
-  const [playlists] = useState([
-    "Tech Reviews",
-    "Coding Tutorials", 
-    "Design Tips",
-    "Music Videos",
-    "Travel Vlogs"
-  ])
+  // Playlist modal state
+  const [showPlaylistModal, setShowPlaylistModal] = useState(false)
+  const [selectedVideoForPlaylist, setSelectedVideoForPlaylist] = useState(null)
+
+
 
   // Fetch videos on component mount
   useEffect(() => {
@@ -362,7 +360,6 @@ const MyChannel = () => {
           description: "",
           thumbnail: null,
           video: null,
-          playlist: "",
           videoType: ""
         })
         // Reset file inputs
@@ -494,22 +491,7 @@ const MyChannel = () => {
             </select>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Add to Playlist (Optional)
-            </label>
-            <select
-              name="playlist"
-              value={formData.playlist}
-              onChange={handleInputChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="">Select a playlist</option>
-              {playlists.map((playlist, index) => (
-                <option key={index} value={playlist}>{playlist}</option>
-              ))}
-            </select>
-          </div>
+
         </div>
 
         <button
