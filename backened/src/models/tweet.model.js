@@ -10,7 +10,13 @@ const tweetSchema=new Schema({
     content:{
         type:String,
         required:true
-    }
+    },
+    replies:[
+        {
+            type:mongoose.Schema.Types.ObjectId,
+            ref:"Tweet"
+        }
+    ]
 },{
     timestamps:true
 })

@@ -15,6 +15,13 @@ const commentSchema=new Schema({
         type:mongoose.Schema.Types.ObjectId,
         ref:"Video"
     },
+
+    replies:[
+        {
+            type:mongoose.Schema.Types.ObjectId,
+            ref:"Comment"
+        }
+    ]
 },{
     timestamps:true
 })
