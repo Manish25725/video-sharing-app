@@ -1,6 +1,6 @@
 import mongoose,{Schema} from "mongoose";
 
-
+//playlist schema
 const playlistSchema=new Schema({
     name:{
         type:String,
