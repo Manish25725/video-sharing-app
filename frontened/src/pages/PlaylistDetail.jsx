@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Play, Shuffle, MoreVertical, Trash2, Share, Download, Plus, Lock, Globe } from 'lucide-react';
+import { ArrowLeft, Play } from 'lucide-react';
 import { playlistService } from '../services/playlistService';
 import { videoService } from '../services/videoService';
 import { useAuth } from '../contexts/AuthContext';
@@ -15,7 +15,6 @@ const PlaylistDetail = ({ onVideoSelect }) => {
   const [loading, setLoading] = useState(true);
   const [videosLoading, setVideosLoading] = useState(false);
   const [currentVideoIndex, setCurrentVideoIndex] = useState(0);
-  const [showOptions, setShowOptions] = useState(false);
   const [toast, setToast] = useState({ show: false, message: '', type: '' });
 
   useEffect(() => {
@@ -84,68 +83,10 @@ const PlaylistDetail = ({ onVideoSelect }) => {
     }
   };
 
-  const handleRemoveFromPlaylist = async (videoId) => {
-    if (!window.confirm('Remove this video from the playlist?')) return;
-
-    try {
-      await playlistService.removeVideoFromPlaylist(playlistId, videoId);
-      setVideos(prev => prev.filter(video => video._id !== videoId));
-      setPlaylist(prev => ({
-        ...prev,
-        videos: prev.videos.filter(id => id !== videoId)
-      }));
-      showToast('Video removed from playlist', 'success');
-    } catch (error) {
-      console.error('Error removing video from playlist:', error);
-      showToast('Failed to remove video from playlist', 'error');
-    }
-  };
-
-  const handleDeletePlaylist = async () => {
-    if (!window.confirm('Are you sure you want to delete this entire playlist? This action cannot be undone.')) {
-      return;
-    }
-
-    try {
-      await playlistService.deletePlaylist(playlistId);
-      showToast('Playlist deleted successfully', 'success');
-      navigate('/playlists');
-    } catch (error) {
-      console.error('Error deleting playlist:', error);
-      showToast('Failed to delete playlist', 'error');
-    }
-  };
-
-  const handleSharePlaylist = async () => {
-    try {
-      const url = `${window.location.origin}/playlist/${playlistId}`;
-      if (navigator.share) {
-        await navigator.share({
-          title: playlist.name,
-          text: playlist.description,
-          url: url
-        });
-      } else {
-        await navigator.clipboard.writeText(url);
-        showToast('Playlist link copied to clipboard', 'success');
-      }
-    } catch (error) {
-      console.error('Error sharing playlist:', error);
-      showToast('Failed to share playlist', 'error');
-    }
-  };
-
   const handlePlayAll = () => {
     if (videos.length > 0) {
       // Navigate to first video with playlist context
       navigate(`/video/${videos[0]._id}?list=${playlistId}&index=0`);
-    }
-  };
-
-  const handleShufflePlay = () => {
-    if (videos.length > 0) {
-      const randomIndex = Math.floor(Math.random() * videos.length);
-      navigate(`/video/${videos[randomIndex]._id}?list=${playlistId}&index=${randomIndex}`);
     }
   };
 
@@ -229,10 +170,10 @@ const PlaylistDetail = ({ onVideoSelect }) => {
   return (
     <div className="min-h-screen bg-white">
       {/* Main Content Container */}
-      <div className="flex flex-col lg:flex-row">
+      <div className="flex flex-col lg:flex-row min-h-screen">
         {/* Left Side - Playlist Info */}
-        <div className="lg:w-1/3 xl:w-1/4 bg-gradient-to-b from-blue-600 to-purple-700 text-white">
-          <div className="p-6">
+        <div className="w-full lg:w-1/3 xl:w-1/4 bg-gradient-to-b from-red-600 to-red-700 text-white min-h-screen lg:min-h-full">
+          <div className="p-6 h-full flex flex-col">
             {/* Back Button */}
             <button
               onClick={() => navigate('/playlists')}
@@ -303,17 +244,10 @@ const PlaylistDetail = ({ onVideoSelect }) => {
               {playlist.description && (
                 <p className="text-white/80 text-sm mb-4 line-clamp-3">{playlist.description}</p>
               )}
-              
-              <div className="flex items-center text-sm text-white/70 mb-4">
-                {playlist.isPrivate ? (
-                  <><Lock className="w-4 h-4 mr-1" /> Private</>
-                ) : (
-                  <><Globe className="w-4 h-4 mr-1" /> Public</>
-                )}
-                <span className="mx-2">•</span>
-                <span>Updated {new Date(playlist.updatedAt).toLocaleDateString()}</span>
-              </div>
             </div>
+
+            {/* Spacer to push Play button to bottom */}
+            <div className="flex-1"></div>
 
             {/* Action Buttons */}
             <div className="space-y-3 mb-6">
@@ -325,55 +259,13 @@ const PlaylistDetail = ({ onVideoSelect }) => {
                 <Play className="w-5 h-5 mr-2" />
                 Play all
               </button>
-              
-              <button
-                onClick={handleShufflePlay}
-                disabled={videos.length === 0}
-                className="w-full bg-white/10 text-white py-3 px-4 rounded-full font-medium hover:bg-white/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center border border-white/20"
-              >
-                <Shuffle className="w-5 h-5 mr-2" />
-                Shuffle
-              </button>
-            </div>
-
-            {/* Options */}
-            <div className="relative">
-              <button
-                onClick={() => setShowOptions(!showOptions)}
-                className="flex items-center text-white/80 hover:text-white transition-colors"
-              >
-                <MoreVertical className="w-5 h-5 mr-2" />
-                More options
-              </button>
-              
-              {showOptions && (
-                <div className="absolute top-8 left-0 bg-white rounded-lg shadow-lg py-2 min-w-48 z-10">
-                  <button
-                    onClick={handleSharePlaylist}
-                    className="w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100 flex items-center"
-                  >
-                    <Share className="w-4 h-4 mr-3" />
-                    Share playlist
-                  </button>
-                  
-                  {user && playlist.owner === user._id && (
-                    <button
-                      onClick={handleDeletePlaylist}
-                      className="w-full text-left px-4 py-2 text-red-600 hover:bg-red-50 flex items-center"
-                    >
-                      <Trash2 className="w-4 h-4 mr-3" />
-                      Delete playlist
-                    </button>
-                  )}
-                </div>
-              )}
             </div>
           </div>
         </div>
 
         {/* Right Side - Video List */}
-        <div className="flex-1 lg:w-2/3 xl:w-3/4">
-          <div className="p-6">
+        <div className="flex-1 w-full lg:w-2/3 xl:w-3/4 min-h-screen bg-gray-50">
+          <div className="p-6 h-full">
             {videosLoading ? (
               <div className="text-center py-12">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-600 mx-auto mb-4"></div>
@@ -466,21 +358,7 @@ const PlaylistDetail = ({ onVideoSelect }) => {
                       </div>
                     </div>
 
-                    {/* Remove Button */}
-                    {user && playlist.owner === user._id && (
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleRemoveFromPlaylist(video._id);
-                        }}
-                        className="opacity-0 group-hover:opacity-100 p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-all ml-2"
-                        title="Remove from playlist"
-                      >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                      </button>
-                    )}
+
                   </div>
                 ))}
               </div>
