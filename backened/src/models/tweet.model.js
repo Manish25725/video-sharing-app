@@ -6,7 +6,6 @@ const tweetSchema=new Schema({
         type:mongoose.Schema.Types.ObjectId,
         ref:"Users"
     },
-
     content:{
         type:String,
         required:true
