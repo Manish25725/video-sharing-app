@@ -25,12 +25,12 @@ const playlistSchema=new Schema({
         ref:"User"
     },
 
+    
     type: {
         type: String,
         enum: ["creator", "user"],  // creator → grouped uploads, user → personal
         default: "user"
     }
-
 
 },{
     timestamps:true
