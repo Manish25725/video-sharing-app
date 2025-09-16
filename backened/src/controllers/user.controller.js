@@ -654,7 +654,7 @@ const toggleNotifyOnPost=asyncHandler( async (req,res)=>{
     )
 })
 
-const notifyOnVideo=asyncHandler(async (req,res)=>{
+const toggleNotifyOnVideo=asyncHandler(async (req,res)=>{
 
     if(!req?.user) return new ApiError(404,"User must be logged in");
 
@@ -685,7 +685,9 @@ export {registerUser,
     getWatchLaterIds,
     addToWatchLater,
     removeFromWatchLater,
-    getUserChannelProfile
+    getUserChannelProfile,
+    toggleNotifyOnPost,
+    toggleNotifyOnVideo
 };
 
 
