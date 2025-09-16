@@ -1,5 +1,5 @@
 import {Router} from "express"
-import { changeCurrentPassword, getCurrentUser, getUserChannelProfile, getWatchHistory, getWatchLater, getWatchLaterIds, addToWatchLater, removeFromWatchLater, loginUser, logoutUser, registerUser, updateDetails, updateUserAvatar, updateUserCoverImage,addToWatchHistory } from "../controllers/user.controller.js";
+import { changeCurrentPassword, getCurrentUser, getUserChannelProfile, getWatchHistory, getWatchLater, getWatchLaterIds, addToWatchLater, removeFromWatchLater, loginUser, logoutUser, registerUser, updateDetails, updateUserAvatar, updateUserCoverImage,addToWatchHistory, toggleNotifyOnPost, toggleNotifyOnVideo } from "../controllers/user.controller.js";
 import {upload} from "../middlewares/multer.middleware.js"
 import { verifyJWT } from "../middlewares/auth.middleware.js";
 import { refreshAccessToken } from "../controllers/user.controller.js";
@@ -53,10 +53,12 @@ router.route("/add-to-watch-history/:videoId").post(verifyJWT,addToWatchHistory)
 
 router.route("/get-watch-history").get(verifyJWT,getWatchHistory);
 
+router.route("/toggle-notify-post").post(verifyJWT,toggleNotifyOnPost);
 
-
+router.route("/toggle-notify-video").post(verifyJWT,toggleNotifyOnVideo)
 
 
 export default router
+
 
 

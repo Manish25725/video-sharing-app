@@ -10,11 +10,20 @@ import { getAllVideos,  publishVideo,getVideoById, updateVideo, deleteVideo, tog
 
 const router=Router();
 
-// Support both GET and POST for getAllVideos
-router.route("/get-all-videos").post(verifyJWT, getAllVideos);
-router.route("/get-all-videos").get(verifyJWT, getAllVideos);
+// Public routes - no authentication required for viewing videos
+router.route("/get-all-videos").post(getAllVideos);
+router.route("/get-all-videos").get(getAllVideos);
 
+// Public route for getting individual video - anyone can view videos
+router.route("/getvideo/:videoId").get(getVideoById)
 
+// Public route for trending videos
+router.route("/get-trending-videos").get(getTrendingVideos);
+
+// Public route for incrementing views - no auth needed
+router.route("/increment-views/:videoId").patch(incrementVideoViews);
+
+// Protected routes - require authentication
 router.route("/publish-video").post(verifyJWT,upload.fields([
     {
         name:"video",
@@ -24,24 +33,15 @@ router.route("/publish-video").post(verifyJWT,upload.fields([
         maxCount:1
     }
 ]),publishVideo)
-
-router.route("/getvideo/:videoId").get(verifyJWT,getVideoById)
+// Protected routes - require authentication for video management
 router.route("/update-video-details/:videoId").patch(verifyJWT,upload.single("thumbnail"),updateVideo)
-
-
 router.route("/delete-video/:videoId").delete(verifyJWT,deleteVideo);
-
 router.route("/toggle-status/:videoId").patch(verifyJWT,togglePublishStatus);
-
-router.route("/increment-views/:videoId").patch(incrementVideoViews);
-
 router.route("/video-stats/:videoId").get(verifyJWT, getVideoStats);
 
-// Download routes
+// Download routes - require authentication
 router.route("/download/:videoId").get(verifyJWT, downloadVideo);
 router.route("/download-info/:videoId").get(verifyJWT, getDownloadInfo);
-
-router.route("/get-trending-videos").get(verifyJWT,getTrendingVideos);
 export default router
 
 

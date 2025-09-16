@@ -72,13 +72,15 @@ const userSchema = new Schema(
         ],
 
         notifyOnPost:{
-            Boolean:true
+            type:Boolean,
+            default:false
         },
 
         notifyOnVideo:{
-            Boolean:true
+            type:Boolean,
+            default:false
         }
-        
+
     },{
         timestamps:true
     }

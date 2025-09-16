@@ -1,5 +1,6 @@
 import {mongoose,Schema} from "mongoose"
 
+
 const notificationSchema=new Schema({
     recipient:{
         type:mongoose.Schema.Types.ObjectId,
