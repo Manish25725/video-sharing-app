@@ -70,6 +70,15 @@ const userSchema = new Schema(
             ref:"Video"
             }
         ],
+
+        notifyOnPost:{
+            Boolean:true
+        },
+
+        notifyOnVideo:{
+            Boolean:true
+        }
+        
     },{
         timestamps:true
     }

@@ -637,6 +637,39 @@ const getUserChannelProfile=asyncHandler(async(req,res)=>{
         new ApiResponse(200, channel[0], "User channel fetched successfully")
     );
 })
+
+
+const toggleNotifyOnPost=asyncHandler( async (req,res)=>{
+
+    if(!req?.user) return new ApiError(404,"User must be logged in");
+
+    const user=req.user;
+    user.notifyOnPost=!user.notifyOnPost;
+    await user.save();
+
+    return res
+    .status(201)
+    .json(
+        new ApiResponse(200,user,"Toggled successfully")
+    )
+})
+
+const notifyOnVideo=asyncHandler(async (req,res)=>{
+
+    if(!req?.user) return new ApiError(404,"User must be logged in");
+
+    const user=req.user;
+    user.notifyOnVideo=!user.notifyOnVideo;
+    await user.save();
+
+    return res
+    .status(201)
+    .json(
+        new ApiResponse(201,user,"Toggled successfully")
+    )
+})
+
+
 export {registerUser,
     loginUser,
     logoutUser,

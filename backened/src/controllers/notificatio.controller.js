@@ -5,7 +5,6 @@ import { ApiError } from "../utils/ApiError.js";
 
 
 const notifyToSubscriber= asyncHandler(async (req,res)=>{
-
     if(!req?.user) return ApiError(404,"User must be logged in");
     
 });
