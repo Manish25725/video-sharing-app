@@ -25,6 +25,7 @@ import tweetRouter from "./routes/tweet.route.js"
 import likeRouter from "./routes/like.route.js"
 import playlistRouter from "./routes/playlist.route.js"
 import dashboardRouter from "./routes/dashboard.route.js"
+import notificationRouter from "./routes/notification.route.js"
 //routes declaration
 
 app.use("/api/v1/users",userRouter);
@@ -35,6 +36,7 @@ app.use("/api/v1/tweet",tweetRouter)
 app.use("/api/v1/like",likeRouter)
 app.use("/api/v1/playlist",playlistRouter)
 app.use("/api/v1/dashboard",dashboardRouter)
+app.use("/api/v1/notifications",notificationRouter)
 
 
 

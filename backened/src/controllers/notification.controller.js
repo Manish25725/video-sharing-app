@@ -8,15 +8,15 @@ import { Subscription } from "../models/subscription.model.js";
 
 const videoUploadeNotify=asyncHandler(async(req,res)=>{
 
-    const {videoId}=req.params;
-    const {content }=req.body;
+    // const {videoId}=req.params;
+    // const {content }=req.body;
 
-    if(req?.user) throw new ApiError(404,"User must be logged in");
+    if(!req?.user) throw new ApiError(404,"User must be logged in");
 
     const notify=await Subscription.aggregate([
         {
             $match:{
-                channel:mongoose.Types.ObjectId(req.user?._id)
+                channel:new mongoose.Types.ObjectId(req.user?._id)
             }
         },
         {
@@ -44,6 +44,46 @@ const videoUploadeNotify=asyncHandler(async(req,res)=>{
 })
 
 
+const postUploadNotify=asyncHandler(async(req,res)=>{
+
+        //const {postid}=req.params;
+        //const {content}=req.body
+
+    if(!req?.user) throw new ApiError(404,"User must be logged in");
+
+
+    const notify=await Subscription.aggregate([
+        {
+            $match:{
+                channel:new mongoose.Types.ObjectId(req.user?._id)
+            }
+        },
+        {
+            $lookup:{
+                from:"users",
+                localField:"subscriber",
+                foreignField:"_id",
+                as:"noted",
+                pipeline:[
+                    {
+                        $match:{
+                            notifyOnPost:true
+                        }
+                    }
+                ]
+            }
+        }
+    ])
+
+    return res
+    .status(201)
+    .json(
+        new ApiResponse(201,notify,"fetched successfully")
+    )
+})
+
+
 export {
-    videoUploadeNotify
+    videoUploadeNotify,
+    postUploadNotify
 }

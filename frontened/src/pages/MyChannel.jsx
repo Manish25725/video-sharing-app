@@ -286,10 +286,13 @@ const MyChannel = () => {
   }
 
   const handleViewVideo = async (videoId) => {
-    // Increment view count when user clicks to view video
+    // Open video first, then try to increment views in background
+    window.open(`/video/${videoId}`, '_blank')
+    
+    // Try to increment view count in background without blocking navigation
     try {
       await videoService.incrementViews(videoId)
-      // Update local state
+      // Update local state only if increment succeeds
       setVideos(prevVideos =>
         prevVideos.map(video =>
           video.id === videoId
@@ -297,12 +300,9 @@ const MyChannel = () => {
             : video
         )
       )
-      // Open video in new tab
-      window.open(`/video/${videoId}`, '_blank')
     } catch (error) {
       console.error("Error incrementing views:", error)
-      // Still open the video even if view increment fails
-      window.open(`/video/${videoId}`, '_blank')
+      // Don't do anything on error - video is already opened
     }
   }
 

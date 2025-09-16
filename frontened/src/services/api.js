@@ -54,9 +54,24 @@ axiosInstance.interceptors.response.use(
           return axiosInstance(originalRequest);
         }
       } catch (refreshError) {
-        // Refresh failed, redirect to login
+        // Refresh failed, redirect to login only if not on public endpoints
         localStorage.removeItem('accessToken');
-        window.location.href = '/login';
+        
+        // Don't redirect to login for public video endpoints
+        const publicEndpoints = [
+          '/videos/get-all-videos',
+          '/videos/getvideo/',
+          '/videos/get-trending-videos',
+          '/videos/increment-views/'
+        ];
+        
+        const isPublicEndpoint = publicEndpoints.some(endpoint => 
+          originalRequest.url?.includes(endpoint)
+        );
+        
+        if (!isPublicEndpoint) {
+          window.location.href = '/login';
+        }
         return Promise.reject(refreshError);
       }
     }

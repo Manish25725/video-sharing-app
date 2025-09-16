@@ -8,14 +8,14 @@ import { uploadOnCloudinary,deleteOnCloudinary } from "../utils/cloudinary.js";
 
 //for trending ..
 const getTrendingVideos=asyncHandler(async (req,res)=>{
-    //user is logged in or not ....
-    if(!req.user){
-        throw new ApiError(400,"user not logged in ")
-    }
+    // Optional authentication - user may or may not be logged in
+    // if(!req.user){
+    //     throw new ApiError(400,"user not logged in ")
+    // }
 
-    if(!mongoose.Types.ObjectId.isValid(String(req.user._id))){
-            throw new ApiError(400,"User Id is invalid")
-    }
+    // if(!mongoose.Types.ObjectId.isValid(String(req.user._id))){
+    //         throw new ApiError(400,"User Id is invalid")
+    // }
 
     const { videoType } = req.query;
     const matchStage = {
