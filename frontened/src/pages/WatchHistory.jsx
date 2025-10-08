@@ -19,7 +19,6 @@ const WatchHistory = () => {
       console.log('=== AUTH STATUS ===');
       console.log('User is logged in:', isLoggedIn);
       console.log('User object:', user);
-      console.log('Access token in localStorage:', localStorage.getItem('accessToken'));
       fetchWatchHistory();
     } else {
       console.log('=== NOT AUTHENTICATED ===');

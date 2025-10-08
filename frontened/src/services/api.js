@@ -12,13 +12,10 @@ const axiosInstance = axios.create({
   },
 });
 
-// Request interceptor to add auth token
+// Request interceptor - no need to manually add tokens (backend handles via cookies)
 axiosInstance.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('accessToken');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
+    // Backend automatically includes cookies with withCredentials: true
     return config;
   },
   (error) => {
@@ -38,24 +35,19 @@ axiosInstance.interceptors.response.use(
       originalRequest._retry = true;
 
       try {
-        // Attempt to refresh token
+        // Attempt to refresh token (backend handles this via cookies)
         const refreshResponse = await axios.post(
           `${API_BASE_URL}/users/refresh-token`,
           {},
           { withCredentials: true }
         );
 
-        if (refreshResponse.data?.data?.accessToken) {
-          const newToken = refreshResponse.data.data.accessToken;
-          localStorage.setItem('accessToken', newToken);
-          
-          // Retry original request with new token
-          originalRequest.headers.Authorization = `Bearer ${newToken}`;
+        if (refreshResponse.data?.success) {
+          // Token refreshed successfully by backend, retry original request
           return axiosInstance(originalRequest);
         }
       } catch (refreshError) {
-        // Refresh failed, redirect to login only if not on public endpoints
-        localStorage.removeItem('accessToken');
+        // Refresh failed, redirect to login for protected routes only
         
         // Don't redirect to login for public video endpoints
         const publicEndpoints = [

@@ -32,14 +32,7 @@ export const authService = {
   async login(email, password) {
     try {
       const response = await apiClient.post('/users/login', { email, password });
-      
-      // Store tokens if login successful
-      if (response.success && response.data) {
-        localStorage.setItem('accessToken', response.data.accessToken);
-        localStorage.setItem('refreshToken', response.data.refreshToken);
-        localStorage.setItem('user', JSON.stringify(response.data.user));
-      }
-      
+      // Backend handles everything via cookies - no need to store anything
       return response;
     } catch (error) {
       console.error('Login error:', error);
@@ -51,13 +44,10 @@ export const authService = {
   async logout() {
     try {
       await apiClient.post('/users/logout');
+      // Backend clears cookies automatically - no need to clear anything locally
     } catch (error) {
       console.error('Logout error:', error);
-    } finally {
-      // Clear local storage regardless of API response
-      localStorage.removeItem('accessToken');
-      localStorage.removeItem('refreshToken');
-      localStorage.removeItem('user');
+      throw error;
     }
   },
 
@@ -171,13 +161,22 @@ export const authService = {
   },
 };
 
-// Check if user is logged in
-export const isAuthenticated = () => {
-  return !!localStorage.getItem('accessToken');
+// Check if user is logged in by calling the API
+export const isAuthenticated = async () => {
+  try {
+    const response = await apiClient.get('/users/current-user');
+    return response && response.success;
+  } catch (error) {
+    return false;
+  }
 };
 
-// Get current user from localStorage
-export const getCurrentUserFromStorage = () => {
-  const userStr = localStorage.getItem('user');
-  return userStr ? JSON.parse(userStr) : null;
+// Get current user from API
+export const getCurrentUserFromStorage = async () => {
+  try {
+    const response = await apiClient.get('/users/current-user');
+    return response && response.success ? response.data : null;
+  } catch (error) {
+    return null;
+  }
 };

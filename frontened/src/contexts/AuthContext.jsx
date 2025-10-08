@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { authService, isAuthenticated, getCurrentUserFromStorage } from '../services/authService.js';
+import { authService } from '../services/authService.js';
 
 const AuthContext = createContext();
 
@@ -19,29 +19,20 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     const initializeAuth = async () => {
       try {
-        if (isAuthenticated()) {
-          // Try to get user from storage first
-          const storedUser = getCurrentUserFromStorage();
-          if (storedUser) {
-            setUser(storedUser);
-            setIsLoggedIn(true);
-          }
-
-          // Verify with backend
-          const response = await authService.getCurrentUser();
-          if (response && response.success) {
-            setUser(response.data);
-            setIsLoggedIn(true);
-            // Update stored user data
-            localStorage.setItem('user', JSON.stringify(response.data));
-          } else {
-            // Token might be invalid, clear storage
-            handleLogout();
-          }
+        // Try to get current user from backend (cookies)
+        const response = await authService.getCurrentUser();
+        if (response && response.success) {
+          setUser(response.data);
+          setIsLoggedIn(true);
+        } else {
+          // Not authenticated
+          setUser(null);
+          setIsLoggedIn(false);
         }
       } catch (error) {
         console.error('Auth initialization error:', error);
-        handleLogout();
+        setUser(null);
+        setIsLoggedIn(false);
       } finally {
         setLoading(false);
       }
@@ -90,14 +81,15 @@ export const AuthProvider = ({ children }) => {
     } catch (error) {
       console.error('Logout error:', error);
     } finally {
+      // Clear local state only
       setUser(null);
       setIsLoggedIn(false);
     }
   };
 
   const updateUser = (userData) => {
+    // Update only local state - no storage needed
     setUser(userData);
-    localStorage.setItem('user', JSON.stringify(userData));
   };
 
   const value = {
