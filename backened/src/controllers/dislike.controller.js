@@ -26,10 +26,20 @@ const toggleVideoDislike=asyncHandler( async(req,res)=>{
 
     const curr=await Dislike.create({
         video : videoId,
+        dislikedBy : req.user._id
     })
 
+    if(!curr){
+        throw new ApiError(400,"Error while disliking");
+    }
 
-})
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(200,curr,"Disliked the video successfully")
+    )
+});
+
 
 const toggleCommentDislike=asyncHandler((req,res)=>{
 
