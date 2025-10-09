@@ -807,9 +807,9 @@ const VideoPlayer = () => {
               {relatedVideos.length > 0 ? (
                 relatedVideos.map((relatedVideo) => (
                   <div
-                    key={relatedVideo._id}
+                    key={relatedVideo.id}
                     className="flex space-x-3 cursor-pointer hover:bg-gray-50 p-2 rounded-lg transition-colors group"
-                    onClick={() => window.location.href = `/video/${relatedVideo._id}`}
+                    onClick={() => window.location.href = `/video/${relatedVideo.id}`}
                   >
                     <div className="relative flex-shrink-0">
                       <img
