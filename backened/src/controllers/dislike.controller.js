@@ -6,7 +6,7 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 const toggleVideoDislike=asyncHandler( async(req,res)=>{
     const {videoId}=req.params;
 
-    if(!req.user || !req.user?._id) throw  new ApiError(401,"User not authenticated");
+    if(!req.user) throw  new ApiError(401,"User not authenticated");
 
     const asd=await Dislike.findOne({
         video:videoId,
@@ -47,13 +47,89 @@ const toggleVideoDislike=asyncHandler( async(req,res)=>{
 });
 
 
-const toggleCommentDislike=asyncHandler((req,res)=>{
+const toggleCommentDislike=asyncHandler(async (req,res)=>{
 
+    const {commentId}=req.params;
+
+    if(!req.user) throw new ApiError(404,"User not authorised");
+
+    const asd=await Dislike.findOne({
+        comment : commentId,
+        dislikedBy : req.user._id
+    })
+
+    if(asd){
+
+        const re=await Dislike.deletMany({
+            comment : commentId,
+            dislikedBy : req.user._id
+        })
+
+        if(!re) throw new ApiError(401,"error while disliking the comment");
+
+        return res
+        .status(201)
+        .json(
+            new ApiResponse(201,re,"Dislked comment successfully")
+        )
+    }
+
+    const ztr=await Dislike.create({
+        comment : commentId,
+        dislikedBy : req.user._id
+    })
+
+    if(!ztr) throw new ApiError(401,"Error while clicking dislike button on comment");
+
+    return res
+    .status(201)
+    .json(
+        new ApiResponse(201,ztr,"Disliked comment successfully")
+    )
 })
 
-const toggleTweetDislike=asyncHandler((req,res)=>{
 
+const toggleTweetDislike=asyncHandler(async (req,res)=>{
+
+    const {tweetId}=req.params;
+
+    if(!req.user) throw new ApiError(404,"User not authorised");
+
+    const asd=await Dislike.findOne({
+        tweet : tweetId,
+        dislikedBy : req.user._id
+    })
+
+    if(asd){
+
+        const re=await Dislike.deletMany({
+            tweet : tweetId,
+            dislikedBy : req.user._id
+        })
+
+        if(!re) throw new ApiError(401,"error while disliking the tweet");
+
+        return res
+        .status(201)
+        .json(
+            new ApiResponse(201,re,"Dislked tweet successfully")
+        )
+    }
+
+    const ztr=await Dislike.create({
+        tweet : tweetId,
+        dislikedBy : req.user._id
+    })
+
+    if(!ztr) throw new ApiError(401,"Error while clicking dislike button on tweet");
+
+    return res
+    .status(201)
+    .json(
+        new ApiResponse(201,ztr,"Disliked tweet successfully")
+    )
 })
+
 
 
 export {toggleVideoDislike,toggleCommentDislike,toggleTweetDislike}
