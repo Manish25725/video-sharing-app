@@ -14,14 +14,20 @@ const toggleVideoDislike=asyncHandler( async(req,res)=>{
     })
 
     if(asd){
-        const re= await Dislike.deletOne({
+        const re= await Dislike.deletMany({
             video : videoId,
             dislikedBy : req.user._id
         })
 
-        if(re.deleteCount ==0){
+        if(!re){
             throw new ApiError(400,"Error while toggling the disliking the video")
         }
+
+        return res
+        .status(201)
+        .json(
+            new ApiResponse(201,re,"Video dislike successfully")
+        )
     }
 
     const curr=await Dislike.create({
