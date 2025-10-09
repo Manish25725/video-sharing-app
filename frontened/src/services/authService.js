@@ -57,7 +57,6 @@ export const authService = {
       const response = await apiClient.get('/users/current-user');
       return response;
     } catch (error) {
-      console.error('Get current user error:', error);
       return null;
     }
   },

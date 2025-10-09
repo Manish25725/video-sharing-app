@@ -62,7 +62,15 @@ axiosInstance.interceptors.response.use(
         );
         
         if (!isPublicEndpoint) {
-          window.location.href = '/login';
+          // For protected endpoints that fail auth, we'll let the component handle the redirect
+          // This prevents infinite refresh loops by not forcing a page reload
+          console.log('Auth failed for protected endpoint, component should handle redirect');
+          
+          // Instead of forcing a redirect here, we'll return a specific error
+          // that components can handle appropriately
+          const authError = new Error('Authentication required');
+          authError.isAuthError = true;
+          return Promise.reject(authError);
         }
         return Promise.reject(refreshError);
       }

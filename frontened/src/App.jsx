@@ -50,7 +50,7 @@ function AppContent() {
     );
   }
 
-  // Show auth page if not logged in
+  // Simple authentication check - show auth page if not logged in
   if (!isLoggedIn) {
     return <AuthPage />;
   }

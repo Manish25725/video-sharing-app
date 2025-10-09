@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext.jsx';
 import { Eye, EyeOff, Upload } from 'lucide-react';
 import Toast from './Toast.jsx';
@@ -10,7 +9,6 @@ const AuthPage = ({ onAuthSuccess }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
-  const navigate = useNavigate();
   
   const { login, register } = useAuth();
 
@@ -55,11 +53,7 @@ const AuthPage = ({ onAuthSuccess }) => {
         const result = await login(formData.email, formData.password);
         if (result.success) {
           showToast('Login successful! Welcome back.', 'success');
-          // Redirect to home page after successful login
-          setTimeout(() => {
-            navigate('/');
-            onAuthSuccess?.();
-          }, 1000); // Small delay to show the toast
+          // AuthContext will handle the state change automatically
         } else {
           setError(result.error);
         }

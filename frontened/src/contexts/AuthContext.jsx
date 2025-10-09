@@ -19,20 +19,14 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     const initializeAuth = async () => {
       try {
-        // Try to get current user from backend (cookies)
         const response = await authService.getCurrentUser();
-        if (response && response.success) {
+        if (response?.success) {
           setUser(response.data);
           setIsLoggedIn(true);
-        } else {
-          // Not authenticated
-          setUser(null);
-          setIsLoggedIn(false);
         }
       } catch (error) {
-        console.error('Auth initialization error:', error);
-        setUser(null);
-        setIsLoggedIn(false);
+        // Ignore errors - just means not authenticated
+        console.log('Auth initialization failed:', error.message);
       } finally {
         setLoading(false);
       }
@@ -45,14 +39,13 @@ export const AuthProvider = ({ children }) => {
     try {
       setLoading(true);
       const response = await authService.login(email, password);
-      if (response.success) {
+      if (response?.success) {
         setUser(response.data.user);
         setIsLoggedIn(true);
         return { success: true, data: response.data };
       }
-      return { success: false, error: response.message || 'Login failed' };
+      return { success: false, error: response?.message || 'Login failed' };
     } catch (error) {
-      console.error('Login error:', error);
       return { success: false, error: error.message || 'Login failed' };
     } finally {
       setLoading(false);
@@ -63,12 +56,11 @@ export const AuthProvider = ({ children }) => {
     try {
       setLoading(true);
       const response = await authService.register(userData, avatarFile, coverImageFile);
-      if (response.success) {
+      if (response?.success) {
         return { success: true, data: response.data };
       }
-      return { success: false, error: response.message || 'Registration failed' };
+      return { success: false, error: response?.message || 'Registration failed' };
     } catch (error) {
-      console.error('Registration error:', error);
       return { success: false, error: error.message || 'Registration failed' };
     } finally {
       setLoading(false);
@@ -79,23 +71,21 @@ export const AuthProvider = ({ children }) => {
     try {
       await authService.logout();
     } catch (error) {
-      console.error('Logout error:', error);
+      // Ignore logout errors
     } finally {
-      // Clear local state only
       setUser(null);
       setIsLoggedIn(false);
     }
   };
 
   const updateUser = (userData) => {
-    // Update only local state - no storage needed
     setUser(userData);
   };
 
   const value = {
     user,
     isLoggedIn,
-    isAuthenticated: isLoggedIn, // Add alias for compatibility
+    isAuthenticated: isLoggedIn,
     loading,
     login: handleLogin,
     register: handleRegister,
