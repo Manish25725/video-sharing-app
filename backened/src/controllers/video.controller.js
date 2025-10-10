@@ -562,10 +562,22 @@ const getVideoStats = asyncHandler(async (req, res) => {
             }
         },
         {
+            $lookup: {
+                from: "dislikes",
+                localField: "_id",
+                foreignField: "video",
+                as: "dislikes"
+            }
+        },
+        {
             $addFields: {
                 likesCount: { $size: "$likes" },
+                dislikesCount: { $size: "$dislikes" },
                 isLikedByUser: userId ? {
                     $in: [userId, "$likes.likedBy"]
+                } : false,
+                isDislikedByUser: userId ? {
+                    $in: [userId, "$dislikes.dislikedBy"]
                 } : false
             }
         },
@@ -573,7 +585,9 @@ const getVideoStats = asyncHandler(async (req, res) => {
             $project: {
                 views: 1,
                 likesCount: 1,
-                isLikedByUser: 1
+                dislikesCount: 1,
+                isLikedByUser: 1,
+                isDislikedByUser: 1
             }
         }
     ]);

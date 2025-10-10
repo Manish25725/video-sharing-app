@@ -53,6 +53,7 @@ export const transformCommentData = (backendComment) => {
 
   return {
     id: backendComment._id,
+    _id: backendComment._id, // Keep both for compatibility
     content: backendComment.content,
     user: {
       id: backendComment.userDetails?._id,
@@ -62,7 +63,11 @@ export const transformCommentData = (backendComment) => {
     },
     createdAt: backendComment.createdAt,
     likesCount: backendComment.likesCount || 0,
-    isLiked: backendComment.isLiked || false,
+    dislikesCount: backendComment.dislikesCount || 0,
+    isLikedByUser: backendComment.isLikedByUser || false,
+    isDislikedByUser: backendComment.isDislikedByUser || false,
+    // Keep old format for compatibility
+    isLiked: backendComment.isLikedByUser || backendComment.isLiked || false,
   };
 };
 

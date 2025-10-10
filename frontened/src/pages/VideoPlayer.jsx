@@ -210,7 +210,7 @@ const VideoPlayer = () => {
   // Handle dislike functionality
   const handleDislike = async () => {
     if (!user) {
-      alert('Please login to dislike videos')
+      alert("Please login to dislike videos")
       return
     }
 
@@ -246,13 +246,10 @@ const VideoPlayer = () => {
           }
         }
       }
-    } catch (error) {
-      console.error('Error disliking video:', error)
-      alert('Failed to dislike video')
+    } catch (err) {
+      console.error("Error toggling dislike:", err)
     }
-  }
-
-  // Handle more options
+  }  // Handle more options
   const handleMoreOptions = () => {
     setShowMoreMenu(!showMoreMenu)
   }

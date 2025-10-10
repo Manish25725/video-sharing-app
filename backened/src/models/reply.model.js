@@ -8,13 +8,23 @@ const replySchema = new Schema({
     },
 
     content:{
-        type : String
+        type : String,
+        required: true,
+        trim: true
+    },
+
+    owner:{
+        type : mongoose.Schema.Types.ObjectId,
+        ref : "User",
+        required: true
     },
 
     tweet:{
         type : mongoose.Schema.Types.ObjectId,
-        ref : "tweet"
+        ref : "Tweet"
     }
+}, {
+    timestamps: true
 })
 
 
