@@ -3,6 +3,7 @@ import {Tweet} from "../models/tweet.model.js"
 import {ApiError} from "../utils/ApiError.js"
 import {ApiResponse} from "../utils/Apiresponse.js"
 import { asyncHandler } from "../utils/asyncHandler.js";
+import NotificationService from "../utils/notificationService.js";
 
 const createTweet = asyncHandler(async (req, res) => {
     //TODO: create tweet
@@ -27,6 +28,14 @@ const createTweet = asyncHandler(async (req, res) => {
 
     if(!creatTwt){
         throw new ApiError(500,"Error while creating a tweet")
+    }
+
+    // Send notification to subscribers who have enabled post notifications
+    try {
+        await NotificationService.notifyTweetPost(req.user._id, content, creatTwt._id);
+    } catch (error) {
+        console.error('Error sending tweet post notifications:', error);
+        // Don't fail the tweet creation if notification fails
     }
 
     return res

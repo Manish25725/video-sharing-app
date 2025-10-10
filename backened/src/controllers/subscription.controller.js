@@ -4,6 +4,7 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 import { User } from "../models/user.model.js";
 import mongoose from "mongoose";
 import { Subscription } from "../models/subscription.model.js";
+import NotificationService from "../utils/notificationService.js";
 
 
 const toggleSubscription = asyncHandler(async (req, res) => {
@@ -69,6 +70,14 @@ const toggleSubscription = asyncHandler(async (req, res) => {
         })
         if(!re){
             throw new ApiError(404,"Error while subscribing a channel")
+        }
+
+        // Send subscription notification to channel owner
+        try {
+            await NotificationService.notifySubscription(channelId, req.user._id);
+        } catch (notificationError) {
+            console.error('Error sending subscription notification:', notificationError);
+            // Don't fail the main operation if notification fails
         }
     }
 

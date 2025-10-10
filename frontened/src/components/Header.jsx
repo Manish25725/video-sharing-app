@@ -2,6 +2,7 @@ import { Search, Menu, Video, Bell, User, Users, Globe, HelpCircle, MessageSquar
 import { useState, useEffect, useRef } from "react";
 import { useAuth } from "../contexts/AuthContext";
 import { Link, useNavigate } from "react-router-dom";
+import NotificationBell from "./NotificationBell";
 
 const Header = ({ 
   onMenuClick, 
@@ -135,12 +136,7 @@ const Header = ({
             )}
           </div>
 
-          <button className="p-2 hover:bg-gray-100 rounded-full transition-colors relative">
-            <Bell className="w-6 h-6 text-gray-700" />
-            <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-600 rounded-full text-xs text-white flex items-center justify-center">
-              3
-            </span>
-          </button>
+          <NotificationBell />
           
           {/* Profile Menu */}
           <div className="relative">

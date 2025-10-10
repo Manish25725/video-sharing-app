@@ -3,6 +3,9 @@ import { ApiResponse } from "../utils/Apiresponse.js";
 import { ApiError } from "../utils/ApiError.js";
 import { Like } from "../models/like.model.js";
 import { Dislike } from "../models/dislike.model.js";
+import { Video } from "../models/video.model.js";
+import { Comment } from "../models/comment.model.js";
+import NotificationService from "../utils/notificationService.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { updateUserAvatar } from "./user.controller.js";
 
@@ -53,6 +56,22 @@ const toggleVideoLike = asyncHandler(async (req, res) => {
 
     if(!creatLike){
         throw new ApiError(400,"Error while liking")
+    }
+
+    // Send notification to video owner
+    try {
+        const video = await Video.findById(videoId).populate('owner', '_id');
+        if (video && video.owner) {
+            await NotificationService.notifyVideoLike(
+                video.owner._id,
+                req.user._id,
+                video.title,
+                videoId
+            );
+        }
+    } catch (notificationError) {
+        console.error('Error sending like notification:', notificationError);
+        // Don't fail the main operation if notification fails
     }
 
     return res
@@ -109,6 +128,21 @@ const toggleCommentLike = asyncHandler(async (req, res) => {
 
     if(!commentLike){
         throw new ApiError(400,"Error while liking a comment")
+    }
+
+    // Send notification to comment owner
+    try {
+        const comment = await Comment.findById(commentId).populate('owner', '_id');
+        if (comment && comment.owner) {
+            await NotificationService.notifyCommentLike(
+                comment.owner._id,
+                req.user._id,
+                commentId
+            );
+        }
+    } catch (notificationError) {
+        console.error('Error sending comment like notification:', notificationError);
+        // Don't fail the main operation if notification fails
     }
 
     return res
