@@ -1,6 +1,7 @@
 import { ApiResponse } from "../utils/Apiresponse.js";
 import { ApiError } from "../utils/ApiError.js";
 import { Dislike } from "../models/dislike.model.js";
+import { Like } from "../models/like.model.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 
 const toggleVideoDislike=asyncHandler( async(req,res)=>{
@@ -29,6 +30,12 @@ const toggleVideoDislike=asyncHandler( async(req,res)=>{
             new ApiResponse(201,re,"Video dislike successfully")
         )
     }
+
+    // Remove any existing like before adding dislike (mutual exclusivity)
+    await Like.deleteMany({
+        video: videoId,
+        likedBy: req.user._id
+    })
 
     const curr=await Dislike.create({
         video : videoId,
@@ -73,6 +80,12 @@ const toggleCommentDislike=asyncHandler(async (req,res)=>{
             new ApiResponse(201,re,"Dislked comment successfully")
         )
     }
+
+    // Remove any existing like before adding dislike (mutual exclusivity)
+    await Like.deleteMany({
+        comment: commentId,
+        likedBy: req.user._id
+    })
 
     const ztr=await Dislike.create({
         comment : commentId,

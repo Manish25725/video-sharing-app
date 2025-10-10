@@ -2,6 +2,7 @@ import mongoose from "mongoose";
 import { ApiResponse } from "../utils/Apiresponse.js";
 import { ApiError } from "../utils/ApiError.js";
 import { Like } from "../models/like.model.js";
+import { Dislike } from "../models/dislike.model.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { updateUserAvatar } from "./user.controller.js";
 
@@ -38,6 +39,12 @@ const toggleVideoLike = asyncHandler(async (req, res) => {
             new ApiResponse(200,re,"Unlike the video")
         )
     }
+
+    // Remove any existing dislike before adding like (mutual exclusivity)
+    await Dislike.deleteMany({
+        video: videoId,
+        dislikedBy: req.user._id
+    })
 
     const creatLike=await Like.create({
         video:videoId,
@@ -88,6 +95,12 @@ const toggleCommentLike = asyncHandler(async (req, res) => {
             new ApiResponse(200,delLike,"Comment unliked successfully")
         )
     }
+
+    // Remove any existing dislike before adding like (mutual exclusivity)
+    await Dislike.deleteMany({
+        comment: commentId,
+        dislikedBy: req.user._id
+    })
 
     const commentLike=await Like.create({
         comment:commentId,

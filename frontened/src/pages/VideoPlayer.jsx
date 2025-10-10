@@ -57,6 +57,7 @@ const VideoPlayer = () => {
   const [comments, setComments] = useState([])
   const [newComment, setNewComment] = useState("")
   const [commentsLoading, setCommentsLoading] = useState(false)
+  const [commentActionsLoading, setCommentActionsLoading] = useState(new Set()) // Track loading state for comment actions
   const [hasViewBeenCounted, setHasViewBeenCounted] = useState(false) // Track if view was already counted
   const [isIncrementingView, setIsIncrementingView] = useState(false) // Prevent multiple simultaneous calls
   const [showMoreMenu, setShowMoreMenu] = useState(false) // For dropdown menu
@@ -343,35 +344,37 @@ const VideoPlayer = () => {
       return
     }
 
-    try {
-      const response = await likeService.toggleCommentLike(commentId)
-      if (response && response.success) {
-        // Update the comment in the local state
-        setComments(prev => prev.map(comment => {
-          if (comment._id === commentId) {
-            const wasLiked = comment.isLikedByUser
-            const wasDisliked = comment.isDislikedByUser
-            
-            return {
-              ...comment,
-              likesCount: wasLiked ? comment.likesCount - 1 : comment.likesCount + 1,
-              dislikesCount: wasDisliked ? comment.dislikesCount - 1 : comment.dislikesCount,
-              isLikedByUser: !wasLiked,
-              isDislikedByUser: false // Remove dislike if it was disliked
-            }
-          }
-          return comment
-        }))
+    // Prevent multiple clicks
+    if (commentActionsLoading.has(commentId)) {
+      console.log('Action already in progress for comment:', commentId)
+      return
+    }
 
-        // If the comment was disliked, toggle dislike off
-        const comment = comments.find(c => c._id === commentId)
-        if (comment && comment.isDislikedByUser) {
-          await dislikeService.toggleCommentDislike(commentId)
-        }
+    try {
+      // Add to loading set
+      setCommentActionsLoading(prev => new Set(prev).add(commentId))
+      
+      console.log('Attempting to like comment:', commentId)
+
+      const response = await likeService.toggleCommentLike(commentId)
+      console.log('Like response:', response)
+      
+      if (response && response.success) {
+        // Simply refresh the comments to get the updated state from backend
+        await fetchComments()
+      } else {
+        alert('Failed to like comment')
       }
     } catch (error) {
       console.error('Error liking comment:', error)
       alert('Failed to like comment')
+    } finally {
+      // Remove from loading set
+      setCommentActionsLoading(prev => {
+        const newSet = new Set(prev)
+        newSet.delete(commentId)
+        return newSet
+      })
     }
   }
 
@@ -381,35 +384,37 @@ const VideoPlayer = () => {
       return
     }
 
-    try {
-      const response = await dislikeService.toggleCommentDislike(commentId)
-      if (response && response.success) {
-        // Update the comment in the local state
-        setComments(prev => prev.map(comment => {
-          if (comment._id === commentId) {
-            const wasLiked = comment.isLikedByUser
-            const wasDisliked = comment.isDislikedByUser
-            
-            return {
-              ...comment,
-              likesCount: wasLiked ? comment.likesCount - 1 : comment.likesCount,
-              dislikesCount: wasDisliked ? comment.dislikesCount - 1 : comment.dislikesCount + 1,
-              isLikedByUser: false, // Remove like if it was liked
-              isDislikedByUser: !wasDisliked
-            }
-          }
-          return comment
-        }))
+    // Prevent multiple clicks
+    if (commentActionsLoading.has(commentId)) {
+      console.log('Action already in progress for comment:', commentId)
+      return
+    }
 
-        // If the comment was liked, toggle like off
-        const comment = comments.find(c => c._id === commentId)
-        if (comment && comment.isLikedByUser) {
-          await likeService.toggleCommentLike(commentId)
-        }
+    try {
+      // Add to loading set
+      setCommentActionsLoading(prev => new Set(prev).add(commentId))
+      
+      console.log('Attempting to dislike comment:', commentId)
+
+      const response = await dislikeService.toggleCommentDislike(commentId)
+      console.log('Dislike response:', response)
+      
+      if (response && response.success) {
+        // Simply refresh the comments to get the updated state from backend
+        await fetchComments()
+      } else {
+        alert('Failed to dislike comment')
       }
     } catch (error) {
       console.error('Error disliking comment:', error)
       alert('Failed to dislike comment')
+    } finally {
+      // Remove from loading set
+      setCommentActionsLoading(prev => {
+        const newSet = new Set(prev)
+        newSet.delete(commentId)
+        return newSet
+      })
     }
   }
 
@@ -448,8 +453,11 @@ const VideoPlayer = () => {
     try {
       setCommentsLoading(true)
       const response = await commentService.getVideoComments(videoId)
+      console.log('Raw comments response:', response)
       if (response && response.data) {
-        setComments(transformCommentsArray(response.data))
+        const transformedComments = transformCommentsArray(response.data)
+        console.log('Transformed comments:', transformedComments)
+        setComments(transformedComments)
       }
     } catch (err) {
       console.error("Error fetching comments:", err)
@@ -906,18 +914,20 @@ const VideoPlayer = () => {
                         <div className="flex items-center space-x-4 text-xs text-gray-600">
                           <button 
                             onClick={() => handleCommentLike(comment.id)}
+                            disabled={commentActionsLoading.has(comment.id)}
                             className={`flex items-center space-x-1 hover:text-gray-800 transition-colors ${
                               comment.isLikedByUser ? 'text-blue-600' : ''
-                            }`}
+                            } ${commentActionsLoading.has(comment.id) ? 'opacity-50 cursor-not-allowed' : ''}`}
                           >
                             <ThumbsUp className={`w-3 h-3 ${comment.isLikedByUser ? 'fill-current' : ''}`} />
                             <span>{comment.likesCount || 0}</span>
                           </button>
                           <button 
                             onClick={() => handleCommentDislike(comment.id)}
+                            disabled={commentActionsLoading.has(comment.id)}
                             className={`flex items-center space-x-1 hover:text-gray-800 transition-colors ${
                               comment.isDislikedByUser ? 'text-red-600' : ''
-                            }`}
+                            } ${commentActionsLoading.has(comment.id) ? 'opacity-50 cursor-not-allowed' : ''}`}
                           >
                             <ThumbsDown className={`w-3 h-3 ${comment.isDislikedByUser ? 'fill-current' : ''}`} />
                             <span>{comment.dislikesCount || 0}</span>
