@@ -2,7 +2,7 @@ import { ApiError } from "../utils/ApiError.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import {Comment} from "../models/comment.model.js"
 import mongoose from "mongoose";
-import { ApiResponse } from "../utils/ApiResponse.js";
+import { ApiResponse } from "../utils/Apiresponse.js";
 
 
 const getVideoComments = asyncHandler(async (req, res) => {
@@ -37,10 +37,46 @@ const getVideoComments = asyncHandler(async (req, res) => {
                 ]
             }
         },{
+            $lookup:{
+                from:"likes",
+                localField:"_id",
+                foreignField:"comment",
+                as:"likes"
+            }
+        },{
+            $lookup:{
+                from:"dislikes",
+                localField:"_id",
+                foreignField:"comment",
+                as:"dislikes"
+            }
+        },{
             $addFields:{
                 userDetails:{
                     $arrayElemAt:["$userDetails",0]
+                },
+                likesCount: { $size: "$likes" },
+                dislikesCount: { $size: "$dislikes" },
+                isLikedByUser: {
+                    $in: [req.user._id, "$likes.likedBy"]
+                },
+                isDislikedByUser: {
+                    $in: [req.user._id, "$dislikes.dislikedBy"]
                 }
+            }
+        },{
+            $project: {
+                content: 1,
+                owner: 1,
+                video: 1,
+                replies: 1,
+                createdAt: 1,
+                updatedAt: 1,
+                userDetails: 1,
+                likesCount: 1,
+                dislikesCount: 1,
+                isLikedByUser: 1,
+                isDislikedByUser: 1
             }
         },{
             $skip:(Number(page)-1)*(Number(limit))

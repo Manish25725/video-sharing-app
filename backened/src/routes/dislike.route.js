@@ -6,8 +6,8 @@ const router=Router();
 
 router.route("/toggle-video-dislike/:videoId").get(verifyJWT,toggleVideoDislike);
 
-router.route("/toogle-comment-dislike/:commentId").get(verifyJWT,toggleCommentDislike);
+router.route("/toggle-comment-dislike/:commentId").get(verifyJWT,toggleCommentDislike);
 
-router.route("/toggle-tweet-dislike/:tweeetId").get(verifyJWT,toggleTweetDislike);
+router.route("/toggle-tweet-dislike/:tweetId").get(verifyJWT,toggleTweetDislike);
 
 export default router

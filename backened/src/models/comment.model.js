@@ -14,14 +14,7 @@ const commentSchema=new Schema({
     video:{
         type:mongoose.Schema.Types.ObjectId,
         ref:"Video"
-    },
-
-    replies:[
-        {
-            type:mongoose.Schema.Types.ObjectId,
-            ref:"Comment"
-        }
-    ]
+    }
 },{
     timestamps:true
 })

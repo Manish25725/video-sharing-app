@@ -26,6 +26,7 @@ import {
 } from 'lucide-react';
 import { videoService } from '../services/videoService';
 import { likeService } from '../services/likeService';
+import { dislikeService } from '../services/dislikeService';
 import { commentService } from '../services/commentService';
 import { subscriptionService } from '../services/subscriptionService';
 import { downloadService } from '../services/downloadService';
@@ -42,7 +43,13 @@ const VideoPlayer = () => {
   const navigate = useNavigate()
   const { user } = useAuth()
   const [video, setVideo] = useState(null)
-  const [videoStats, setVideoStats] = useState({ views: 0, likesCount: 0, isLikedByUser: false })
+  const [videoStats, setVideoStats] = useState({ 
+    views: 0, 
+    likesCount: 0, 
+    dislikesCount: 0,
+    isLikedByUser: false, 
+    isDislikedByUser: false 
+  })
   const [isSubscribed, setIsSubscribed] = useState(false)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -201,9 +208,48 @@ const VideoPlayer = () => {
   }
 
   // Handle dislike functionality
-  const handleDislike = () => {
-    // For now, just show a message since we haven't implemented dislikes in backend
-    alert('Dislike feature coming soon!')
+  const handleDislike = async () => {
+    if (!user) {
+      alert('Please login to dislike videos')
+      return
+    }
+
+    try {
+      const response = await dislikeService.toggleVideoDislike(videoId)
+      if (response && response.success) {
+        // If currently disliked, toggle it off
+        if (videoStats.isDislikedByUser) {
+          setVideoStats(prev => ({
+            ...prev,
+            dislikesCount: prev.dislikesCount - 1,
+            isDislikedByUser: false
+          }))
+        } else {
+          // If currently liked, remove like and add dislike
+          if (videoStats.isLikedByUser) {
+            // Remove like first
+            await likeService.toggleVideoLike(videoId)
+            setVideoStats(prev => ({
+              ...prev,
+              likesCount: prev.likesCount - 1,
+              dislikesCount: prev.dislikesCount + 1,
+              isLikedByUser: false,
+              isDislikedByUser: true
+            }))
+          } else {
+            // Just add dislike
+            setVideoStats(prev => ({
+              ...prev,
+              dislikesCount: prev.dislikesCount + 1,
+              isDislikedByUser: true
+            }))
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error disliking video:', error)
+      alert('Failed to dislike video')
+    }
   }
 
   // Handle more options
@@ -295,12 +341,78 @@ const VideoPlayer = () => {
 
   // Handle comment like/dislike
   const handleCommentLike = async (commentId) => {
+    if (!user) {
+      alert('Please login to like comments')
+      return
+    }
+
     try {
-      // This would need to be implemented in the backend
-      console.log('Like comment:', commentId)
-      alert('Comment like feature coming soon!')
+      const response = await likeService.toggleCommentLike(commentId)
+      if (response && response.success) {
+        // Update the comment in the local state
+        setComments(prev => prev.map(comment => {
+          if (comment._id === commentId) {
+            const wasLiked = comment.isLikedByUser
+            const wasDisliked = comment.isDislikedByUser
+            
+            return {
+              ...comment,
+              likesCount: wasLiked ? comment.likesCount - 1 : comment.likesCount + 1,
+              dislikesCount: wasDisliked ? comment.dislikesCount - 1 : comment.dislikesCount,
+              isLikedByUser: !wasLiked,
+              isDislikedByUser: false // Remove dislike if it was disliked
+            }
+          }
+          return comment
+        }))
+
+        // If the comment was disliked, toggle dislike off
+        const comment = comments.find(c => c._id === commentId)
+        if (comment && comment.isDislikedByUser) {
+          await dislikeService.toggleCommentDislike(commentId)
+        }
+      }
     } catch (error) {
       console.error('Error liking comment:', error)
+      alert('Failed to like comment')
+    }
+  }
+
+  const handleCommentDislike = async (commentId) => {
+    if (!user) {
+      alert('Please login to dislike comments')
+      return
+    }
+
+    try {
+      const response = await dislikeService.toggleCommentDislike(commentId)
+      if (response && response.success) {
+        // Update the comment in the local state
+        setComments(prev => prev.map(comment => {
+          if (comment._id === commentId) {
+            const wasLiked = comment.isLikedByUser
+            const wasDisliked = comment.isDislikedByUser
+            
+            return {
+              ...comment,
+              likesCount: wasLiked ? comment.likesCount - 1 : comment.likesCount,
+              dislikesCount: wasDisliked ? comment.dislikesCount - 1 : comment.dislikesCount + 1,
+              isLikedByUser: false, // Remove like if it was liked
+              isDislikedByUser: !wasDisliked
+            }
+          }
+          return comment
+        }))
+
+        // If the comment was liked, toggle like off
+        const comment = comments.find(c => c._id === commentId)
+        if (comment && comment.isLikedByUser) {
+          await likeService.toggleCommentLike(commentId)
+        }
+      }
+    } catch (error) {
+      console.error('Error disliking comment:', error)
+      alert('Failed to dislike comment')
     }
   }
 
@@ -382,12 +494,34 @@ const VideoPlayer = () => {
     try {
       const response = await likeService.toggleVideoLike(videoId)
       if (response && response.success) {
-        // Update local state
-        setVideoStats(prev => ({
-          ...prev,
-          isLikedByUser: !prev.isLikedByUser,
-          likesCount: prev.isLikedByUser ? prev.likesCount - 1 : prev.likesCount + 1
-        }))
+        // If currently liked, toggle it off
+        if (videoStats.isLikedByUser) {
+          setVideoStats(prev => ({
+            ...prev,
+            likesCount: prev.likesCount - 1,
+            isLikedByUser: false
+          }))
+        } else {
+          // If currently disliked, remove dislike and add like
+          if (videoStats.isDislikedByUser) {
+            // Remove dislike first
+            await dislikeService.toggleVideoDislike(videoId)
+            setVideoStats(prev => ({
+              ...prev,
+              likesCount: prev.likesCount + 1,
+              dislikesCount: prev.dislikesCount - 1,
+              isLikedByUser: true,
+              isDislikedByUser: false
+            }))
+          } else {
+            // Just add like
+            setVideoStats(prev => ({
+              ...prev,
+              likesCount: prev.likesCount + 1,
+              isLikedByUser: true
+            }))
+          }
+        }
       }
     } catch (err) {
       console.error("Error toggling like:", err)
@@ -546,10 +680,15 @@ const VideoPlayer = () => {
                   <div className="w-px h-6 bg-gray-300"></div>
                   <button 
                     onClick={handleDislike}
-                    className="px-4 py-2 hover:bg-gray-200 transition-colors text-gray-700"
-                    title="Dislike this video"
+                    className={`px-4 py-2 hover:bg-gray-200 transition-colors ${
+                      videoStats.isDislikedByUser ? 'text-red-600' : 'text-gray-700'
+                    }`}
+                    title={videoStats.isDislikedByUser ? 'Remove dislike' : 'Dislike this video'}
                   >
-                    <ThumbsDown className="w-5 h-5" />
+                    <div className="flex items-center space-x-2">
+                      <ThumbsDown className={`w-5 h-5 ${videoStats.isDislikedByUser ? 'fill-current' : ''}`} />
+                      <span className="font-medium">{(videoStats.dislikesCount || 0).toLocaleString()}</span>
+                    </div>
                   </button>
                 </div>
 
@@ -770,16 +909,21 @@ const VideoPlayer = () => {
                         <div className="flex items-center space-x-4 text-xs text-gray-600">
                           <button 
                             onClick={() => handleCommentLike(comment.id)}
-                            className="flex items-center space-x-1 hover:text-gray-800 transition-colors"
+                            className={`flex items-center space-x-1 hover:text-gray-800 transition-colors ${
+                              comment.isLikedByUser ? 'text-blue-600' : ''
+                            }`}
                           >
-                            <ThumbsUp className="w-3 h-3" />
+                            <ThumbsUp className={`w-3 h-3 ${comment.isLikedByUser ? 'fill-current' : ''}`} />
                             <span>{comment.likesCount || 0}</span>
                           </button>
                           <button 
-                            onClick={handleDislike}
-                            className="flex items-center space-x-1 hover:text-gray-800 transition-colors"
+                            onClick={() => handleCommentDislike(comment.id)}
+                            className={`flex items-center space-x-1 hover:text-gray-800 transition-colors ${
+                              comment.isDislikedByUser ? 'text-red-600' : ''
+                            }`}
                           >
-                            <ThumbsDown className="w-3 h-3" />
+                            <ThumbsDown className={`w-3 h-3 ${comment.isDislikedByUser ? 'fill-current' : ''}`} />
+                            <span>{comment.dislikesCount || 0}</span>
                           </button>
                           <button 
                             onClick={() => handleCommentReply(comment.id)}

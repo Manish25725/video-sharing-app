@@ -14,7 +14,7 @@ const toggleVideoDislike=asyncHandler( async(req,res)=>{
     })
 
     if(asd){
-        const re= await Dislike.deletMany({
+        const re= await Dislike.deleteMany({
             video : videoId,
             dislikedBy : req.user._id
         })
@@ -60,7 +60,7 @@ const toggleCommentDislike=asyncHandler(async (req,res)=>{
 
     if(asd){
 
-        const re=await Dislike.deletMany({
+        const re=await Dislike.deleteMany({
             comment : commentId,
             dislikedBy : req.user._id
         })
@@ -102,7 +102,7 @@ const toggleTweetDislike=asyncHandler(async (req,res)=>{
 
     if(asd){
 
-        const re=await Dislike.deletMany({
+        const re=await Dislike.deleteMany({
             tweet : tweetId,
             dislikedBy : req.user._id
         })

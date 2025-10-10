@@ -25,4 +25,4 @@ const dislikeSchema=new Schema({
 },{timestamps:true})
 
 
-export const Dislike=new mongoose.model("Dislike",dislikeSchema);
+export const Dislike = mongoose.model("Dislike",dislikeSchema);
