@@ -20,7 +20,7 @@ export class NotificationService {
                 return null;
             }
 
-            // Create notification in database
+            // Create notification in database (ALWAYS store for offline users)
             const notification = await Notification.create({
                 recipient,
                 sender,
@@ -28,38 +28,22 @@ export class NotificationService {
                 message,
                 video,
                 comment,
-                tweet
+                tweet,
+                isSent: false // Will be updated if user is online
             });
 
             // Populate sender information for socket emission
             await notification.populate('sender', 'userName fullName avatar');
 
-            // Send real-time notification via socket if io is available
-            if (global.io) {
-                const notificationData = {
-                    id: notification._id,
-                    type,
-                    message,
-                    sender: {
-                        id: notification.sender._id,
-                        userName: notification.sender.userName,
-                        fullName: notification.sender.fullName,
-                        avatar: notification.sender.avatar
-                    },
-                    video,
-                    comment,
-                    tweet,
-                    createdAt: notification.createdAt,
-                    isRead: false
-                };
-
-                // Emit to user's personal notification room
-                global.io.to(`user:${recipient}`).emit('new-notification', notificationData);
-                console.log(`Notification sent to user:${recipient}`, notificationData);
-
-                // Mark as sent
-                notification.isSent = true;
-                await notification.save();
+            // Try to send real-time notification if user is online
+            const isUserOnline = this.sendRealTimeNotification(recipient, notification);
+            
+            // Update isSent status if successfully sent to online user
+            if (isUserOnline) {
+                await Notification.findByIdAndUpdate(notification._id, { isSent: true });
+                console.log(`✅ Real-time notification sent to user:${recipient}`);
+            } else {
+                console.log(`💾 Notification stored for offline user:${recipient}`);
             }
 
             return notification;
@@ -67,6 +51,40 @@ export class NotificationService {
             console.error('Error creating notification:', error);
             return null;
         }
+    }
+
+    // Send real-time notification if user is online
+    static sendRealTimeNotification(recipient, notification) {
+        if (!global.io) return false;
+        
+        const userRoom = `user:${recipient}`;
+        const clients = global.io.sockets.adapter.rooms.get(userRoom);
+        
+        // Check if user is online (has active socket connections)
+        if (clients && clients.size > 0) {
+            const notificationData = {
+                _id: notification._id,
+                type: notification.type,
+                message: notification.message,
+                sender: {
+                    _id: notification.sender._id,
+                    userName: notification.sender.userName,
+                    fullName: notification.sender.fullName,
+                    avatar: notification.sender.avatar
+                },
+                video: notification.video,
+                comment: notification.comment,
+                tweet: notification.tweet,
+                createdAt: notification.createdAt,
+                isRead: false
+            };
+
+            // Emit to user's personal notification room
+            global.io.to(userRoom).emit('new-notification', notificationData);
+            return true; // User is online
+        }
+        
+        return false; // User is offline
     }
 
     // Generate notification messages based on type
@@ -206,51 +224,84 @@ export class NotificationService {
         }
     }
 
-    // Mark notification as read
+    // Mark notification as read and DELETE from database
     static async markAsRead(notificationId, userId) {
         try {
-            return await Notification.findOneAndUpdate(
-                { _id: notificationId, recipient: userId },
-                { isRead: true },
-                { new: true }
-            );
+            // Find and DELETE the notification when marked as read
+            const notification = await Notification.findOneAndDelete({
+                _id: notificationId,
+                recipient: userId
+            });
+
+            if (notification) {
+                console.log(`🗑️ Notification deleted after being read:`, notificationId);
+                
+                // Send real-time update to user that notification was read/deleted
+                if (global.io) {
+                    global.io.to(`user:${userId}`).emit('notification-deleted', {
+                        notificationId: notificationId
+                    });
+                }
+                
+                return { success: true, deleted: true };
+            }
+
+            return null;
         } catch (error) {
             console.error('Error marking notification as read:', error);
             return null;
         }
     }
 
-    // Mark all notifications as read for a user
+    // Mark all notifications as read and DELETE them from database
     static async markAllAsRead(userId) {
         try {
-            return await Notification.updateMany(
-                { recipient: userId, isRead: false },
-                { isRead: true }
-            );
+            // DELETE all notifications for the user
+            const result = await Notification.deleteMany({
+                recipient: userId
+            });
+
+            console.log(`🗑️ Deleted ${result.deletedCount} notifications for user:`, userId);
+            
+            // Send real-time update to user that all notifications were deleted
+            if (global.io) {
+                global.io.to(`user:${userId}`).emit('all-notifications-deleted');
+            }
+
+            return {
+                success: true,
+                deletedCount: result.deletedCount
+            };
         } catch (error) {
             console.error('Error marking all notifications as read:', error);
             return null;
         }
     }
 
-    // Get user notifications
+    // Get user notifications (only unread since read ones are deleted)
     static async getUserNotifications(userId, page = 1, limit = 20) {
         try {
             const skip = (page - 1) * limit;
             
-            const notifications = await Notification.find({ recipient: userId })
+            // Only get unread notifications since read ones are deleted
+            const notifications = await Notification.find({ 
+                recipient: userId,
+                isRead: false // Only unread notifications exist
+            })
                 .populate('sender', 'userName fullName avatar')
                 .populate('video', 'title thumbnail')
-                .populate('comment', 'content')
+                .populate('tweet', 'content')
                 .sort({ createdAt: -1 })
                 .skip(skip)
                 .limit(limit);
 
-            const total = await Notification.countDocuments({ recipient: userId });
-            const unreadCount = await Notification.countDocuments({ 
-                recipient: userId, 
+            const total = await Notification.countDocuments({ 
+                recipient: userId,
                 isRead: false 
             });
+
+            // All notifications are unread since read ones are deleted
+            const unreadCount = total;
 
             return {
                 notifications,

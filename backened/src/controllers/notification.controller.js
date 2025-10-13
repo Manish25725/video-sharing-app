@@ -36,7 +36,7 @@ const getUserNotifications = asyncHandler(async (req, res) => {
     }
 });
 
-// Mark a specific notification as read
+// Mark notification as read (which deletes it from database)
 const markNotificationAsRead = asyncHandler(async (req, res) => {
     const { notificationId } = req.params;
 
@@ -49,16 +49,16 @@ const markNotificationAsRead = asyncHandler(async (req, res) => {
     }
 
     try {
-        const notification = await NotificationService.markAsRead(notificationId, req.user._id);
+        const result = await NotificationService.markAsRead(notificationId, req.user._id);
 
-        if (!notification) {
-            throw new ApiError(404, "Notification not found or already read");
+        if (!result) {
+            throw new ApiError(404, "Notification not found");
         }
 
         return res
             .status(200)
             .json(
-                new ApiResponse(200, notification, "Notification marked as read")
+                new ApiResponse(200, { deleted: true }, "Notification marked as read and deleted")
             );
     } catch (error) {
         console.error('Error marking notification as read:', error);
@@ -66,7 +66,7 @@ const markNotificationAsRead = asyncHandler(async (req, res) => {
     }
 });
 
-// Mark all notifications as read for the user
+// Mark all notifications as read (which deletes them all from database)
 const markAllNotificationsAsRead = asyncHandler(async (req, res) => {
     if (!req?.user) {
         throw new ApiError(401, "User must be logged in");
@@ -78,7 +78,9 @@ const markAllNotificationsAsRead = asyncHandler(async (req, res) => {
         return res
             .status(200)
             .json(
-                new ApiResponse(200, { modifiedCount: result.modifiedCount }, "All notifications marked as read")
+                new ApiResponse(200, { 
+                    deletedCount: result.deletedCount 
+                }, "All notifications marked as read and deleted")
             );
     } catch (error) {
         console.error('Error marking all notifications as read:', error);
@@ -86,16 +88,16 @@ const markAllNotificationsAsRead = asyncHandler(async (req, res) => {
     }
 });
 
-// Get unread notification count
+// Get unread notification count (since read notifications are deleted)
 const getUnreadNotificationCount = asyncHandler(async (req, res) => {
     if (!req?.user) {
         throw new ApiError(401, "User must be logged in");
     }
 
     try {
+        // Since read notifications are deleted, all notifications are unread
         const count = await Notification.countDocuments({
-            recipient: req.user._id,
-            isRead: false
+            recipient: req.user._id
         });
 
         return res

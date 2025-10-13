@@ -19,9 +19,15 @@ const NotificationBell = () => {
             // Connect to socket and listen for real-time notifications
             socketService.connect(user._id);
             socketService.onNotification(handleNewNotification);
+            
+            // Listen for notification deletion events
+            socketService.on('notification-deleted', handleNotificationDeleted);
+            socketService.on('all-notifications-deleted', handleAllNotificationsDeleted);
 
             return () => {
                 socketService.offNotification(handleNewNotification);
+                socketService.off('notification-deleted', handleNotificationDeleted);
+                socketService.off('all-notifications-deleted', handleAllNotificationsDeleted);
             };
         }
     }, [user]);
@@ -38,6 +44,18 @@ const NotificationBell = () => {
                 badge: '/favicon.ico'
             });
         }
+    };
+
+    const handleNotificationDeleted = ({ notificationId }) => {
+        console.log('Notification deleted:', notificationId);
+        setNotifications(prev => prev.filter(notif => notif._id !== notificationId));
+        setUnreadCount(prev => Math.max(0, prev - 1));
+    };
+
+    const handleAllNotificationsDeleted = () => {
+        console.log('All notifications deleted');
+        setNotifications([]);
+        setUnreadCount(0);
     };
 
     const fetchUnreadCount = async () => {
@@ -73,12 +91,8 @@ const NotificationBell = () => {
     const handleMarkAsRead = async (notificationId) => {
         try {
             await notificationService.markAsRead(notificationId);
-            setNotifications(prev => 
-                prev.map(notif => 
-                    notif._id === notificationId ? { ...notif, isRead: true } : notif
-                )
-            );
-            setUnreadCount(prev => Math.max(0, prev - 1));
+            // Notification is automatically removed from UI via socket event
+            console.log('Notification marked as read and deleted:', notificationId);
         } catch (error) {
             console.error('Error marking notification as read:', error);
         }
@@ -87,8 +101,8 @@ const NotificationBell = () => {
     const handleMarkAllAsRead = async () => {
         try {
             await notificationService.markAllAsRead();
-            setNotifications(prev => prev.map(notif => ({ ...notif, isRead: true })));
-            setUnreadCount(0);
+            // All notifications are automatically removed from UI via socket event
+            console.log('All notifications marked as read and deleted');
         } catch (error) {
             console.error('Error marking all as read:', error);
         }
@@ -158,10 +172,8 @@ const NotificationBell = () => {
                             notifications.map((notification) => (
                                 <div
                                     key={notification._id}
-                                    className={`p-4 border-b border-gray-100 hover:bg-gray-50 cursor-pointer ${
-                                        !notification.isRead ? 'bg-blue-50' : ''
-                                    }`}
-                                    onClick={() => !notification.isRead && handleMarkAsRead(notification._id)}
+                                    className={`p-4 border-b border-gray-100 hover:bg-gray-50 cursor-pointer bg-blue-50`}
+                                    onClick={() => handleMarkAsRead(notification._id)}
                                 >
                                     <div className="flex items-start space-x-3">
                                         {notification.sender?.avatar ? (
@@ -185,9 +197,8 @@ const NotificationBell = () => {
                                             </p>
                                         </div>
                                         
-                                        {!notification.isRead && (
-                                            <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0 mt-2"></div>
-                                        )}
+                                        {/* All notifications show unread indicator since read ones are deleted */}
+                                        <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0 mt-2"></div>
                                     </div>
                                 </div>
                             ))
