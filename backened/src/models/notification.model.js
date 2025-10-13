@@ -19,14 +19,6 @@ const notificationSchema = new Schema({
     type: {
         type: String,
         enum: [
-            'like_video',
-            'dislike_video', 
-            'comment_video',
-            'like_comment',
-            'dislike_comment',
-            'reply_comment',
-            'subscribe',
-            'unsubscribe',
             'video_upload',
             'tweet_post'
         ],
@@ -37,11 +29,6 @@ const notificationSchema = new Schema({
     video: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "Video"
-    },
-    
-    comment: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Comment"
     },
     
     tweet: {
