@@ -12,7 +12,7 @@ class SocketService {
             this.disconnect();
         }
 
-        this.socket = io('http://localhost:8002', {
+        this.socket = io('http://localhost:8004', {
             withCredentials: true,
             transports: ['websocket', 'polling']
         });

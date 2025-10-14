@@ -14,8 +14,12 @@ const NotificationBell = () => {
     const { user } = useAuth();
     const dropdownRef = useRef(null);
 
+        // console.log('🔔 NotificationBell component rendered, unreadCount:', unreadCount);
+
     useEffect(() => {
+            // console.log('🚀 NotificationBell useEffect triggered, user:', user);
         if (user) {
+                // console.log('👤 User found, fetching unread count...');
             fetchUnreadCount();
             
             // Connect to socket and listen for real-time notifications
@@ -105,10 +109,13 @@ const NotificationBell = () => {
 
     const fetchUnreadCount = async () => {
         try {
+            console.log('🔍 Fetching unread count...');
             const response = await notificationService.getUnreadCount();
+            console.log('📊 Unread count response:', response);
             setUnreadCount(response.data.unreadCount);
+            console.log('✅ Set unread count to:', response.data.unreadCount);
         } catch (error) {
-            console.error('Error fetching unread count:', error);
+            console.error('❌ Error fetching unread count:', error);
         }
     };
 
