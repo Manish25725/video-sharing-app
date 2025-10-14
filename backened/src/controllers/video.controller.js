@@ -5,7 +5,7 @@ import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/Apiresponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { uploadOnCloudinary,deleteOnCloudinary } from "../utils/cloudinary.js";
-import NotificationService from "../utils/notificationService.js";
+import { notifyVideoUpload } from "./notification.controller.js";
 
 //for trending ..
 const getTrendingVideos=asyncHandler(async (req,res)=>{
@@ -315,7 +315,7 @@ const publishVideo = asyncHandler(async (req, res) => {
 
     // Send notification to subscribers who have enabled video notifications
     try {
-        await NotificationService.notifyVideoUpload(req.user._id, title, video._id);
+        await notifyVideoUpload(req.user._id, title, video._id);
     } catch (error) {
         console.error('Error sending video upload notifications:', error);
         // Don't fail the video upload if notification fails
