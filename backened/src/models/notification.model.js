@@ -48,6 +48,12 @@ const notificationSchema = new Schema({
         default: false
     },
     
+    // Whether the notification was manually dismissed by user
+    isDismissed: {
+        type: Boolean,
+        default: false
+    },
+    
     // Whether the notification was sent via socket
     isSent: {
         type: Boolean,

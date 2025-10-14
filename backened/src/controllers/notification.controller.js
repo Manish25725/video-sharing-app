@@ -36,6 +36,58 @@ const getUserNotifications = asyncHandler(async (req, res) => {
     }
 });
 
+// Dismiss notification (cross button clicked)
+const dismissNotification = asyncHandler(async (req, res) => {
+    const { notificationId } = req.params;
+
+    if (!req?.user) {
+        throw new ApiError(401, "User must be logged in");
+    }
+
+    if (!mongoose.Types.ObjectId.isValid(notificationId)) {
+        throw new ApiError(400, "Invalid notification ID");
+    }
+
+    try {
+        const result = await NotificationService.dismissNotification(notificationId, req.user._id);
+
+        if (!result) {
+            throw new ApiError(404, "Notification not found");
+        }
+
+        return res
+            .status(200)
+            .json(
+                new ApiResponse(200, result, "Notification dismissed successfully")
+            );
+    } catch (error) {
+        console.error('Error dismissing notification:', error);
+        throw new ApiError(500, "Failed to dismiss notification");
+    }
+});
+
+// Store active notifications when user goes offline
+const storeActiveNotifications = asyncHandler(async (req, res) => {
+    const { activeNotifications } = req.body;
+
+    if (!req?.user) {
+        throw new ApiError(401, "User must be logged in");
+    }
+
+    try {
+        const result = await NotificationService.storeActiveNotifications(req.user._id, activeNotifications);
+
+        return res
+            .status(200)
+            .json(
+                new ApiResponse(200, result, "Active notifications stored successfully")
+            );
+    } catch (error) {
+        console.error('Error storing active notifications:', error);
+        throw new ApiError(500, "Failed to store active notifications");
+    }
+});
+
 // Mark notification as read (which deletes it from database)
 const markNotificationAsRead = asyncHandler(async (req, res) => {
     const { notificationId } = req.params;
@@ -217,6 +269,8 @@ export {
     markAllNotificationsAsRead,
     getUnreadNotificationCount,
     deleteNotification,
+    dismissNotification,
+    storeActiveNotifications,
     videoUploadeNotify,
     postUploadNotify
 };

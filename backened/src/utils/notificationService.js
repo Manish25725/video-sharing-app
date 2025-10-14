@@ -72,11 +72,22 @@ export class NotificationService {
                     fullName: notification.sender.fullName,
                     avatar: notification.sender.avatar
                 },
-                video: notification.video,
-                comment: notification.comment,
-                tweet: notification.tweet,
+                // Rich content for UI display
+                content: {
+                    video: notification.video ? {
+                        _id: notification.video._id,
+                        title: notification.video.title,
+                        thumbnail: notification.video.thumbnail,
+                        duration: notification.video.duration
+                    } : null,
+                    tweet: notification.tweet ? {
+                        _id: notification.tweet._id,
+                        content: notification.tweet.content
+                    } : null
+                },
                 createdAt: notification.createdAt,
-                isRead: false
+                isRead: false,
+                isDismissed: false  // Track if user manually dismissed
             };
 
             // Emit to user's personal notification room
@@ -224,31 +235,75 @@ export class NotificationService {
         }
     }
 
-    // Mark notification as read and DELETE from database
-    static async markAsRead(notificationId, userId) {
+    // Dismiss notification (remove from UI, mark in DB if user goes offline)
+    static async dismissNotification(notificationId, userId) {
         try {
-            // Find and DELETE the notification when marked as read
-            const notification = await Notification.findOneAndDelete({
-                _id: notificationId,
-                recipient: userId
-            });
-
-            if (notification) {
-                console.log(`🗑️ Notification deleted after being read:`, notificationId);
+            const userRoom = `user:${userId}`;
+            const clients = global.io.sockets.adapter.rooms.get(userRoom);
+            
+            if (clients && clients.size > 0) {
+                // User is online - remove immediately, don't store in DB
+                await Notification.findOneAndDelete({
+                    _id: notificationId,
+                    recipient: userId
+                });
                 
-                // Send real-time update to user that notification was read/deleted
-                if (global.io) {
-                    global.io.to(`user:${userId}`).emit('notification-deleted', {
-                        notificationId: notificationId
-                    });
+                // Send real-time update to remove from UI
+                global.io.to(userRoom).emit('notification-dismissed', {
+                    notificationId: notificationId
+                });
+                
+                console.log(`🗑️ Online dismissal: Notification ${notificationId} deleted immediately`);
+                return { success: true, stored: false };
+            } else {
+                // User is offline - mark as dismissed but keep in DB
+                const result = await Notification.findOneAndUpdate(
+                    { _id: notificationId, recipient: userId },
+                    { isDismissed: true },
+                    { new: true }
+                );
+                
+                console.log(`💾 Offline dismissal: Notification ${notificationId} marked as dismissed`);
+                return { success: true, stored: true, notification: result };
+            }
+        } catch (error) {
+            console.error('Error dismissing notification:', error);
+            return null;
+        }
+    }
+
+    // Store active notifications when user goes offline
+    static async storeActiveNotifications(userId, activeNotifications) {
+        try {
+            // Only store notifications that haven't been dismissed
+            const notificationsToStore = activeNotifications.filter(notif => !notif.isDismissed);
+            
+            if (notificationsToStore.length > 0) {
+                // Update existing notifications or create new ones
+                for (const notif of notificationsToStore) {
+                    await Notification.findOneAndUpdate(
+                        { _id: notif._id },
+                        {
+                            recipient: userId,
+                            sender: notif.sender._id,
+                            type: notif.type,
+                            message: notif.message,
+                            video: notif.content?.video?._id,
+                            tweet: notif.content?.tweet?._id,
+                            isRead: notif.isRead,
+                            isDismissed: false,
+                            isSent: true  // Was sent during online session
+                        },
+                        { upsert: true, new: true }
+                    );
                 }
                 
-                return { success: true, deleted: true };
+                console.log(`💾 Stored ${notificationsToStore.length} active notifications for offline user ${userId}`);
             }
-
-            return null;
+            
+            return { success: true, storedCount: notificationsToStore.length };
         } catch (error) {
-            console.error('Error marking notification as read:', error);
+            console.error('Error storing active notifications:', error);
             return null;
         }
     }
