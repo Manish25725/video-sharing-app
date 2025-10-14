@@ -217,33 +217,78 @@ const NotificationBell = () => {
                             notifications.map((notification) => (
                                 <div
                                     key={notification._id}
-                                    className={`p-4 border-b border-gray-100 hover:bg-gray-50 cursor-pointer bg-blue-50`}
-                                    onClick={() => handleMarkAsRead(notification._id)}
+                                    className="relative group"
                                 >
-                                    <div className="flex items-start space-x-3">
-                                        {notification.sender?.avatar ? (
-                                            <img
-                                                src={notification.sender.avatar}
-                                                alt={notification.sender.fullName || notification.sender.userName}
-                                                className="w-8 h-8 rounded-full object-cover"
-                                            />
-                                        ) : (
-                                            <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center">
-                                                <span className="text-xs text-gray-600">
-                                                    {(notification.sender?.fullName || notification.sender?.userName || 'U')[0].toUpperCase()}
-                                                </span>
+                                    <div className="p-4 border-b border-gray-100 hover:bg-gray-50 bg-blue-50">
+                                        <div className="flex items-start space-x-3">
+                                            {/* Sender Avatar */}
+                                            {notification.sender?.avatar ? (
+                                                <img
+                                                    src={notification.sender.avatar}
+                                                    alt={notification.sender.fullName || notification.sender.userName}
+                                                    className="w-10 h-10 rounded-full object-cover flex-shrink-0"
+                                                />
+                                            ) : (
+                                                <div className="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center flex-shrink-0">
+                                                    <span className="text-sm text-gray-600 font-medium">
+                                                        {(notification.sender?.fullName || notification.sender?.userName || 'U')[0].toUpperCase()}
+                                                    </span>
+                                                </div>
+                                            )}
+                                            
+                                            <div className="flex-1 min-w-0">
+                                                {/* Notification Message */}
+                                                <p className="text-sm text-gray-900 font-medium mb-2">
+                                                    {notification.message}
+                                                </p>
+                                                
+                                                {/* Rich Content */}
+                                                {notification.content?.video && (
+                                                    <div className="flex items-center space-x-3 p-2 bg-gray-50 rounded-lg mb-2">
+                                                        <div className="relative">
+                                                            <img
+                                                                src={notification.content.video.thumbnail}
+                                                                alt={notification.content.video.title}
+                                                                className="w-16 h-12 object-cover rounded"
+                                                            />
+                                                            <div className="absolute inset-0 flex items-center justify-center">
+                                                                <PlayIcon className="w-4 h-4 text-white bg-black bg-opacity-50 rounded-full p-1" />
+                                                            </div>
+                                                        </div>
+                                                        <div className="flex-1 min-w-0">
+                                                            <p className="text-xs font-medium text-gray-900 truncate">
+                                                                {notification.content.video.title}
+                                                            </p>
+                                                            <p className="text-xs text-gray-500">
+                                                                {notification.content.video.duration && `${Math.floor(notification.content.video.duration / 60)}:${(notification.content.video.duration % 60).toString().padStart(2, '0')}`}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                )}
+                                                
+                                                {notification.content?.tweet && (
+                                                    <div className="p-2 bg-gray-50 rounded-lg mb-2">
+                                                        <p className="text-xs text-gray-700 italic">
+                                                            "{notification.content.tweet.content.substring(0, 100)}{notification.content.tweet.content.length > 100 ? '...' : ''}"
+                                                        </p>
+                                                    </div>
+                                                )}
+                                                
+                                                {/* Timestamp */}
+                                                <p className="text-xs text-gray-500">
+                                                    {formatTimeAgo(notification.createdAt)}
+                                                </p>
                                             </div>
-                                        )}
-                                        
-                                        <div className="flex-1 min-w-0">
-                                            <p className="text-sm text-gray-900">{notification.message}</p>
-                                            <p className="text-xs text-gray-500 mt-1">
-                                                {formatTimeAgo(notification.createdAt)}
-                                            </p>
+                                            
+                                            {/* Cross Button */}
+                                            <button
+                                                onClick={(e) => handleDismissNotification(notification._id, e)}
+                                                className="opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-gray-200 rounded-full"
+                                                title="Dismiss notification"
+                                            >
+                                                <XMarkIcon className="w-4 h-4 text-gray-500" />
+                                            </button>
                                         </div>
-                                        
-                                        {/* All notifications show unread indicator since read ones are deleted */}
-                                        <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0 mt-2"></div>
                                     </div>
                                 </div>
                             ))

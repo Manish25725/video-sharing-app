@@ -65,14 +65,14 @@ class SocketService {
     // Listen for notifications
     onNotification(callback) {
         if (this.socket) {
-            this.socket.on('notification', callback);
+            this.socket.on('new-notification', callback);
         }
     }
 
     // Remove notification listener
     offNotification(callback) {
         if (this.socket) {
-            this.socket.off('notification', callback);
+            this.socket.off('new-notification', callback);
         }
     }
 

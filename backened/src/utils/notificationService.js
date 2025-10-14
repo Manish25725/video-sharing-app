@@ -32,8 +32,18 @@ export class NotificationService {
                 isSent: false // Will be updated if user is online
             });
 
-            // Populate sender information for socket emission
+            // Populate sender and content information for socket emission
             await notification.populate('sender', 'userName fullName avatar');
+            
+            // Populate video content if exists
+            if (notification.video) {
+                await notification.populate('video', 'title thumbnail duration views');
+            }
+            
+            // Populate tweet content if exists
+            if (notification.tweet) {
+                await notification.populate('tweet', 'content');
+            }
 
             // Try to send real-time notification if user is online
             const isUserOnline = this.sendRealTimeNotification(recipient, notification);
