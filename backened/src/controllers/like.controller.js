@@ -57,21 +57,7 @@ const toggleVideoLike = asyncHandler(async (req, res) => {
         throw new ApiError(400,"Error while liking")
     }
 
-    // Send notification to video owner
-    try {
-        const video = await Video.findById(videoId).populate('owner', '_id');
-        if (video && video.owner) {
-            await NotificationService.notifyVideoLike(
-                video.owner._id,
-                req.user._id,
-                video.title,
-                videoId
-            );
-        }
-    } catch (notificationError) {
-        console.error('Error sending like notification:', notificationError);
-        // Don't fail the main operation if notification fails
-    }
+    // Note: Like notifications are not implemented as per requirements (only video and tweet notifications)
 
     return res
     .status(200)
@@ -129,20 +115,7 @@ const toggleCommentLike = asyncHandler(async (req, res) => {
         throw new ApiError(400,"Error while liking a comment")
     }
 
-    // Send notification to comment owner
-    try {
-        const comment = await Comment.findById(commentId).populate('owner', '_id');
-        if (comment && comment.owner) {
-            await NotificationService.notifyCommentLike(
-                comment.owner._id,
-                req.user._id,
-                commentId
-            );
-        }
-    } catch (notificationError) {
-        console.error('Error sending comment like notification:', notificationError);
-        // Don't fail the main operation if notification fails
-    }
+    // Note: Comment like notifications are not implemented as per requirements (only video and tweet notifications)
 
     return res
     .status(200)
