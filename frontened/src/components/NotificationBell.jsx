@@ -74,8 +74,8 @@ const NotificationBell = () => {
         }
     };
 
-    const handleNotificationDeleted = ({ notificationId }) => {
-        console.log('Notification deleted:', notificationId);
+    const handleNotificationDismissed = ({ notificationId }) => {
+        console.log('Notification dismissed:', notificationId);
         setNotifications(prev => prev.filter(notif => notif._id !== notificationId));
         setUnreadCount(prev => Math.max(0, prev - 1));
     };
@@ -84,6 +84,23 @@ const NotificationBell = () => {
         console.log('All notifications deleted');
         setNotifications([]);
         setUnreadCount(0);
+    };
+
+    const handleDismissNotification = async (notificationId, event) => {
+        event.stopPropagation(); // Prevent notification click
+        
+        try {
+            await notificationService.dismissNotification(notificationId);
+            console.log('Notification dismissed successfully:', notificationId);
+            
+            // If offline, remove from UI immediately
+            if (!isOnline) {
+                setNotifications(prev => prev.filter(notif => notif._id !== notificationId));
+                setUnreadCount(prev => Math.max(0, prev - 1));
+            }
+        } catch (error) {
+            console.error('Error dismissing notification:', error);
+        }
     };
 
     const fetchUnreadCount = async () => {
