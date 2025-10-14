@@ -5,7 +5,6 @@ import { Like } from "../models/like.model.js";
 import { Dislike } from "../models/dislike.model.js";
 import { Video } from "../models/video.model.js";
 import { Comment } from "../models/comment.model.js";
-import NotificationService from "../utils/notificationService.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { updateUserAvatar } from "./user.controller.js";
 

@@ -32,7 +32,7 @@ const createTweet = asyncHandler(async (req, res) => {
 
     // Send notification to subscribers who have enabled post notifications
     try {
-        await NotificationService.notifyTweetPost(req.user._id, content, creatTwt._id);
+        await notifyTweetPost(req.user._id, content, creatTwt._id);
     } catch (error) {
         console.error('Error sending tweet post notifications:', error);
         // Don't fail the tweet creation if notification fails

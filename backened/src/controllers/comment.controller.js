@@ -4,7 +4,6 @@ import {Comment} from "../models/comment.model.js"
 import {Video} from "../models/video.model.js"
 import mongoose from "mongoose";
 import { ApiResponse } from "../utils/Apiresponse.js";
-import NotificationService from "../utils/notificationService.js";
 
 
 const getVideoComments = asyncHandler(async (req, res) => {
@@ -121,22 +120,7 @@ const addComment = asyncHandler(async (req, res) => {
         video:videoId,
     })
 
-    // Send notification to video owner
-    try {
-        const video = await Video.findById(videoId).populate('owner', '_id');
-        if (video && video.owner) {
-            await NotificationService.notifyVideoComment(
-                video.owner._id,
-                req.user._id,
-                video.title,
-                videoId,
-                addCom._id
-            );
-        }
-    } catch (notificationError) {
-        console.error('Error sending comment notification:', notificationError);
-        // Don't fail the main operation if notification fails
-    }
+    // Note: Comment notifications are not implemented as per requirements (only video and tweet notifications)
 
     return res
     .status(200)
