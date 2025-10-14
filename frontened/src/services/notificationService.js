@@ -54,6 +54,30 @@ const notificationService = {
             console.error('Error deleting notification:', error);
             throw error;
         }
+    },
+
+    // Dismiss notification (cross button)
+    dismissNotification: async (notificationId) => {
+        try {
+            const response = await api.patch(`/notifications/${notificationId}/dismiss`);
+            return response.data;
+        } catch (error) {
+            console.error('Error dismissing notification:', error);
+            throw error;
+        }
+    },
+
+    // Store active notifications when going offline
+    storeActiveNotifications: async (activeNotifications) => {
+        try {
+            const response = await api.post('/notifications/store-active', {
+                activeNotifications
+            });
+            return response.data;
+        } catch (error) {
+            console.error('Error storing active notifications:', error);
+            throw error;
+        }
     }
 };
 

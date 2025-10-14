@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { BellIcon } from '@heroicons/react/24/outline';
-import { BellIcon as BellIconSolid } from '@heroicons/react/24/solid';
+import { BellIcon as BellIconSolid, XMarkIcon, PlayIcon } from '@heroicons/react/24/solid';
 import notificationService from '../services/notificationService';
 import socketService from '../services/socketService';
 import { useAuth } from '../contexts/AuthContext';
@@ -10,7 +10,9 @@ const NotificationBell = () => {
     const [notifications, setNotifications] = useState([]);
     const [showDropdown, setShowDropdown] = useState(false);
     const [loading, setLoading] = useState(false);
+    const [isOnline, setIsOnline] = useState(navigator.onLine);
     const { user } = useAuth();
+    const dropdownRef = useRef(null);
 
     useEffect(() => {
         if (user) {
@@ -20,17 +22,43 @@ const NotificationBell = () => {
             socketService.connect(user._id);
             socketService.onNotification(handleNewNotification);
             
-            // Listen for notification deletion events
-            socketService.on('notification-deleted', handleNotificationDeleted);
+            // Listen for notification events
+            socketService.on('notification-dismissed', handleNotificationDismissed);
             socketService.on('all-notifications-deleted', handleAllNotificationsDeleted);
+
+            // Handle online/offline events
+            const handleOnline = () => {
+                setIsOnline(true);
+                console.log('📶 User came online');
+            };
+
+            const handleOffline = async () => {
+                setIsOnline(false);
+                console.log('📴 User went offline');
+                
+                // Store active notifications before going offline
+                if (notifications.length > 0) {
+                    try {
+                        await notificationService.storeActiveNotifications(notifications);
+                        console.log('💾 Stored active notifications for offline');
+                    } catch (error) {
+                        console.error('Error storing notifications:', error);
+                    }
+                }
+            };
+
+            window.addEventListener('online', handleOnline);
+            window.addEventListener('offline', handleOffline);
 
             return () => {
                 socketService.offNotification(handleNewNotification);
-                socketService.off('notification-deleted', handleNotificationDeleted);
+                socketService.off('notification-dismissed', handleNotificationDismissed);
                 socketService.off('all-notifications-deleted', handleAllNotificationsDeleted);
+                window.removeEventListener('online', handleOnline);
+                window.removeEventListener('offline', handleOffline);
             };
         }
-    }, [user]);
+    }, [user, notifications]);
 
     const handleNewNotification = (notification) => {
         console.log('New notification received:', notification);

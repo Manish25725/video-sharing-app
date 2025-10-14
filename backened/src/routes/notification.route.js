@@ -6,6 +6,8 @@ import {
     markAllNotificationsAsRead,
     getUnreadNotificationCount,
     deleteNotification,
+    dismissNotification,
+    storeActiveNotifications,
     videoUploadeNotify,
     postUploadNotify
 } from "../controllers/notification.controller.js";
@@ -23,6 +25,12 @@ router.route('/unread-count').get(getUnreadNotificationCount);
 
 // Mark specific notification as read
 router.route('/:notificationId/read').patch(markNotificationAsRead);
+
+// Dismiss specific notification (cross button)
+router.route('/:notificationId/dismiss').patch(dismissNotification);
+
+// Store active notifications when going offline
+router.route('/store-active').post(storeActiveNotifications);
 
 // Mark all notifications as read
 router.route('/read-all').patch(markAllNotificationsAsRead);
