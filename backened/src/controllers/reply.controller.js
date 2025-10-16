@@ -18,6 +18,15 @@ const createReplyOnComment=asyncHandler(async(req,res)=>{
     });
 
     if(!repl) throw new ApiError(401,"Error while creating a reply");
-    
-    
-})
+
+    return res
+    .status(201)
+    .json(
+        new ApiResponse(201,"Reply created succesfully",repl)
+    )
+});
+
+
+
+
+export {createReplyOnComment}

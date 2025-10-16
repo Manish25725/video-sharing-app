@@ -95,6 +95,44 @@ const getVideoComments = asyncHandler(async (req, res) => {
 })
 
 
+const getCommentsOnTweet=asyncHandler(async(req,res)=>{
+    //get all  comments for a post...
+    const {TweetId} =params;
+    const {page = 1, limit =10} =req.query;
+
+     if(!req.user){
+        throw new ApiError(400,"user must be logged in")
+    }
+    
+    const asd = await Comment.aggregate({
+        $match:{
+            tweet : mongoose.Types.ObjectId(String(TweetId))
+        },
+
+        $lookup:{
+            from : "users",
+            localField: "owner",
+            foreignField : "_id",
+            as : "userDetails",
+            pipeline:[
+                {
+                    $project:{
+                        userName : 1,
+                        fullName : 1,
+                        avatar : 1,
+                        
+                    }
+                }
+            ] 
+        }
+    })
+
+})
+
+
+
+
+
 
 const addComment = asyncHandler(async (req, res) => {
     // TODO: add a comment to a video

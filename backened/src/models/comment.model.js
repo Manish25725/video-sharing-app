@@ -14,6 +14,11 @@ const commentSchema=new Schema({
     video:{
         type:mongoose.Schema.Types.ObjectId,
         ref:"Video"
+    },
+
+    tweet:{
+        type :mongoose.Schema.Types.ObjectId,
+        ref : "Tweet"
     }
 },{
     timestamps:true
