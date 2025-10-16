@@ -19,8 +19,10 @@ const Notification = mongoose.model('Notification', notificationSchema);
 
 async function checkNotifications() {
     try {
-        // Connect to MongoDB
-        await mongoose.connect(process.env.MONGODB_URI);
+        // Connect to MongoDB with correct database name
+        const mongoUri = process.env.MONGODB_URI || 'mongodb+srv://manish:manish25@cluster0.n4rjlbq.mongodb.net';
+        console.log('🔗 Connecting to MongoDB...');
+        await mongoose.connect(mongoUri + '/vediotube');
         console.log('✅ Connected to MongoDB');
 
         // Count all notifications

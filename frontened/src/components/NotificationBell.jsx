@@ -14,12 +14,25 @@ const NotificationBell = () => {
     const { user } = useAuth();
     const dropdownRef = useRef(null);
 
-        // console.log('🔔 NotificationBell component rendered, unreadCount:', unreadCount);
+    console.log('🔔 DEBUG: NotificationBell component rendered, current unreadCount:', unreadCount);
+    console.log('🔔 DEBUG: Component instance ID:', Math.random().toString(36).substr(2, 9));
+
+    // Reset notification count when user changes
+    useEffect(() => {
+        console.log('� DEBUG: User changed, resetting notification count');
+        setUnreadCount(0);
+        setNotifications([]);
+    }, [user?._id]); // Only run when user ID changes, not the whole user object
 
     useEffect(() => {
-            // console.log('🚀 NotificationBell useEffect triggered, user:', user);
+        console.log('🚀 DEBUG: NotificationBell useEffect triggered, user:', user);
         if (user) {
-                // console.log('👤 User found, fetching unread count...');
+            console.log('👤 DEBUG: User found, fetching unread count...');
+            
+            // Clear any cached notification data first
+            localStorage.removeItem('notificationCount');
+            sessionStorage.removeItem('notificationCount');
+            
             fetchUnreadCount();
             
             // Connect to socket and listen for real-time notifications
@@ -33,18 +46,15 @@ const NotificationBell = () => {
             // Handle online/offline events
             const handleOnline = () => {
                 setIsOnline(true);
-                console.log('📶 User came online');
             };
 
             const handleOffline = async () => {
                 setIsOnline(false);
-                console.log('📴 User went offline');
                 
                 // Store active notifications before going offline
                 if (notifications.length > 0) {
                     try {
                         await notificationService.storeActiveNotifications(notifications);
-                        console.log('💾 Stored active notifications for offline');
                     } catch (error) {
                         console.error('Error storing notifications:', error);
                     }
@@ -65,8 +75,13 @@ const NotificationBell = () => {
     }, [user, notifications]);
 
     const handleNewNotification = (notification) => {
-        console.log('New notification received:', notification);
-        setUnreadCount(prev => prev + 1);
+        console.log('📨 DEBUG: New notification received:', notification);
+        console.log('📊 DEBUG: Current unreadCount before increment:', unreadCount);
+        setUnreadCount(prev => {
+            const newCount = prev + 1;
+            console.log('📈 DEBUG: Incrementing unreadCount from', prev, 'to', newCount);
+            return newCount;
+        });
         setNotifications(prev => [notification, ...prev.slice(0, 4)]); // Keep only 5 latest
         
         // Show browser notification if permission granted
@@ -79,13 +94,11 @@ const NotificationBell = () => {
     };
 
     const handleNotificationDismissed = ({ notificationId }) => {
-        console.log('Notification dismissed:', notificationId);
         setNotifications(prev => prev.filter(notif => notif._id !== notificationId));
         setUnreadCount(prev => Math.max(0, prev - 1));
     };
 
     const handleAllNotificationsDeleted = () => {
-        console.log('All notifications deleted');
         setNotifications([]);
         setUnreadCount(0);
     };
@@ -109,13 +122,17 @@ const NotificationBell = () => {
 
     const fetchUnreadCount = async () => {
         try {
-            console.log('🔍 Fetching unread count...');
+            console.log('🔍 DEBUG: Fetching unread count...');
             const response = await notificationService.getUnreadCount();
-            console.log('📊 Unread count response:', response);
+            console.log('📊 DEBUG: Full API Response:', response);
+            console.log('🔢 DEBUG: Unread count from API:', response.data.unreadCount);
+            console.log('🔢 DEBUG: Current unreadCount state before update:', unreadCount);
             setUnreadCount(response.data.unreadCount);
-            console.log('✅ Set unread count to:', response.data.unreadCount);
+            console.log('✅ DEBUG: Updated unreadCount state to:', response.data.unreadCount);
         } catch (error) {
             console.error('❌ Error fetching unread count:', error);
+            // If API fails, reset to 0
+            setUnreadCount(0);
         }
     };
 
@@ -182,12 +199,42 @@ const NotificationBell = () => {
 
     return (
         <div className="relative">
+            {/* Temporary debug reset button - only in development */}
+            {process.env.NODE_ENV === 'development' && (
+                <button 
+                    onClick={() => {
+                        console.log('🔄 RESET: Manually resetting notification count');
+                        setUnreadCount(0);
+                        setNotifications([]);
+                        fetchUnreadCount();
+                    }}
+                    style={{
+                        position: 'absolute',
+                        top: '-25px',
+                        right: '0',
+                        background: 'red',
+                        color: 'white',
+                        padding: '2px 6px',
+                        fontSize: '10px',
+                        border: 'none',
+                        borderRadius: '3px',
+                        cursor: 'pointer',
+                        zIndex: 1000
+                    }}
+                    title="Reset notification count (dev only)"
+                >
+                    RESET
+                </button>
+            )}
+            
+            {/* Debug: Simple bell button to test rendering */}
             <button
                 onClick={handleBellClick}
                 className="relative p-2 text-gray-600 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded-full"
+                title={`${unreadCount} notifications`}
             >
                 {unreadCount > 0 ? (
-                    <BellIconSolid className="h-6 w-6" />
+                    <BellIconSolid className="h-6 w-6 text-blue-600" />
                 ) : (
                     <BellIcon className="h-6 w-6" />
                 )}

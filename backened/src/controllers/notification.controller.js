@@ -477,6 +477,8 @@ const getUnreadNotificationCount = asyncHandler(async (req, res) => {
             recipient: req.user._id
         });
 
+        console.log(`🔍 DEBUG: User ${req.user._id} has ${count} unread notifications`);
+
         return res
             .status(200)
             .json(
