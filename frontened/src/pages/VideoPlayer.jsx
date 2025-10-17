@@ -424,6 +424,7 @@ const VideoPlayer = () => {
     // Update the comments state to include the new reply
     setComments(prevComments => 
       prevComments.map(comment => {
+        // If this is a reply to the top-level comment
         if (comment.id === commentId) {
           return {
             ...comment,
@@ -431,6 +432,35 @@ const VideoPlayer = () => {
             replies: [newReply, ...(comment.replies || [])]
           };
         }
+        
+        // If this is a reply to a nested comment, we need to update the nested structure
+        if (comment.replies && comment.replies.length > 0) {
+          const updateNestedReplies = (replies) => {
+            return replies.map(reply => {
+              if (reply.id === commentId) {
+                return {
+                  ...reply,
+                  repliesCount: (reply.repliesCount || 0) + 1,
+                  replies: [newReply, ...(reply.replies || [])]
+                };
+              }
+              // Recursively check nested replies
+              if (reply.replies && reply.replies.length > 0) {
+                return {
+                  ...reply,
+                  replies: updateNestedReplies(reply.replies)
+                };
+              }
+              return reply;
+            });
+          };
+          
+          return {
+            ...comment,
+            replies: updateNestedReplies(comment.replies)
+          };
+        }
+        
         return comment;
       })
     );

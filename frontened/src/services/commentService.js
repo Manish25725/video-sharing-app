@@ -5,7 +5,7 @@ export const commentService = {
   // Get all comments for a video
   async getVideoComments(videoId, page = 1, limit = 10) {
     try {
-      const response = await apiClient.get(`/comment/get-video-comment/${videoId}?page=${page}&limit=${limit}`);
+      const response = await apiClient.get(`/comment/get-video-comments-enhanced/${videoId}?page=${page}&limit=${limit}`);
       return response;
     } catch (error) {
       console.error('Get video comments error:', error);
@@ -96,7 +96,7 @@ export const transformCommentData = (backendComment) => {
     // Reply-related fields
     isReply: backendComment.isReply || false,
     parentComment: backendComment.parentComment || null,
-    repliesCount: backendComment.repliesCount || 0,
+    repliesCount: backendComment.totalReplies || backendComment.repliesCount || 0,
     replies: backendComment.replies ? transformCommentsArray(backendComment.replies) : [],
   };
 };

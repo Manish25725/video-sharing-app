@@ -25,6 +25,11 @@ try {
         next();
 
 } catch (error) {
+    // Log database connection errors specifically
+    if (error.message && error.message.includes('ENOTFOUND')) {
+        console.error('Database connection error:', error.message);
+        throw new ApiError(503, "Database connection failed. Please try again later.");
+    }
     throw new ApiError(401,error?.message || "Invalid access token");
 }
 });

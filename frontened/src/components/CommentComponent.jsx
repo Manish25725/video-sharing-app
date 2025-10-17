@@ -3,6 +3,8 @@ import { ThumbsUp, ThumbsDown, MessageCircle, ChevronDown, ChevronUp } from 'luc
 import { formatTimeAgo } from '../utils/formatters';
 import { commentService } from '../services/commentService';
 
+import { useEffect } from 'react';
+
 const CommentComponent = ({ 
   comment, 
   onLike, 
@@ -18,29 +20,60 @@ const CommentComponent = ({
   const [repliesLoading, setRepliesLoading] = useState(false);
   const [replies, setReplies] = useState(comment.replies || []);
   const [loadingReplies, setLoadingReplies] = useState(false);
+  const componentId = comment.id || comment._id || Math.random().toString(36).slice(2,9);
+
+  // Close reply form when another component opens its reply form
+  useEffect(() => {
+    const onOtherOpen = (e) => {
+      const openedId = e.detail?.commentId;
+      if (openedId && openedId !== componentId) {
+        setShowReplyForm(false);
+      }
+    };
+
+    window.addEventListener('reply-form-opened', onOtherOpen);
+    return () => window.removeEventListener('reply-form-opened', onOtherOpen);
+  }, [componentId]);
+
+  // Close reply form when user clicks elsewhere or cancels
+  const handleCancelReply = () => {
+    setShowReplyForm(false);
+    setReplyContent('');
+  };
 
   const handleToggleReplies = async () => {
     if (!showReplies && replies.length === 0 && comment.repliesCount > 0) {
       setLoadingReplies(true);
       try {
         const response = await commentService.getCommentReplies(comment.id);
-        if (response.success && response.data.replies) {
-          // Transform the replies data to ensure proper user info
-          const transformedReplies = response.data.replies.map(reply => {
-            const userInfo = reply.userDetails || reply.owner || {};
-            return {
-              ...reply,
-              id: reply._id,
-              user: {
-                id: userInfo._id,
-                name: userInfo.fullName || userInfo.userName || 'Unknown User',
-                userName: userInfo.userName || 'unknown',
-                avatar: userInfo.avatar || '',
-              }
-            };
-          });
-          setReplies(transformedReplies);
-        }
+
+        // Normalize the possible response shapes from commentService/api
+        // commentService.getCommentReplies returns { success: true, data: { replies: [...] } }
+        // but some calls might return the raw ApiResponse directly. Handle both.
+        let repliesArray = [];
+        if (response == null) repliesArray = [];
+        else if (Array.isArray(response)) repliesArray = response;
+        else if (response.success && response.data && Array.isArray(response.data.replies)) repliesArray = response.data.replies;
+        else if (response.data && Array.isArray(response.data)) repliesArray = response.data;
+        else if (response.data && response.data.data && Array.isArray(response.data.data)) repliesArray = response.data.data;
+        else repliesArray = [];
+
+        const transformedReplies = repliesArray.map((reply) => {
+          const userInfo = reply.userDetails || reply.owner || {};
+          const displayName = userInfo.fullName || userInfo.userName || reply.user?.name || 'Anonymous';
+          return {
+            ...reply,
+            id: reply._id,
+            user: {
+              id: userInfo._id || reply.owner || reply.user?.id || null,
+              name: displayName,
+              userName: userInfo.userName || reply.user?.userName || '',
+              avatar: userInfo.avatar || reply.user?.avatar || '',
+            }
+          };
+        });
+
+        setReplies(transformedReplies);
       } catch (error) {
         console.error('Error loading replies:', error);
       } finally {
@@ -57,20 +90,24 @@ const CommentComponent = ({
     setRepliesLoading(true);
     try {
       const response = await commentService.addReply(comment.id, replyContent);
-      if (response.data) {
-        // Transform the reply data to ensure proper user info
-        const replyData = response.data;
+      // Normalize API response to get actual reply payload
+      const replyPayload = response?.data || response;
+      if (replyPayload) {
+        const replyData = replyPayload;
         const userInfo = replyData.owner || replyData.userDetails || {};
-        
+        const displayName = userInfo.fullName || userInfo.userName || user?.fullName || user?.userName || 'You';
+
         const transformedReply = {
           ...replyData,
           id: replyData._id,
           user: {
-            id: userInfo._id,
-            name: userInfo.fullName || userInfo.userName || user?.fullName || user?.userName || 'You',
-            userName: userInfo.userName || user?.userName || 'you',
+            id: userInfo._id || replyData.owner || null,
+            name: displayName,
+            userName: userInfo.userName || user?.userName || '',
             avatar: userInfo.avatar || user?.avatar || '',
-          }
+          },
+          repliesCount: 0, // New replies start with 0 replies
+          replies: [] // Initialize empty replies array
         };
 
         // Add the new reply to the local state
@@ -78,8 +115,14 @@ const CommentComponent = ({
         setReplyContent('');
         setShowReplyForm(false);
         setShowReplies(true);
-        
-        // Call parent callback if provided
+
+        // Update the current comment's reply count
+        comment.repliesCount = (comment.repliesCount || 0) + 1;
+
+        // Notify other components to close their reply forms
+        window.dispatchEvent(new CustomEvent('reply-form-opened', { detail: { commentId: componentId } }));
+
+        // Call parent callback if provided - this will update the parent's state
         if (onReply) {
           onReply(comment.id, transformedReply);
         }
@@ -89,6 +132,30 @@ const CommentComponent = ({
       alert('Failed to add reply. Please try again.');
     } finally {
       setRepliesLoading(false);
+    }
+  };
+
+  // Handle replies to this comment's nested replies
+  const handleNestedReply = (parentReplyId, newReply) => {
+    // If the reply is for one of our nested replies, update our local state
+    setReplies(prevReplies => {
+      const updatedReplies = prevReplies.map(reply => {
+        if (reply.id === parentReplyId) {
+          // Update the reply count and add the new reply to its nested replies
+          return {
+            ...reply,
+            repliesCount: (reply.repliesCount || 0) + 1,
+            replies: [newReply, ...(reply.replies || [])]
+          };
+        }
+        return reply;
+      });
+      return updatedReplies;
+    });
+
+    // Also propagate up to parent if this isn't the top level
+    if (onReply) {
+      onReply(parentReplyId, newReply);
     }
   };
 
@@ -151,10 +218,14 @@ const CommentComponent = ({
             {/* Reply Button */}
             {canReply && (
               <button 
-                onClick={() => setShowReplyForm(!showReplyForm)}
-                className="hover:text-gray-800 transition-colors"
+                onClick={() => {
+                  // Broadcast that this comment opened its reply form so others close theirs
+                  window.dispatchEvent(new CustomEvent('reply-form-opened', { detail: { commentId: componentId } }));
+                  setShowReplyForm(!showReplyForm);
+                }}
+                className={`hover:text-gray-800 transition-colors ${showReplyForm ? 'text-blue-600' : ''}`}
               >
-                Reply
+                {showReplyForm ? 'Cancel' : 'Reply'}
               </button>
             )}
           </div>
@@ -229,7 +300,7 @@ const CommentComponent = ({
                   comment={reply}
                   onLike={onLike}
                   onDislike={onDislike}
-                  onReply={onReply}
+                  onReply={handleNestedReply} // Use our nested reply handler
                   isLoading={isLoading}
                   user={user}
                   depth={depth + 1}
