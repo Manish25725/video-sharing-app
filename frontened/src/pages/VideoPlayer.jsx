@@ -36,6 +36,7 @@ import { transformCommentsArray } from "../services/commentService";
 import { useAuth } from "../contexts/AuthContext";
 import { formatDate, formatTimeAgo } from "../utils/formatters";
 import AddToPlaylistModal from '../components/AddToPlaylistModal';
+import CommentComponent from '../components/CommentComponent';
 import '../styles/VideoPlayer.css';
 
 const VideoPlayer = () => {
@@ -418,13 +419,22 @@ const VideoPlayer = () => {
     }
   }
 
-  const handleCommentReply = (commentId) => {
-    // This would need to be implemented
-    console.log('Reply to comment:', commentId)
-    alert('Reply feature coming soon!')
-  }
-
-  const fetchRelatedVideos = async () => {
+  // Handle comment reply
+  const handleCommentReply = (commentId, newReply) => {
+    // Update the comments state to include the new reply
+    setComments(prevComments => 
+      prevComments.map(comment => {
+        if (comment.id === commentId) {
+          return {
+            ...comment,
+            repliesCount: (comment.repliesCount || 0) + 1,
+            replies: [newReply, ...(comment.replies || [])]
+          };
+        }
+        return comment;
+      })
+    );
+  };  const fetchRelatedVideos = async () => {
     try {
       const response = await videoService.getAllVideos(1, 10)
       if (response && response.data) {
@@ -895,52 +905,16 @@ const VideoPlayer = () => {
                   <div className="text-center py-8 text-gray-500">Loading comments...</div>
                 ) : comments.length > 0 ? (
                   comments.map((comment) => (
-                    <div key={comment.id} className="flex space-x-3">
-                      <img
-                        src={comment.user?.avatar || "/placeholder.svg?height=24&width=24&text=U"}
-                        alt={comment.user?.name}
-                        className="w-6 h-6 rounded-full object-cover flex-shrink-0"
-                      />
-                      <div className="flex-1">
-                        <div className="flex items-center space-x-2 mb-1">
-                          <span className="font-medium text-sm text-gray-900">
-                            {comment.user?.name || 'Anonymous'}
-                          </span>
-                          <span className="text-xs text-gray-500">
-                            {formatTimeAgo(comment.createdAt)}
-                          </span>
-                        </div>
-                        <p className="text-sm text-gray-700 leading-relaxed mb-2">{comment.content}</p>
-                        <div className="flex items-center space-x-4 text-xs text-gray-600">
-                          <button 
-                            onClick={() => handleCommentLike(comment.id)}
-                            disabled={commentActionsLoading.has(comment.id)}
-                            className={`flex items-center space-x-1 hover:text-gray-800 transition-colors ${
-                              comment.isLikedByUser ? 'text-blue-600' : ''
-                            } ${commentActionsLoading.has(comment.id) ? 'opacity-50 cursor-not-allowed' : ''}`}
-                          >
-                            <ThumbsUp className={`w-3 h-3 ${comment.isLikedByUser ? 'fill-current' : ''}`} />
-                            <span>{comment.likesCount || 0}</span>
-                          </button>
-                          <button 
-                            onClick={() => handleCommentDislike(comment.id)}
-                            disabled={commentActionsLoading.has(comment.id)}
-                            className={`flex items-center space-x-1 hover:text-gray-800 transition-colors ${
-                              comment.isDislikedByUser ? 'text-red-600' : ''
-                            } ${commentActionsLoading.has(comment.id) ? 'opacity-50 cursor-not-allowed' : ''}`}
-                          >
-                            <ThumbsDown className={`w-3 h-3 ${comment.isDislikedByUser ? 'fill-current' : ''}`} />
-                            <span>{comment.dislikesCount || 0}</span>
-                          </button>
-                          <button 
-                            onClick={() => handleCommentReply(comment.id)}
-                            className="hover:text-gray-800 transition-colors"
-                          >
-                            Reply
-                          </button>
-                        </div>
-                      </div>
-                    </div>
+                    <CommentComponent
+                      key={comment.id}
+                      comment={comment}
+                      onLike={handleCommentLike}
+                      onDislike={handleCommentDislike}
+                      onReply={handleCommentReply}
+                      isLoading={commentActionsLoading.has(comment.id)}
+                      user={user}
+                      depth={0}
+                    />
                   ))
                 ) : (
                   <div className="text-center py-8 text-gray-500">

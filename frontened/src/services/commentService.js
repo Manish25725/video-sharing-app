@@ -24,6 +24,28 @@ export const commentService = {
     }
   },
 
+  // Add a reply to a comment
+  async addReply(commentId, content) {
+    try {
+      const response = await apiClient.post(`/comment/add-reply/${commentId}`, { content });
+      return response;
+    } catch (error) {
+      console.error('Add reply error:', error);
+      throw error;
+    }
+  },
+
+  // Get replies for a specific comment
+  async getCommentReplies(commentId, page = 1, limit = 5) {
+    try {
+      const response = await apiClient.get(`/comment/get-replies/${commentId}?page=${page}&limit=${limit}`);
+      return { success: true, data: { replies: response.data } };
+    } catch (error) {
+      console.error('Get replies error:', error);
+      return { success: false, data: [] };
+    }
+  },
+
   // Update an existing comment
   async updateComment(commentId, content) {
     try {
@@ -51,15 +73,18 @@ export const commentService = {
 export const transformCommentData = (backendComment) => {
   if (!backendComment) return null;
 
+  // Handle both userDetails (from aggregation) and owner (from populate)
+  const userInfo = backendComment.userDetails || backendComment.owner || {};
+
   return {
     id: backendComment._id,
     _id: backendComment._id, // Keep both for compatibility
     content: backendComment.content,
     user: {
-      id: backendComment.userDetails?._id,
-      name: backendComment.userDetails?.fullName || backendComment.userDetails?.userName || 'Unknown User',
-      userName: backendComment.userDetails?.userName || 'unknown',
-      avatar: backendComment.userDetails?.avatar || '',
+      id: userInfo._id,
+      name: userInfo.fullName || userInfo.userName || 'Unknown User',
+      userName: userInfo.userName || 'unknown',
+      avatar: userInfo.avatar || '',
     },
     createdAt: backendComment.createdAt,
     likesCount: backendComment.likesCount || 0,
@@ -68,6 +93,11 @@ export const transformCommentData = (backendComment) => {
     isDislikedByUser: backendComment.isDislikedByUser || false,
     // Keep old format for compatibility
     isLiked: backendComment.isLikedByUser || backendComment.isLiked || false,
+    // Reply-related fields
+    isReply: backendComment.isReply || false,
+    parentComment: backendComment.parentComment || null,
+    repliesCount: backendComment.repliesCount || 0,
+    replies: backendComment.replies ? transformCommentsArray(backendComment.replies) : [],
   };
 };
 
