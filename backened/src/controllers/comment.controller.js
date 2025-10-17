@@ -54,7 +54,7 @@ const getVideoComments = asyncHandler(async (req, res) => {
         },{
             $addFields:{
                 userDetails:{
-                    $arrayElemAt:["$userDetails",0]
+                     $arrayElemAt:["$userDetails",0]
                 },
                 likesCount: { $size: "$likes" },
                 dislikesCount: { $size: "$dislikes" },
@@ -95,42 +95,105 @@ const getVideoComments = asyncHandler(async (req, res) => {
 })
 
 
-const getCommentsOnTweet=asyncHandler(async(req,res)=>{
-    //get all  comments for a post...
-    const {TweetId} =params;
-    const {page = 1, limit =10} =req.query;
 
-     if(!req.user){
+const getTweetComments = asyncHandler(async (req, res) => {
+    const { TweetId } = req.params;
+    const { page = 1, limit = 10 } = req.query;
+
+    if (!req.user) {
+        throw new ApiError(400, "User must be logged in");
+    }
+
+    const comments = await Comment.aggregate([
+        {
+            $match: {
+                tweet: new mongoose.Types.ObjectId(String(TweetId))
+            }
+        },
+        {
+            $lookup: {
+                from: "users",
+                localField: "owner",
+                foreignField: "_id",
+                as: "userDetails",
+                pipeline: [
+                    {
+                        $project: {
+                            userName: 1,
+                            fullName: 1,
+                            avatar: 1
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            $lookup: {
+                from: "likes",
+                localField: "_id",
+                foreignField: "comment",
+                as: "like"
+            }
+        },
+        {
+            $lookup: {
+                from: "dislikes",
+                localField: "_id",
+                foreignField: "comment",
+                as: "dislike"
+            }
+        },
+        {
+            $addFields: {
+                userDetails: { $arrayElemAt: ["$userDetails", 0] },
+                likesCount: { $size: "$like" },
+                dislikesCount: { $size: "$dislike" },
+                isLikedByUser: {
+                    $in: [req.user._id, "$like.likedBy"]
+                },
+                isDislikedByUser: {
+                    $in: [req.user._id, "$dislike.dislikedBy"]
+                }
+            }
+        },
+        { $skip: (page - 1) * parseInt(limit) },
+        { $limit: parseInt(limit) }
+    ]);
+
+    res.status(200).json(new ApiResponse(200, comments, "Comments fetched successfully"));
+});
+
+
+const addCommentOnTweet=asyncHandler( async(req,res) =>{
+    //TODO : add a comment to a tweet
+    const {tweetId} = req.params;
+    const {content}  = req.body;
+
+    if(!req.user){
         throw new ApiError(400,"user must be logged in")
     }
+
+    if(!content || content.trim()===""){
+        throw new ApiError(400,"Content should not be empty")
+    }
+
+    if(!mongoose.Types.ObjectId.isValid(tweetId)) throw new ApiError(400,"Invalid tweetId");
+
+    const asd= await Comment.create({
+        content : content,
+        owner : req.user._id,
+        tweet : tweetId
+    });
+
+    if(! asd ) throw new ApiError(400,"Error while creating a comment on tweet");
+
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(201,"Added a comment on tweet sucessfully",asd)
+    )
     
-    const asd = await Comment.aggregate({
-        $match:{
-            tweet : mongoose.Types.ObjectId(String(TweetId))
-        },
-
-        $lookup:{
-            from : "users",
-            localField: "owner",
-            foreignField : "_id",
-            as : "userDetails",
-            pipeline:[
-                {
-                    $project:{
-                        userName : 1,
-                        fullName : 1,
-                        avatar : 1,
-                        
-                    }
-                }
-            ] 
-        }
-    })
-
 })
-
-
-
 
 
 
@@ -235,5 +298,7 @@ export {
     getVideoComments, 
     addComment, 
     updateComment,
-     deleteComment
+     deleteComment,
+     addCommentOnTweet,
+     getTweetComments
     }
