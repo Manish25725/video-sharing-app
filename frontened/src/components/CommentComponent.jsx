@@ -20,7 +20,10 @@ const CommentComponent = ({
   const [repliesLoading, setRepliesLoading] = useState(false);
   const [replies, setReplies] = useState(comment.replies || []);
   const [loadingReplies, setLoadingReplies] = useState(false);
-  const componentId = comment.id || comment._id || Math.random().toString(36).slice(2,9);
+  const componentId = React.useMemo(() => 
+    comment.id || comment._id || `comment-${Math.random().toString(36).slice(2,9)}`, 
+    [comment.id, comment._id]
+  );
 
   // Close reply form when another component opens its reply form
   useEffect(() => {
@@ -47,31 +50,40 @@ const CommentComponent = ({
       try {
         const response = await commentService.getCommentReplies(comment.id);
 
-        // Normalize the possible response shapes from commentService/api
-        // commentService.getCommentReplies returns { success: true, data: { replies: [...] } }
-        // but some calls might return the raw ApiResponse directly. Handle both.
+        // Normalize the response from commentService.getCommentReplies
         let repliesArray = [];
-        if (response == null) repliesArray = [];
-        else if (Array.isArray(response)) repliesArray = response;
-        else if (response.success && response.data && Array.isArray(response.data.replies)) repliesArray = response.data.replies;
-        else if (response.data && Array.isArray(response.data)) repliesArray = response.data;
-        else if (response.data && response.data.data && Array.isArray(response.data.data)) repliesArray = response.data.data;
-        else repliesArray = [];
+        if (response && response.success && response.data && response.data.replies) {
+          repliesArray = response.data.replies;
+        } else if (response && response.data && Array.isArray(response.data)) {
+          repliesArray = response.data;
+        } else {
+          console.warn('Unexpected reply response format:', response);
+          repliesArray = [];
+        }
 
         const transformedReplies = repliesArray.map((reply) => {
+          if (!reply || !reply._id) {
+            console.warn('Invalid reply object:', reply);
+            return null;
+          }
+          
           const userInfo = reply.userDetails || reply.owner || {};
           const displayName = userInfo.fullName || userInfo.userName || reply.user?.name || 'Anonymous';
+          
           return {
             ...reply,
             id: reply._id,
+            _id: reply._id, // Keep both for consistency
             user: {
-              id: userInfo._id || reply.owner || reply.user?.id || null,
+              id: userInfo._id || userInfo.id || null,
               name: displayName,
-              userName: userInfo.userName || reply.user?.userName || '',
-              avatar: userInfo.avatar || reply.user?.avatar || '',
-            }
+              userName: userInfo.userName || '',
+              avatar: userInfo.avatar || '',
+            },
+            repliesCount: reply.totalReplies || reply.repliesCount || 0,
+            replies: []
           };
-        });
+        }).filter(Boolean); // Remove any null entries
 
         setReplies(transformedReplies);
       } catch (error) {
@@ -89,43 +101,47 @@ const CommentComponent = ({
 
     setRepliesLoading(true);
     try {
-      const response = await commentService.addReply(comment.id, replyContent);
-      // Normalize API response to get actual reply payload
-      const replyPayload = response?.data || response;
-      if (replyPayload) {
-        const replyData = replyPayload;
-        const userInfo = replyData.owner || replyData.userDetails || {};
-        const displayName = userInfo.fullName || userInfo.userName || user?.fullName || user?.userName || 'You';
+      const response = await commentService.addReply(comment.id || comment._id, replyContent);
+      
+      if (!response || !response.data) {
+        throw new Error('Invalid response from server');
+      }
 
-        const transformedReply = {
-          ...replyData,
-          id: replyData._id,
-          user: {
-            id: userInfo._id || replyData.owner || null,
-            name: displayName,
-            userName: userInfo.userName || user?.userName || '',
-            avatar: userInfo.avatar || user?.avatar || '',
-          },
-          repliesCount: 0, // New replies start with 0 replies
-          replies: [] // Initialize empty replies array
-        };
+      const replyData = response.data;
+      if (!replyData._id) {
+        throw new Error('Reply was not created properly');
+      }
 
-        // Add the new reply to the local state
-        setReplies(prev => [transformedReply, ...prev]);
-        setReplyContent('');
-        setShowReplyForm(false);
-        setShowReplies(true);
+      const userInfo = replyData.owner || replyData.userDetails || {};
+      const displayName = userInfo.fullName || userInfo.userName || user?.fullName || user?.userName || 'You';
 
-        // Update the current comment's reply count
-        comment.repliesCount = (comment.repliesCount || 0) + 1;
+      const transformedReply = {
+        ...replyData,
+        id: replyData._id,
+        _id: replyData._id,
+        user: {
+          id: userInfo._id || userInfo.id || null,
+          name: displayName,
+          userName: userInfo.userName || user?.userName || '',
+          avatar: userInfo.avatar || user?.avatar || '',
+        },
+        repliesCount: 0,
+        replies: [],
+        isReply: true
+      };
 
-        // Notify other components to close their reply forms
-        window.dispatchEvent(new CustomEvent('reply-form-opened', { detail: { commentId: componentId } }));
+      // Add the new reply to the local state
+      setReplies(prev => [transformedReply, ...prev]);
+      setReplyContent('');
+      setShowReplyForm(false);
+      setShowReplies(true);
 
-        // Call parent callback if provided - this will update the parent's state
-        if (onReply) {
-          onReply(comment.id, transformedReply);
-        }
+      // Notify other components to close their reply forms
+      window.dispatchEvent(new CustomEvent('reply-form-opened', { detail: { commentId: componentId } }));
+
+      // Call parent callback if provided - this will update the parent's state
+      if (onReply) {
+        onReply(comment.id, transformedReply);
       }
     } catch (error) {
       console.error('Error adding reply:', error);
@@ -193,11 +209,11 @@ const CommentComponent = ({
           <div className="flex items-center space-x-4 text-xs text-gray-600">
             {/* Like Button */}
             <button 
-              onClick={() => onLike(comment.id)}
-              disabled={isLoading}
+              onClick={() => onLike && onLike(comment.id || comment._id)}
+              disabled={isLoading || !onLike}
               className={`flex items-center space-x-1 hover:text-gray-800 transition-colors ${
                 comment.isLikedByUser ? 'text-blue-600' : ''
-              } ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+              } ${isLoading || !onLike ? 'opacity-50 cursor-not-allowed' : ''}`}
             >
               <ThumbsUp className={`w-3 h-3 ${comment.isLikedByUser ? 'fill-current' : ''}`} />
               <span>{comment.likesCount || 0}</span>
@@ -205,11 +221,11 @@ const CommentComponent = ({
             
             {/* Dislike Button */}
             <button 
-              onClick={() => onDislike(comment.id)}
-              disabled={isLoading}
+              onClick={() => onDislike && onDislike(comment.id || comment._id)}
+              disabled={isLoading || !onDislike}
               className={`flex items-center space-x-1 hover:text-gray-800 transition-colors ${
                 comment.isDislikedByUser ? 'text-red-600' : ''
-              } ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+              } ${isLoading || !onDislike ? 'opacity-50 cursor-not-allowed' : ''}`}
             >
               <ThumbsDown className={`w-3 h-3 ${comment.isDislikedByUser ? 'fill-current' : ''}`} />
               <span>{comment.dislikesCount || 0}</span>

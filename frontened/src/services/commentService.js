@@ -39,10 +39,16 @@ export const commentService = {
   async getCommentReplies(commentId, page = 1, limit = 5) {
     try {
       const response = await apiClient.get(`/comment/get-replies/${commentId}?page=${page}&limit=${limit}`);
-      return { success: true, data: { replies: response.data } };
+      // Ensure consistent response format
+      if (response && response.data) {
+        return { success: true, data: { replies: response.data } };
+      } else {
+        console.warn('Invalid response format from getCommentReplies:', response);
+        return { success: false, data: { replies: [] } };
+      }
     } catch (error) {
       console.error('Get replies error:', error);
-      return { success: false, data: [] };
+      return { success: false, data: { replies: [] } };
     }
   },
 
