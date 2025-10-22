@@ -491,16 +491,30 @@ const VideoPlayer = () => {
 
   const fetchComments = async () => {
     try {
+      console.log('🔍 Fetching comments for video:', videoId)
       setCommentsLoading(true)
       const response = await commentService.getVideoComments(videoId)
-      console.log('Raw comments response:', response)
+      console.log('📥 Comments fetch response:', response)
+      
       if (response && response.data) {
         const transformedComments = transformCommentsArray(response.data)
-        console.log('Transformed comments:', transformedComments)
+        console.log('🔄 Transformed comments:', {
+          count: transformedComments.length,
+          firstComment: transformedComments[0] ? {
+            id: transformedComments[0].id,
+            content: transformedComments[0].content?.substring(0, 50) + '...',
+            user: transformedComments[0].user?.name
+          } : null
+        })
         setComments(transformedComments)
+        console.log('✅ Comments state updated')
+      } else {
+        console.log('❌ No comment data in response')
+        setComments([])
       }
     } catch (err) {
-      console.error("Error fetching comments:", err)
+      console.error("❌ Error fetching comments:", err)
+      setComments([])
     } finally {
       setCommentsLoading(false)
     }
@@ -609,20 +623,77 @@ const VideoPlayer = () => {
 
   const handleCommentSubmit = async (e) => {
     e.preventDefault()
+    console.log('💬 Comment submission started')
+    
     if (!user) {
+      console.log('❌ User not authenticated')
       alert("Please login to comment")
       return
     }
-    if (!newComment.trim()) return
+    
+    if (!newComment.trim()) {
+      console.log('❌ Empty comment')
+      return
+    }
+
+    console.log('📝 Submitting comment:', {
+      videoId,
+      content: newComment.trim(),
+      user: { id: user._id, name: user.fullName || user.userName }
+    })
 
     try {
       const response = await commentService.addComment(videoId, newComment.trim())
+      console.log('📨 Comment service response:', response)
+      
       if (response && response.success) {
+        console.log('✅ Comment added successfully')
         setNewComment("")
-        fetchComments() // Refresh comments
+        
+        // Add the new comment to the UI immediately
+        if (response.data && user) {
+          const newCommentObj = {
+            id: response.data._id,
+            _id: response.data._id,
+            content: response.data.content,
+            user: {
+              id: user._id || user.id,
+              name: user.fullName || user.userName || 'You',
+              userName: user.userName || '',
+              avatar: user.avatar || '',
+            },
+            createdAt: response.data.createdAt || new Date().toISOString(),
+            likesCount: 0,
+            dislikesCount: 0,
+            isLikedByUser: false,
+            isDislikedByUser: false,
+            repliesCount: 0,
+            replies: [],
+            isReply: false
+          };
+          
+          console.log('🎯 Adding comment to UI state:', newCommentObj)
+          setComments(prevComments => {
+            console.log('📊 Previous comments count:', prevComments.length)
+            const newComments = [newCommentObj, ...prevComments]
+            console.log('📊 New comments count:', newComments.length)
+            return newComments
+          });
+        }
+        
+        // Also refresh to ensure consistency
+        console.log('🔄 Refreshing comments from server...')
+        await fetchComments();
+      } else if (response) {
+        console.log('❌ Server returned error:', response.message)
+        alert('Failed to add comment: ' + (response.message || 'Unknown error'))
+      } else {
+        console.log('❌ No response from server')
+        alert('Failed to add comment: No response from server')
       }
     } catch (err) {
-      console.error("Error adding comment:", err)
+      console.error("❌ Comment submission error:", err)
+      alert('Failed to add comment: ' + (err.message || 'Network error'))
     }
   }
 

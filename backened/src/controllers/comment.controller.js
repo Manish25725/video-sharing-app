@@ -198,28 +198,38 @@ const addCommentOnTweet=asyncHandler( async(req,res) =>{
 
 
 const addComment = asyncHandler(async (req, res) => {
-    // TODO: add a comment to a video
+    console.log('🎯 addComment endpoint called');
+    console.log('Request params:', req.params);
+    console.log('Request body:', req.body);
+    console.log('User:', req.user ? { id: req.user._id, name: req.user.fullName } : 'No user');
+    
     const {videoId}=req.params
     const {content}=req.body
 
     if(!req.user){
+        console.log('❌ No user in request');
         throw new ApiError(400,"user must be logged in")
     }
 
     if(!content || content.trim()===""){
+        console.log('❌ Empty content');
         throw new ApiError(400,"Content should not be empty")
     }
 
     
     if (!mongoose.Types.ObjectId.isValid(videoId)) {
+        console.log('❌ Invalid video ID:', videoId);
         throw new ApiError(400, "Invalid video ID");
     }
 
+    console.log('✅ Creating comment...');
     const addCom=await Comment.create({
         content:content,
         owner:req.user._id,
         video:videoId,
     })
+
+    console.log('✅ Comment created:', { id: addCom._id, content: addCom.content });
 
     // Note: Comment notifications are not implemented as per requirements (only video and tweet notifications)
 
@@ -433,13 +443,19 @@ const getCommentReplies = asyncHandler(async (req, res) => {
 
 // Update the getVideoComments to exclude replies from main comments
 const getVideoCommentsEnhanced = asyncHandler(async (req, res) => {
+    console.log('🔍 getVideoCommentsEnhanced called');
     const {videoId} = req.params
     const {page = 1, limit = 10} = req.query
+    
+    console.log('Request params:', { videoId, page, limit });
+    console.log('User:', req.user ? { id: req.user._id, name: req.user.fullName } : 'No user');
 
     if(!req.user){
+        console.log('❌ No user in request');
         throw new ApiError(400,"user must be logged in");
     }
 
+    console.log('📊 Querying comments...');
     const getAllComment=await Comment.aggregate([
         {
             $match:{
@@ -513,6 +529,15 @@ const getVideoCommentsEnhanced = asyncHandler(async (req, res) => {
             $limit:Number(limit)
         }
     ])
+
+    console.log('📊 Query results:', {
+        count: getAllComment.length,
+        firstComment: getAllComment[0] ? {
+            id: getAllComment[0]._id,
+            content: getAllComment[0].content?.substring(0, 50) + '...',
+            user: getAllComment[0].userDetails?.fullName
+        } : null
+    });
 
     return res
     .status(200)

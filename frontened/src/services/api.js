@@ -89,9 +89,22 @@ class ApiClient {
   async get(endpoint, config = {}) {
     try {
       const response = await this.axios.get(endpoint, config);
+      // Log only comment-related requests
+      if (endpoint.includes('comment')) {
+        console.log(`GET ${endpoint} response:`, {
+          success: response.data?.success,
+          dataLength: Array.isArray(response.data?.data) ? response.data.data.length : 'not array',
+          message: response.data?.message
+        });
+      }
       return response.data;
     } catch (error) {
-      console.error(`GET ${endpoint} failed:`, error);
+      if (endpoint.includes('comment')) {
+        console.error(`GET ${endpoint} failed:`, {
+          status: error.response?.status,
+          message: error.response?.data?.message || error.message
+        });
+      }
       throw this.handleError(error);
     }
   }
@@ -99,10 +112,27 @@ class ApiClient {
   // POST request
   async post(endpoint, data = {}, config = {}) {
     try {
+      // Log only comment-related requests
+      if (endpoint.includes('comment')) {
+        console.log(`🔄 POST ${endpoint}`, { content: data.content });
+      }
       const response = await this.axios.post(endpoint, data, config);
+      if (endpoint.includes('comment')) {
+        console.log(`✅ POST ${endpoint} success:`, {
+          success: response.data?.success,
+          commentId: response.data?.data?._id,
+          message: response.data?.message
+        });
+      }
       return response.data;
     } catch (error) {
-      console.error(`POST ${endpoint} failed:`, error);
+      if (endpoint.includes('comment')) {
+        console.error(`❌ POST ${endpoint} failed:`, {
+          status: error.response?.status,
+          message: error.response?.data?.message || error.message,
+          data: error.response?.data
+        });
+      }
       throw this.handleError(error);
     }
   }

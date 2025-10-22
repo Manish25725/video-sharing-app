@@ -20,7 +20,14 @@ export const commentService = {
       return response;
     } catch (error) {
       console.error('Add comment error:', error);
-      throw error;
+      // Return error details for better debugging
+      if (error.isAuthError) {
+        throw new Error('Please log in to add comments');
+      } else if (error.message) {
+        throw new Error(error.message);
+      } else {
+        throw new Error('Failed to add comment. Please try again.');
+      }
     }
   },
 
