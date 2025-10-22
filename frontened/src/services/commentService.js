@@ -42,6 +42,17 @@ export const commentService = {
     }
   },
 
+  // Add a reply to a reply (nested reply)
+  async addReplyToReply(replyId, content) {
+    try {
+      const response = await apiClient.post(`/comment/add-reply-to-reply/${replyId}`, { content });
+      return response;
+    } catch (error) {
+      console.error('Add nested reply error:', error);
+      throw error;
+    }
+  },
+
   // Get replies for a specific comment
   async getCommentReplies(commentId, page = 1, limit = 5) {
     try {
@@ -55,6 +66,22 @@ export const commentService = {
       }
     } catch (error) {
       console.error('Get replies error:', error);
+      return { success: false, data: { replies: [] } };
+    }
+  },
+
+  // Get nested replies for a specific reply
+  async getReplyReplies(replyId, page = 1, limit = 5) {
+    try {
+      const response = await apiClient.get(`/comment/get-reply-replies/${replyId}?page=${page}&limit=${limit}`);
+      if (response && response.data) {
+        return { success: true, data: { replies: response.data } };
+      } else {
+        console.warn('Invalid response format from getReplyReplies:', response);
+        return { success: false, data: { replies: [] } };
+      }
+    } catch (error) {
+      console.error('Get nested replies error:', error);
       return { success: false, data: { replies: [] } };
     }
   },

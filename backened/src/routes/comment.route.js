@@ -8,7 +8,9 @@ import {
     addCommentOnTweet, 
     getTweetComments,
     addReply,
+    addReplyToReply,
     getCommentReplies,
+    getReplyReplies,
     getVideoCommentsEnhanced
 } from "../controllers/comment.controller.js";
 
@@ -29,7 +31,9 @@ router.route("/delete-comment/:commentId").delete(verifyJWT,deleteComment)
 
 // Reply routes
 router.route("/add-reply/:commentId").post(verifyJWT,addReply);
+router.route("/add-reply-to-reply/:replyId").post(verifyJWT,addReplyToReply);
 router.route("/get-replies/:commentId").get(verifyJWT,getCommentReplies);
+router.route("/get-reply-replies/:replyId").get(verifyJWT,getReplyReplies);
 
 export default router
 

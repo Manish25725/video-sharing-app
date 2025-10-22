@@ -335,7 +335,8 @@ const addReply = asyncHandler(async (req, res) => {
         owner: req.user._id,
         comment: commentId,
         video: parentComment.video,
-        tweet: parentComment.tweet
+        tweet: parentComment.tweet,
+        level: 1
     });
 
     if (!reply) {
@@ -350,6 +351,55 @@ const addReply = asyncHandler(async (req, res) => {
         .status(201)
         .json(
             new ApiResponse(201, populatedReply, "Reply added successfully")
+        );
+});
+
+// Add reply to a reply (nested reply)
+const addReplyToReply = asyncHandler(async (req, res) => {
+    const { replyId } = req.params;
+    const { content } = req.body;
+
+    if (!req.user) {
+        throw new ApiError(401, "User must be logged in");
+    }
+
+    if (!content || content.trim() === "") {
+        throw new ApiError(400, "Reply content is required");
+    }
+
+    // Check if parent reply exists
+    const parentReply = await Reply.findById(replyId);
+    if (!parentReply) {
+        throw new ApiError(404, "Parent reply not found");
+    }
+
+    // Check nesting level limit
+    if (parentReply.level >= 5) {
+        throw new ApiError(400, "Maximum reply nesting level reached");
+    }
+
+    // Create nested reply
+    const reply = await Reply.create({
+        content: content.trim(),
+        owner: req.user._id,
+        parentReply: replyId,
+        video: parentReply.video,
+        tweet: parentReply.tweet,
+        level: parentReply.level + 1
+    });
+
+    if (!reply) {
+        throw new ApiError(500, "Failed to create reply");
+    }
+
+    // Populate reply with user details
+    const populatedReply = await Reply.findById(reply._id)
+        .populate("owner", "userName fullName avatar");
+
+    return res
+        .status(201)
+        .json(
+            new ApiResponse(201, populatedReply, "Nested reply added successfully")
         );
 });
 
@@ -419,6 +469,8 @@ const getCommentReplies = asyncHandler(async (req, res) => {
                 content: 1,
                 owner: 1,
                 comment: 1,
+                level: 1,
+                totalReplies: 1,
                 createdAt: 1,
                 updatedAt: 1,
                 userDetails: 1,
@@ -443,6 +495,101 @@ const getCommentReplies = asyncHandler(async (req, res) => {
         .status(200)
         .json(
             new ApiResponse(200, replies, "Replies fetched successfully")
+        );
+});
+
+// Get nested replies for a specific reply
+const getReplyReplies = asyncHandler(async (req, res) => {
+    const { replyId } = req.params;
+    const { page = 1, limit = 10 } = req.query;
+
+    if (!req.user) {
+        throw new ApiError(401, "User must be logged in");
+    }
+
+    const nestedReplies = await Reply.aggregate([
+        {
+            $match: {
+                parentReply: new mongoose.Types.ObjectId(replyId)
+            }
+        },
+        {
+            $lookup: {
+                from: "users",
+                localField: "owner",
+                foreignField: "_id",
+                as: "userDetails",
+                pipeline: [
+                    {
+                        $project: {
+                            userName: 1,
+                            fullName: 1,
+                            avatar: 1
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            $lookup: {
+                from: "likes",
+                localField: "_id",
+                foreignField: "reply",
+                as: "likes"
+            }
+        },
+        {
+            $lookup: {
+                from: "dislikes",
+                localField: "_id",
+                foreignField: "reply",
+                as: "dislikes"
+            }
+        },
+        {
+            $addFields: {
+                userDetails: { $arrayElemAt: ["$userDetails", 0] },
+                likesCount: { $size: "$likes" },
+                dislikesCount: { $size: "$dislikes" },
+                isLikedByUser: {
+                    $in: [req.user._id, "$likes.likedBy"]
+                },
+                isDislikedByUser: {
+                    $in: [req.user._id, "$dislikes.dislikedBy"]
+                }
+            }
+        },
+        {
+            $project: {
+                content: 1,
+                owner: 1,
+                parentReply: 1,
+                level: 1,
+                totalReplies: 1,
+                createdAt: 1,
+                updatedAt: 1,
+                userDetails: 1,
+                likesCount: 1,
+                dislikesCount: 1,
+                isLikedByUser: 1,
+                isDislikedByUser: 1
+            }
+        },
+        {
+            $sort: { createdAt: 1 } // Nested replies sorted chronologically
+        },
+        {
+            $skip: (Number(page) - 1) * Number(limit)
+        },
+        {
+            $limit: Number(limit)
+        }
+    ]);
+
+    return res
+        .status(200)
+        .json(
+            new ApiResponse(200, nestedReplies, "Nested replies fetched successfully")
         );
 });
 
@@ -570,6 +717,8 @@ export {
      addCommentOnTweet,
      getTweetComments,
      addReply,
+     addReplyToReply,
      getCommentReplies,
+     getReplyReplies,
      getVideoCommentsEnhanced
     }
