@@ -188,9 +188,9 @@ const addCommentOnTweet=asyncHandler( async(req,res) =>{
     if(! asd ) throw new ApiError(400,"Error while creating a comment on tweet");
 
     return res
-    .status(200)
+    .status(201)
     .json(
-        new ApiResponse(201,"Added a comment on tweet sucessfully",asd)
+        new ApiResponse(201,asd,"Added a comment on tweet sucessfully")
     )
     
 })
@@ -231,12 +231,19 @@ const addComment = asyncHandler(async (req, res) => {
 
     console.log('✅ Comment created:', { id: addCom._id, content: addCom.content });
 
+    // Also fetch the comment with user details to ensure proper response
+    const populatedComment = await Comment.findById(addCom._id)
+        .populate('owner', 'userName fullName avatar')
+        .lean();
+    
+    console.log('✅ Populated comment:', populatedComment);
+
     // Note: Comment notifications are not implemented as per requirements (only video and tweet notifications)
 
     return res
-    .status(200)
+    .status(201)
     .json(
-        new ApiResponse(200,addCom,"Comment added successfully")
+        new ApiResponse(201, populatedComment, "Comment added successfully")
     )
 })
 
@@ -249,7 +256,7 @@ const updateComment=asyncHandler(async(req,res)=>{
         throw new ApiError(400,"user should be logged in")
     }
 
-    if(!content || !content.trim()===""){
+    if(!content || content.trim()===""){
         throw new ApiError(400,"Content should not be empty")
     }
 
@@ -456,11 +463,28 @@ const getVideoCommentsEnhanced = asyncHandler(async (req, res) => {
     }
 
     console.log('📊 Querying comments...');
+    
+    // First, let's check all comments for this video (for debugging)
+    const allCommentsForVideo = await Comment.find({ video: videoId }).lean();
+    console.log('🔍 All comments in DB for this video:', {
+        total: allCommentsForVideo.length,
+        comments: allCommentsForVideo.map(c => ({
+            id: c._id,
+            content: c.content?.substring(0, 20) + '...',
+            parentComment: c.parentComment,
+            isReply: c.isReply,
+            createdAt: c.createdAt
+        }))
+    });
+    
     const getAllComment=await Comment.aggregate([
         {
             $match:{
                 video:new mongoose.Types.ObjectId(String(videoId)),
-                parentComment: { $exists: false } // Only get top-level comments
+                $or: [
+                    { parentComment: { $exists: false } },
+                    { parentComment: null }
+                ]
             }
         },{
             $lookup:{

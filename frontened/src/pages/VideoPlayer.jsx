@@ -650,38 +650,7 @@ const VideoPlayer = () => {
         console.log('✅ Comment added successfully')
         setNewComment("")
         
-        // Add the new comment to the UI immediately
-        if (response.data && user) {
-          const newCommentObj = {
-            id: response.data._id,
-            _id: response.data._id,
-            content: response.data.content,
-            user: {
-              id: user._id || user.id,
-              name: user.fullName || user.userName || 'You',
-              userName: user.userName || '',
-              avatar: user.avatar || '',
-            },
-            createdAt: response.data.createdAt || new Date().toISOString(),
-            likesCount: 0,
-            dislikesCount: 0,
-            isLikedByUser: false,
-            isDislikedByUser: false,
-            repliesCount: 0,
-            replies: [],
-            isReply: false
-          };
-          
-          console.log('🎯 Adding comment to UI state:', newCommentObj)
-          setComments(prevComments => {
-            console.log('📊 Previous comments count:', prevComments.length)
-            const newComments = [newCommentObj, ...prevComments]
-            console.log('📊 New comments count:', newComments.length)
-            return newComments
-          });
-        }
-        
-        // Also refresh to ensure consistency
+        // Refresh comments from server to get the new comment with proper formatting
         console.log('🔄 Refreshing comments from server...')
         await fetchComments();
       } else if (response) {
