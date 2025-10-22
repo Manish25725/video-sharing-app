@@ -1,6 +1,7 @@
 import { ApiError } from "../utils/ApiError.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import {Comment} from "../models/comment.model.js"
+import {Reply} from "../models/reply.model.js"
 import {Video} from "../models/video.model.js"
 import mongoose from "mongoose";
 import { ApiResponse } from "../utils/Apiresponse.js";
@@ -224,7 +225,7 @@ const addComment = asyncHandler(async (req, res) => {
 
     console.log('✅ Creating comment...');
     const addCom=await Comment.create({
-        content:content,
+        content:content.trim(),
         owner:req.user._id,
         video:videoId,
     })
@@ -328,14 +329,13 @@ const addReply = asyncHandler(async (req, res) => {
         throw new ApiError(404, "Parent comment not found");
     }
 
-    // Create reply
-    const reply = await Comment.create({
+    // Create reply using Reply model
+    const reply = await Reply.create({
         content: content.trim(),
         owner: req.user._id,
-        parentComment: commentId,
+        comment: commentId,
         video: parentComment.video,
-        tweet: parentComment.tweet,
-        isReply: true
+        tweet: parentComment.tweet
     });
 
     if (!reply) {
@@ -343,7 +343,7 @@ const addReply = asyncHandler(async (req, res) => {
     }
 
     // Populate reply with user details
-    const populatedReply = await Comment.findById(reply._id)
+    const populatedReply = await Reply.findById(reply._id)
         .populate("owner", "userName fullName avatar");
 
     return res
@@ -362,11 +362,10 @@ const getCommentReplies = asyncHandler(async (req, res) => {
         throw new ApiError(401, "User must be logged in");
     }
 
-    const replies = await Comment.aggregate([
+    const replies = await Reply.aggregate([
         {
             $match: {
-                parentComment: new mongoose.Types.ObjectId(commentId),
-                isReply: true
+                comment: new mongoose.Types.ObjectId(commentId)
             }
         },
         {
@@ -390,7 +389,7 @@ const getCommentReplies = asyncHandler(async (req, res) => {
             $lookup: {
                 from: "likes",
                 localField: "_id",
-                foreignField: "comment",
+                foreignField: "reply",
                 as: "likes"
             }
         },
@@ -398,7 +397,7 @@ const getCommentReplies = asyncHandler(async (req, res) => {
             $lookup: {
                 from: "dislikes",
                 localField: "_id",
-                foreignField: "comment",
+                foreignField: "reply",
                 as: "dislikes"
             }
         },
@@ -419,8 +418,7 @@ const getCommentReplies = asyncHandler(async (req, res) => {
             $project: {
                 content: 1,
                 owner: 1,
-                parentComment: 1,
-                isReply: 1,
+                comment: 1,
                 createdAt: 1,
                 updatedAt: 1,
                 userDetails: 1,
@@ -471,8 +469,6 @@ const getVideoCommentsEnhanced = asyncHandler(async (req, res) => {
         comments: allCommentsForVideo.map(c => ({
             id: c._id,
             content: c.content?.substring(0, 20) + '...',
-            parentComment: c.parentComment,
-            isReply: c.isReply,
             createdAt: c.createdAt
         }))
     });
@@ -480,11 +476,7 @@ const getVideoCommentsEnhanced = asyncHandler(async (req, res) => {
     const getAllComment=await Comment.aggregate([
         {
             $match:{
-                video:new mongoose.Types.ObjectId(String(videoId)),
-                $or: [
-                    { parentComment: { $exists: false } },
-                    { parentComment: null }
-                ]
+                video:new mongoose.Types.ObjectId(String(videoId))
             }
         },{
             $lookup:{
