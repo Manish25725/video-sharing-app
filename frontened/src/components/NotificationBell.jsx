@@ -112,10 +112,9 @@ const NotificationBell = () => {
     const fetchUnreadCount = async () => {
         try {
             const response = await notificationService.getUnreadCount();
-            setUnreadCount(response.data.unreadCount);
+            setUnreadCount(response.unreadCount ?? 0);
         } catch (error) {
             console.error('Error fetching unread count:', error);
-            // If API fails, reset to 0
             setUnreadCount(0);
         }
     };
@@ -126,7 +125,7 @@ const NotificationBell = () => {
         setLoading(true);
         try {
             const response = await notificationService.getNotifications(1, 5);
-            setNotifications(response.data.notifications);
+            setNotifications(response.notifications ?? []);
         } catch (error) {
             console.error('Error fetching notifications:', error);
         } finally {

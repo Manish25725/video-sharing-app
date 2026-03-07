@@ -247,10 +247,6 @@ const Header = ({
                     <User className="w-5 h-5 text-gray-600" />
                     <span className="text-gray-900">Your channel</span>
                   </div>
-                  <div className="px-4 py-2 hover:bg-gray-50 cursor-pointer flex items-center space-x-3">
-                    <UserPlus className="w-5 h-5 text-gray-600" />
-                    <span className="text-gray-900">Create a channel</span>
-                  </div>
                   <div
                     onClick={() => { setShowSwitchPanel(true); setSwitchError(""); setShowAddAccountForm(false); }}
                     className="px-4 py-2 hover:bg-gray-50 cursor-pointer flex items-center justify-between"
