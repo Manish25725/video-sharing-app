@@ -1,4 +1,4 @@
-import {mongoose,Schema} from "mongoose"
+import mongoose,{Schema} from "mongoose"
 
 const notificationSchema = new Schema({
     // User who will receive the notification

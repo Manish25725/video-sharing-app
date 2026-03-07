@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { videoService, transformVideosArray } from "../services/videoService.js";
 import { useAuth } from "../contexts/AuthContext.jsx";
 
+
 const Home = ({ onVideoSelect }) => {
   const { user, isAuthenticated } = useAuth();
   const [activeCategory, setActiveCategory] = useState("All");

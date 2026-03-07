@@ -41,12 +41,17 @@ app.use("/api/v1/dashboard",dashboardRouter)
 app.use("/api/v1/notifications",notificationRouter)
 app.use("/api/v1/dislike",dislikeRouter)
 app.use("/api/v1/health",healthRouter)
-app.use("/api/v1/health",healthRouter)
 
-
-
-
-
-// --->http://localhost:8000/users/register
+// Global error handler - must be last middleware
+// Serializes ApiError (and any other error) as JSON
+app.use((err, req, res, next) => {
+    const statusCode = err.statusCode || err.status || 500;
+    res.status(statusCode).json({
+        success: false,
+        statusCode,
+        message: err.message || "Something went wrong",
+        errors: err.errors || []
+    });
+});
 
 export {app}

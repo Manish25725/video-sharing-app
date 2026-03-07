@@ -53,9 +53,10 @@ const AuthPage = ({ onAuthSuccess }) => {
         const result = await login(formData.email, formData.password);
         if (result.success) {
           showToast('Login successful! Welcome back.', 'success');
-          // AuthContext will handle the state change automatically
         } else {
-          setError(result.error);
+          const msg = result.error || 'Invalid credentials. Please try again.';
+          setError(msg);
+          showToast(msg, 'error');
         }
       } else {
         // Registration validation
@@ -223,6 +224,7 @@ const AuthPage = ({ onAuthSuccess }) => {
                 id="email"
                 name="email"
                 type="email"
+                autoComplete={isLogin ? 'email' : 'new-email'}
                 required
                 value={formData.email}
                 onChange={handleInputChange}
@@ -240,6 +242,7 @@ const AuthPage = ({ onAuthSuccess }) => {
                   id="password"
                   name="password"
                   type={showPassword ? 'text' : 'password'}
+                  autoComplete={isLogin ? 'current-password' : 'new-password'}
                   required
                   value={formData.password}
                   onChange={handleInputChange}

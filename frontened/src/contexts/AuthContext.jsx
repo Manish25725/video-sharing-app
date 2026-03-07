@@ -15,17 +15,20 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [savedAccounts, setSavedAccounts] = useState([]);
 
   useEffect(() => {
     const initializeAuth = async () => {
       try {
         const response = await authService.getCurrentUser();
         if (response?.success) {
-          setUser(response.data);
-          setIsLoggedIn(true);
+          setUser(response.data || null);
+          setIsLoggedIn(Boolean(response.data));
         }
+        // Load saved accounts list
+        const savedRes = await authService.getSavedAccounts();
+        if (savedRes?.success) setSavedAccounts(savedRes.data || []);
       } catch (error) {
-        // Ignore errors - just means not authenticated
         console.log('Auth initialization failed:', error.message);
       } finally {
         setLoading(false);
@@ -78,6 +81,50 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const handleAddAccount = async (email, password) => {
+    try {
+      const response = await authService.addAccount(email, password);
+      if (response?.success) {
+        // Refresh the saved accounts list
+        const savedRes = await authService.getSavedAccounts();
+        if (savedRes?.success) setSavedAccounts(savedRes.data || []);
+        return { success: true, data: response.data };
+      }
+      return { success: false, error: response?.message || 'Failed to add account' };
+    } catch (error) {
+      return { success: false, error: error.response?.data?.message || error.message || 'Failed to add account' };
+    }
+  };
+
+  const handleSwitchAccount = async (targetUserId) => {
+    try {
+      setLoading(true);
+      const response = await authService.switchAccount(targetUserId);
+      if (response?.success) {
+        // Full reload clears all stale per-user state (liked videos, watch history, etc.)
+        window.location.href = '/';
+        return { success: true };
+      }
+      return { success: false, error: response?.message || 'Failed to switch account' };
+    } catch (error) {
+      setLoading(false);
+      return { success: false, error: error.message || 'Failed to switch account' };
+    }
+  };
+
+  const handleRemoveAccount = async (accountId) => {
+    try {
+      const response = await authService.removeAccount(accountId);
+      if (response?.success) {
+        setSavedAccounts(prev => prev.filter(a => a._id !== accountId));
+        return { success: true };
+      }
+      return { success: false, error: response?.message || 'Failed to remove account' };
+    } catch (error) {
+      return { success: false, error: error.response?.data?.message || error.message || 'Failed to remove account' };
+    }
+  };
+
   const updateUser = (userData) => {
     setUser(userData);
   };
@@ -87,9 +134,13 @@ export const AuthProvider = ({ children }) => {
     isLoggedIn,
     isAuthenticated: isLoggedIn,
     loading,
+    savedAccounts,
     login: handleLogin,
     register: handleRegister,
     logout: handleLogout,
+    addAccount: handleAddAccount,
+    switchAccount: handleSwitchAccount,
+    removeAccount: handleRemoveAccount,
     updateUser,
   };
 

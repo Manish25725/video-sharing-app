@@ -158,6 +158,57 @@ export const authService = {
       throw error;
     }
   },
+
+  // ── Switch Account ────────────────────────────────────────────
+
+  // Add another account to the saved accounts list (without switching)
+  async addAccount(identifier, password) {
+    try {
+      // Send as email or userName depending on whether it looks like an email
+      const isEmail = identifier.includes('@');
+      const payload = isEmail
+        ? { email: identifier, password }
+        : { userName: identifier, password };
+      const response = await apiClient.post('/users/add-account', payload);
+      return response;
+    } catch (error) {
+      console.error('Add account error:', error);
+      throw error;
+    }
+  },
+
+  // Switch the active session to a previously saved account
+  async switchAccount(targetUserId) {
+    try {
+      const response = await apiClient.post('/users/switch-account', { targetUserId });
+      return response;
+    } catch (error) {
+      console.error('Switch account error:', error);
+      throw error;
+    }
+  },
+
+  // Get all saved accounts info
+  async getSavedAccounts() {
+    try {
+      const response = await apiClient.get('/users/saved-accounts');
+      return response;
+    } catch (error) {
+      console.error('Get saved accounts error:', error);
+      return { success: false, data: [] };
+    }
+  },
+
+  // Remove an account from the saved list
+  async removeAccount(accountId) {
+    try {
+      const response = await apiClient.delete(`/users/saved-accounts/${accountId}`);
+      return response;
+    } catch (error) {
+      console.error('Remove account error:', error);
+      throw error;
+    }
+  },
 };
 
 // Check if user is logged in by calling the API

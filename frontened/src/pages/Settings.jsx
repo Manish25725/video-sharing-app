@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { 
   User, 
   Bell, 
@@ -10,15 +10,19 @@ import {
   Wifi,
   HardDrive
 } from "lucide-react"
+import { useAuth } from "../contexts/AuthContext"
+import api from "../services/api.js"
 
 const Settings = () => {
+  const { user, updateUser } = useAuth()
   const [activeTab, setActiveTab] = useState("account")
+  const [notifSaving, setNotifSaving] = useState(null)
   const [settings, setSettings] = useState({
     notifications: {
-      subscriptions: true,
-      recommendations: true,
+      subscriptions: false,
+      recommendations: false,
       comments: false,
-      mentions: true,
+      mentions: false,
       email: false
     },
     privacy: {
@@ -36,7 +40,55 @@ const Settings = () => {
     }
   })
 
-  const handleToggle = (category, setting) => {
+  // Sync notification settings from the logged-in user's profile
+  useEffect(() => {
+    if (user) {
+      setSettings(prev => ({
+        ...prev,
+        notifications: {
+          ...prev.notifications,
+          subscriptions: user.notifyOnVideo || false,
+          recommendations: user.notifyOnPost || false,
+          comments: user.notifyOnComment || false,
+          mentions: user.notifyOnMention || false,
+          email: user.notifyOnEmail || false,
+        }
+      }))
+    }
+  }, [user])
+
+  const handleToggle = async (category, setting) => {
+    if (category === 'notifications') {
+      // Map UI keys to backend endpoints
+      const endpointMap = {
+        subscriptions: '/users/toggle-notify-video',
+        recommendations: '/users/toggle-notify-post',
+        comments: '/users/toggle-notify-comment',
+        mentions: '/users/toggle-notify-mention',
+        email: '/users/toggle-notify-email',
+      }
+      const endpoint = endpointMap[setting]
+      if (endpoint) {
+        setNotifSaving(setting)
+        try {
+          const response = await api.post(endpoint)
+          if (response?.data?.data) {
+            // Update auth context user so other components stay in sync
+            updateUser(response.data.data)
+          }
+          setSettings(prev => ({
+            ...prev,
+            notifications: { ...prev.notifications, [setting]: !prev.notifications[setting] }
+          }))
+        } catch (err) {
+          console.error('Failed to update notification setting:', err)
+        } finally {
+          setNotifSaving(null)
+        }
+        return
+      }
+    }
+    // Local-only toggle for settings with no backend counterpart
     setSettings(prev => ({
       ...prev,
       [category]: {
@@ -62,13 +114,17 @@ const Settings = () => {
       
       <div className="space-y-6">
         <div className="flex items-center space-x-4 p-4 border border-gray-200 rounded-lg">
-          <div className="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center">
-            <User className="w-8 h-8 text-white" />
+          <div className="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center overflow-hidden">
+            {user?.avatar ? (
+              <img src={user.avatar} alt={user.fullName} className="w-full h-full object-cover" />
+            ) : (
+              <User className="w-8 h-8 text-white" />
+            )}
           </div>
           <div className="flex-1">
-            <h3 className="font-semibold text-gray-900">Manish Kalwani</h3>
-            <p className="text-gray-500">kalwanimanish777@gmail.com</p>
-            <p className="text-sm text-gray-400">Channel created: March 2024</p>
+            <h3 className="font-semibold text-gray-900">{user?.fullName || 'User'}</h3>
+            <p className="text-gray-500">{user?.email || ''}</p>
+            <p className="text-sm text-gray-400">@{user?.userName || ''}</p>
           </div>
           <button className="px-4 py-2 text-blue-600 border border-blue-600 rounded-md hover:bg-blue-50">
             Edit Profile
@@ -82,7 +138,7 @@ const Settings = () => {
             </label>
             <input
               type="text"
-              defaultValue="Manish Kalwani"
+              defaultValue={user?.fullName || ''}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
@@ -122,34 +178,39 @@ const Settings = () => {
         <div>
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Push Notifications</h3>
           <div className="space-y-4">
-            {Object.entries(settings.notifications).map(([key, value]) => (
-              <div key={key} className="flex items-center justify-between">
-                <div>
-                  <p className="font-medium text-gray-900 capitalize">
-                    {key.replace(/([A-Z])/g, ' $1')}
-                  </p>
-                  <p className="text-sm text-gray-500">
-                    {key === 'subscriptions' && 'Get notified when channels you subscribe to upload new videos'}
-                    {key === 'recommendations' && 'Receive personalized video recommendations'}
-                    {key === 'comments' && 'Get notified about comments on your videos'}
-                    {key === 'mentions' && 'Get notified when someone mentions you'}
-                    {key === 'email' && 'Receive email notifications'}
-                  </p>
+            {Object.entries(settings.notifications).map(([key, value]) => {
+              const isSaving = notifSaving === key
+              const descriptions = {
+                subscriptions: 'Get notified when channels you subscribe to upload new videos',
+                recommendations: 'Get notified when subscribed channels post new tweets',
+                comments: 'Get notified about comments on your videos',
+                mentions: 'Get notified when someone mentions you',
+                email: 'Receive email notifications',
+              }
+              return (
+                <div key={key} className="flex items-center justify-between">
+                  <div>
+                    <p className="font-medium text-gray-900 capitalize">
+                      {key.replace(/([A-Z])/g, ' $1')}
+                    </p>
+                    <p className="text-sm text-gray-500">{descriptions[key]}</p>
+                  </div>
+                  <button
+                    onClick={() => handleToggle('notifications', key)}
+                    disabled={isSaving}
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                      value ? 'bg-blue-600' : 'bg-gray-200'
+                    } ${isSaving ? 'opacity-60 cursor-not-allowed' : ''}`}
+                  >
+                    <span
+                      className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                        value ? 'translate-x-6' : 'translate-x-1'
+                      }`}
+                    />
+                  </button>
                 </div>
-                <button
-                  onClick={() => handleToggle('notifications', key)}
-                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                    value ? 'bg-blue-600' : 'bg-gray-200'
-                  }`}
-                >
-                  <span
-                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                      value ? 'translate-x-6' : 'translate-x-1'
-                    }`}
-                  />
-                </button>
-              </div>
-            ))}
+              )
+            })}
           </div>
         </div>
       </div>

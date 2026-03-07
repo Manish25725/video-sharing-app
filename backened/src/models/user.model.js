@@ -73,10 +73,25 @@ const userSchema = new Schema(
 
         notifyOnPost:{
             type:Boolean,
-            default:false
+            default:true
         },
 
         notifyOnVideo:{
+            type:Boolean,
+            default:true
+        },
+
+        notifyOnComment:{
+            type:Boolean,
+            default:false
+        },
+
+        notifyOnMention:{
+            type:Boolean,
+            default:false
+        },
+
+        notifyOnEmail:{
             type:Boolean,
             default:false
         }
@@ -102,8 +117,8 @@ userSchema.methods.generateAccessToken = function(){
         {
             _id:this._id,
             email:this.email,
-            userName:this.username,
-            fullName:this.fullname
+            userName:this.userName,
+            fullName:this.fullName
         },
         process.env.ACCESS_TOKEN_SECRET,
         {

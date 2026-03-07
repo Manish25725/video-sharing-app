@@ -14,6 +14,11 @@ const NotificationBell = () => {
     const { user } = useAuth();
     const dropdownRef = useRef(null);
 
+    // Use a ref so the offline handler always has the latest notifications
+    // without being listed as a useEffect dependency
+    const notificationsRef = useRef(notifications);
+    useEffect(() => { notificationsRef.current = notifications; }, [notifications]);
+
     useEffect(() => {
         if (user) {
             fetchUnreadCount();
@@ -24,6 +29,7 @@ const NotificationBell = () => {
             
             // Listen for notification events
             socketService.on('notification-dismissed', handleNotificationDismissed);
+            socketService.on('notification-deleted', handleNotificationDeleted);
             socketService.on('all-notifications-deleted', handleAllNotificationsDeleted);
 
             // Handle online/offline events
@@ -35,9 +41,9 @@ const NotificationBell = () => {
                 setIsOnline(false);
                 
                 // Store active notifications before going offline
-                if (notifications.length > 0) {
+                if (notificationsRef.current.length > 0) {
                     try {
-                        await notificationService.storeActiveNotifications(notifications);
+                        await notificationService.storeActiveNotifications(notificationsRef.current);
                     } catch (error) {
                         console.error('Error storing notifications:', error);
                     }
@@ -50,12 +56,13 @@ const NotificationBell = () => {
             return () => {
                 socketService.offNotification(handleNewNotification);
                 socketService.off('notification-dismissed', handleNotificationDismissed);
+                socketService.off('notification-deleted', handleNotificationDeleted);
                 socketService.off('all-notifications-deleted', handleAllNotificationsDeleted);
                 window.removeEventListener('online', handleOnline);
                 window.removeEventListener('offline', handleOffline);
             };
         }
-    }, [user, notifications]);
+    }, [user]);
 
     const handleNewNotification = (notification) => {
         setUnreadCount(prev => prev + 1);
@@ -71,6 +78,11 @@ const NotificationBell = () => {
     };
 
     const handleNotificationDismissed = ({ notificationId }) => {
+        setNotifications(prev => prev.filter(notif => notif._id !== notificationId));
+        setUnreadCount(prev => Math.max(0, prev - 1));
+    };
+
+    const handleNotificationDeleted = ({ notificationId }) => {
         setNotifications(prev => prev.filter(notif => notif._id !== notificationId));
         setUnreadCount(prev => Math.max(0, prev - 1));
     };
@@ -130,22 +142,32 @@ const NotificationBell = () => {
     };
 
     const handleMarkAsRead = async (notificationId) => {
+        // Optimistically remove from UI immediately
+        setNotifications(prev => prev.filter(notif => notif._id !== notificationId));
+        setUnreadCount(prev => Math.max(0, prev - 1));
         try {
             await notificationService.markAsRead(notificationId);
-            // Notification is automatically removed from UI via socket event
-            console.log('Notification marked as read and deleted:', notificationId);
+            // Socket event 'notification-deleted' will be a no-op since already removed
         } catch (error) {
             console.error('Error marking notification as read:', error);
+            // Refetch to restore correct state on failure
+            fetchUnreadCount();
+            fetchRecentNotifications();
         }
     };
 
     const handleMarkAllAsRead = async () => {
+        // Optimistically clear UI immediately
+        setNotifications([]);
+        setUnreadCount(0);
         try {
             await notificationService.markAllAsRead();
-            // All notifications are automatically removed from UI via socket event
-            console.log('All notifications marked as read and deleted');
+            // Socket event 'all-notifications-deleted' will be a no-op since already cleared
         } catch (error) {
             console.error('Error marking all as read:', error);
+            // Refetch to restore correct state on failure
+            fetchUnreadCount();
+            fetchRecentNotifications();
         }
     };
 

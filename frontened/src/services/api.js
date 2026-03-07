@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 // API Configuration and Base Setup
-const API_BASE_URL = 'http://localhost:8004/api/v1';
+const API_BASE_URL = 'http://localhost:8000/api/v1';
 
 // Create axios instance
 const axiosInstance = axios.create({
@@ -23,6 +23,17 @@ axiosInstance.interceptors.request.use(
   }
 );
 
+// Endpoints that should NEVER trigger a token-refresh attempt on 401.
+// These are auth endpoints whose own 401 response is meaningful.
+const NO_REFRESH_ENDPOINTS = [
+  '/users/login',
+  '/users/register',
+  '/users/refresh-token',
+  '/users/current-user',
+  '/users/add-account',
+  '/users/switch-account',
+];
+
 // Response interceptor to handle token refresh
 axiosInstance.interceptors.response.use(
   (response) => {
@@ -31,11 +42,21 @@ axiosInstance.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    // Skip refresh logic for auth-related endpoints so their own 401/400 errors
+    // bubble up intact to the caller (e.g. "Password is incorrect").
+    const isNoRefreshEndpoint = NO_REFRESH_ENDPOINTS.some(endpoint =>
+      originalRequest?.url?.includes(endpoint)
+    );
+
+    if (
+      error.response?.status === 401 &&
+      !originalRequest._retry &&
+      !isNoRefreshEndpoint
+    ) {
       originalRequest._retry = true;
 
       try {
-        // Attempt to refresh token (backend handles this via cookies)
+        // Attempt to refresh token via httpOnly cookie
         const refreshResponse = await axios.post(
           `${API_BASE_URL}/users/refresh-token`,
           {},
@@ -43,36 +64,11 @@ axiosInstance.interceptors.response.use(
         );
 
         if (refreshResponse.data?.success) {
-          // Token refreshed successfully by backend, retry original request
+          // New tokens set in cookies by backend – retry original request
           return axiosInstance(originalRequest);
         }
       } catch (refreshError) {
-        // Refresh failed, redirect to login for protected routes only
-        
-        // Don't redirect to login for public video endpoints
-        const publicEndpoints = [
-          '/videos/get-all-videos',
-          '/videos/getvideo/',
-          '/videos/get-trending-videos',
-          '/videos/increment-views/'
-        ];
-        
-        const isPublicEndpoint = publicEndpoints.some(endpoint => 
-          originalRequest.url?.includes(endpoint)
-        );
-        
-        if (!isPublicEndpoint) {
-          // For protected endpoints that fail auth, we'll let the component handle the redirect
-          // This prevents infinite refresh loops by not forcing a page reload
-          console.log('Auth failed for protected endpoint, component should handle redirect');
-          
-          // Instead of forcing a redirect here, we'll return a specific error
-          // that components can handle appropriately
-          const authError = new Error('Authentication required');
-          authError.isAuthError = true;
-          return Promise.reject(authError);
-        }
-        return Promise.reject(refreshError);
+        // Refresh failed – just reject so the component can decide what to do
       }
     }
 
@@ -189,31 +185,27 @@ class ApiClient {
     }
   }
 
-  // Error handler
+  // Error handler – always throws a real Error so callers get error.message
   handleError(error) {
+    let message;
+    let status = 0;
+
     if (error.response) {
-      // Server responded with error status
-      const { status, data } = error.response;
-      return {
-        status,
-        message: data?.message || 'An error occurred',
-        data: data,
-      };
+      status = error.response.status;
+      // Backend may use 'message' at the root or inside a 'data' wrapper
+      message = error.response.data?.message
+        || error.response.data?.data?.message
+        || `Request failed with status ${status}`;
     } else if (error.request) {
-      // Request was made but no response received
-      return {
-        status: 0,
-        message: 'Network error - no response from server',
-        data: null,
-      };
+      message = 'Network error - no response from server';
     } else {
-      // Something else happened
-      return {
-        status: 0,
-        message: error.message || 'An unexpected error occurred',
-        data: null,
-      };
+      message = error.message || 'An unexpected error occurred';
     }
+
+    const err = new Error(message);
+    err.status = status;
+    err.data = error.response?.data || null;
+    return err;
   }
 }
 

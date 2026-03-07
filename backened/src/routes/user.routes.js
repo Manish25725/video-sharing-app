@@ -1,7 +1,7 @@
 import {Router} from "express"
-import { changeCurrentPassword, getCurrentUser, getUserChannelProfile, getWatchHistory, getWatchLater, getWatchLaterIds, addToWatchLater, removeFromWatchLater, loginUser, logoutUser, registerUser, updateDetails, updateUserAvatar, updateUserCoverImage,addToWatchHistory, toggleNotifyOnPost, toggleNotifyOnVideo } from "../controllers/user.controller.js";
+import { changeCurrentPassword, getCurrentUser, getUserChannelProfile, getWatchHistory, getWatchLater, getWatchLaterIds, addToWatchLater, removeFromWatchLater, loginUser, logoutUser, registerUser, updateDetails, updateUserAvatar, updateUserCoverImage,addToWatchHistory, toggleNotifyOnPost, toggleNotifyOnVideo, toggleNotifyOnComment, toggleNotifyOnMention, toggleNotifyOnEmail, addAccount, switchAccount, getSavedAccounts, removeAccount } from "../controllers/user.controller.js";
 import {upload} from "../middlewares/multer.middleware.js"
-import { verifyJWT } from "../middlewares/auth.middleware.js";
+import { optionalAuth, verifyJWT } from "../middlewares/auth.middleware.js";
 import { refreshAccessToken } from "../controllers/user.controller.js";
 const router=Router();
 
@@ -28,7 +28,7 @@ router.route("/refresh-token").post(refreshAccessToken);
 
 router.route("/change-password").post(verifyJWT,changeCurrentPassword);
 
-router.route("/current-user").get(verifyJWT,getCurrentUser);
+router.route("/current-user").get(optionalAuth,getCurrentUser);
 
 router.route("/update-account").patch(verifyJWT,updateDetails);
 
@@ -56,6 +56,18 @@ router.route("/get-watch-history").get(verifyJWT,getWatchHistory);
 router.route("/toggle-notify-post").post(verifyJWT,toggleNotifyOnPost);
 
 router.route("/toggle-notify-video").post(verifyJWT,toggleNotifyOnVideo)
+
+router.route("/toggle-notify-comment").post(verifyJWT,toggleNotifyOnComment)
+
+router.route("/toggle-notify-mention").post(verifyJWT,toggleNotifyOnMention)
+
+router.route("/toggle-notify-email").post(verifyJWT,toggleNotifyOnEmail)
+
+// Switch account routes
+router.route("/add-account").post(optionalAuth, addAccount);
+router.route("/switch-account").post(verifyJWT, switchAccount);
+router.route("/saved-accounts").get(optionalAuth, getSavedAccounts);
+router.route("/saved-accounts/:accountId").delete(verifyJWT, removeAccount);
 
 
 export default router

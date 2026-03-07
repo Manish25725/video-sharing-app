@@ -11,6 +11,12 @@ const subscriptionSchema=new Schema({
         // one to whom 'subscirber' is subscribing...
         type:Schema.Types.ObjectId,
         ref:"User"
+    },
+
+    notificationsEnabled:{
+        // Per-channel notification preference; true = notify on new uploads/posts
+        type:Boolean,
+        default:true
     }
 },
 {

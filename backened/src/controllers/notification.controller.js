@@ -1,4 +1,4 @@
-import { mongoose } from "mongoose";
+import mongoose from "mongoose";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiResponse } from "../utils/Apiresponse.js";
 import { ApiError } from "../utils/ApiError.js";
@@ -127,42 +127,29 @@ const notifyVideoUpload = async (channelOwnerId, videoTitle, videoId) => {
         const sender = await getSenderInfo(channelOwnerId);
         if (!sender) return null;
 
-        // Get subscribers who have enabled video notifications
-        const subscribers = await Subscription.aggregate([
-            {
-                $match: { channel: new mongoose.Types.ObjectId(channelOwnerId) }
-            },
-            {
-                $lookup: {
-                    from: "users",
-                    localField: "subscriber",
-                    foreignField: "_id",
-                    as: "subscriberDetails",
-                    pipeline: [
-                        {
-                            $match: { notifyOnVideo: true } // Only users who enabled video notifications
-                        },
-                        {
-                            $project: { _id: 1 }
-                        }
-                    ]
-                }
-            },
-            {
-                $match: { "subscriberDetails.0": { $exists: true } } // Only include if user details exist
-            },
-            {
-                $project: { subscriber: 1 }
-            }
-        ]);
+        // Step 1: Get all subscriptions to this channel where per-channel notifications are enabled
+        const subscriptions = await Subscription.find({
+            channel: channelOwnerId,
+            notificationsEnabled: true
+        }).select('subscriber').lean();
+
+        if (!subscriptions.length) return [];
+
+        const subscriberIds = subscriptions.map(s => s.subscriber);
+
+        // Step 2: Filter subscribers who have the global video notification toggle ON
+        const eligibleUsers = await User.find({
+            _id: { $in: subscriberIds },
+            notifyOnVideo: true
+        }).select('_id').lean();
 
         const message = generateMessage('video_upload', sender.fullName || sender.userName, videoTitle);
-        
-        // Send notification to eligible subscribers
+
+        // Step 3: Send notification to each eligible subscriber
         const notifications = [];
-        for (const sub of subscribers) {
+        for (const u of eligibleUsers) {
             const notification = await createAndSendNotification({
-                recipient: sub.subscriber,
+                recipient: u._id,
                 sender: channelOwnerId,
                 type: 'video_upload',
                 message,
@@ -184,42 +171,29 @@ const notifyTweetPost = async (authorId, tweetContent, tweetId) => {
         const sender = await getSenderInfo(authorId);
         if (!sender) return null;
 
-        // Get subscribers who have enabled post notifications
-        const subscribers = await Subscription.aggregate([
-            {
-                $match: { channel: new mongoose.Types.ObjectId(authorId) }
-            },
-            {
-                $lookup: {
-                    from: "users",
-                    localField: "subscriber",
-                    foreignField: "_id",
-                    as: "subscriberDetails",
-                    pipeline: [
-                        {
-                            $match: { notifyOnPost: true } // Only users who enabled post notifications
-                        },
-                        {
-                            $project: { _id: 1 }
-                        }
-                    ]
-                }
-            },
-            {
-                $match: { "subscriberDetails.0": { $exists: true } } // Only include if user details exist
-            },
-            {
-                $project: { subscriber: 1 }
-            }
-        ]);
+        // Step 1: Get all subscriptions to this channel where per-channel notifications are enabled
+        const subscriptions = await Subscription.find({
+            channel: authorId,
+            notificationsEnabled: true
+        }).select('subscriber').lean();
+
+        if (!subscriptions.length) return [];
+
+        const subscriberIds = subscriptions.map(s => s.subscriber);
+
+        // Step 2: Filter subscribers who have the global post notification toggle ON
+        const eligibleUsers = await User.find({
+            _id: { $in: subscriberIds },
+            notifyOnPost: true
+        }).select('_id').lean();
 
         const message = generateMessage('tweet_post', sender.fullName || sender.userName);
-        
-        // Send notification to eligible subscribers
+
+        // Step 3: Send notification to each eligible subscriber
         const notifications = [];
-        for (const sub of subscribers) {
+        for (const u of eligibleUsers) {
             const notification = await createAndSendNotification({
-                recipient: sub.subscriber,
+                recipient: u._id,
                 sender: authorId,
                 type: 'tweet_post',
                 message,

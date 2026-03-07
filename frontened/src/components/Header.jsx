@@ -1,4 +1,4 @@
-import { Search, Menu, Video, Bell, User, Users, Globe, HelpCircle, MessageSquare, LogOut, UserPlus, RotateCcw } from "lucide-react";
+import { Search, Menu, Video, Bell, User, Users, Globe, HelpCircle, MessageSquare, LogOut, UserPlus, RotateCcw, X, ChevronLeft } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { useAuth } from "../contexts/AuthContext";
 import { Link, useNavigate } from "react-router-dom";
@@ -11,11 +11,65 @@ const Header = ({
   showSubscriptionMenu,
   setShowSubscriptionMenu 
 }) => {
-  const { user, logout } = useAuth();
+  const { user, logout, savedAccounts, switchAccount, addAccount, removeAccount } = useAuth();
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
   const profileMenuRef = useRef(null);
   const subscriptionMenuRef = useRef(null);
+
+  // Switch account panel state
+  const [showSwitchPanel, setShowSwitchPanel] = useState(false);
+  const [showAddAccountForm, setShowAddAccountForm] = useState(false);
+  const [addAccountEmail, setAddAccountEmail] = useState("");
+  const [addAccountPassword, setAddAccountPassword] = useState("");
+  const [addAccountError, setAddAccountError] = useState("");
+  const [addAccountLoading, setAddAccountLoading] = useState(false);
+  const [switchError, setSwitchError] = useState("");
+  const [switchingId, setSwitchingId] = useState(null);
+
+  const handleAddAccountSubmit = async (e) => {
+    e.preventDefault();
+    setAddAccountError("");
+    setAddAccountLoading(true);
+    try {
+      const result = await addAccount(addAccountEmail, addAccountPassword);
+      if (result?.success) {
+        setAddAccountEmail("");
+        setAddAccountPassword("");
+        setShowAddAccountForm(false);
+      } else {
+        setAddAccountError(result?.error || "Failed to add account");
+      }
+    } catch (err) {
+      setAddAccountError(err.message || "Failed to add account");
+    } finally {
+      setAddAccountLoading(false);
+    }
+  };
+
+  const handleSwitchAccount = async (targetUserId) => {
+    setSwitchError("");
+    setSwitchingId(targetUserId);
+    try {
+      const result = await switchAccount(targetUserId);
+      if (result?.success) {
+        setShowSwitchPanel(false);
+        setShowProfileMenu(false);
+        navigate("/");
+      } else {
+        setSwitchError(result?.error || "Failed to switch account");
+      }
+    } catch (err) {
+      setSwitchError(err.message || "Failed to switch account");
+    } finally {
+      setSwitchingId(null);
+    }
+  };
+
+  const handleRemoveAccount = async (accountId, e) => {
+    e.stopPropagation();
+    await removeAccount(accountId);
+  };
 
   // Search handler functions
   const handleSearch = () => {
@@ -44,6 +98,8 @@ const Header = ({
     const handleClickOutside = (event) => {
       if (profileMenuRef.current && !profileMenuRef.current.contains(event.target)) {
         setShowProfileMenu(false);
+        setShowSwitchPanel(false);
+        setShowAddAccountForm(false);
       }
       if (subscriptionMenuRef.current && !subscriptionMenuRef.current.contains(event.target)) {
         setShowSubscriptionMenu(false);
@@ -188,10 +244,133 @@ const Header = ({
                     <UserPlus className="w-5 h-5 text-gray-600" />
                     <span className="text-gray-900">Create a channel</span>
                   </div>
-                  <div className="px-4 py-2 hover:bg-gray-50 cursor-pointer flex items-center space-x-3">
-                    <RotateCcw className="w-5 h-5 text-gray-600" />
-                    <span className="text-gray-900">Switch account</span>
+                  <div
+                    onClick={() => { setShowSwitchPanel(true); setSwitchError(""); setShowAddAccountForm(false); }}
+                    className="px-4 py-2 hover:bg-gray-50 cursor-pointer flex items-center justify-between"
+                  >
+                    <div className="flex items-center space-x-3">
+                      <RotateCcw className="w-5 h-5 text-gray-600" />
+                      <span className="text-gray-900">Switch account</span>
+                    </div>
+                    {savedAccounts.filter(a => a._id !== user?._id).length > 0 && (
+                      <span className="text-xs bg-blue-100 text-blue-700 rounded-full px-2 py-0.5 font-medium">
+                        {savedAccounts.filter(a => a._id !== user?._id).length}
+                      </span>
+                    )}
                   </div>
+
+                  {/* Switch Account Panel (inline inside dropdown) */}
+                  {showSwitchPanel && (
+                    <div className="border-t border-gray-100 bg-gray-50">
+                      <div className="px-4 py-2 flex items-center space-x-2">
+                        <button
+                          onClick={() => { setShowSwitchPanel(false); setShowAddAccountForm(false); }}
+                          className="p-1 hover:bg-gray-200 rounded-full"
+                        >
+                          <ChevronLeft className="w-4 h-4 text-gray-600" />
+                        </button>
+                        <span className="text-sm font-semibold text-gray-700">Switch account</span>
+                      </div>
+
+                      {switchError && (
+                        <p className="px-4 pb-2 text-xs text-red-600">{switchError}</p>
+                      )}
+
+                      {/* Saved accounts list */}
+                      <div className="max-h-48 overflow-y-auto">
+                        {savedAccounts.filter(a => a._id !== user?._id).length === 0 ? (
+                          <p className="px-4 py-3 text-sm text-gray-500">No other saved accounts</p>
+                        ) : (
+                          savedAccounts
+                            .filter(a => a._id !== user?._id)
+                            .map(account => (
+                              <div
+                                key={account._id}
+                                className="flex items-center px-4 py-2 hover:bg-gray-100 group"
+                              >
+                                <button
+                                  onClick={() => handleSwitchAccount(account._id)}
+                                  disabled={switchingId === account._id}
+                                  className="flex items-center space-x-3 flex-1 text-left disabled:opacity-60"
+                                >
+                                  <div className="w-8 h-8 rounded-full overflow-hidden bg-blue-500 flex-shrink-0">
+                                    {account.avatar ? (
+                                      <img src={account.avatar} alt={account.fullName} className="w-full h-full object-cover" />
+                                    ) : (
+                                      <div className="w-full h-full flex items-center justify-center text-white text-xs font-bold">
+                                        {(account.fullName || account.userName || 'U')[0].toUpperCase()}
+                                      </div>
+                                    )}
+                                  </div>
+                                  <div className="min-w-0">
+                                    <p className="text-sm font-medium text-gray-900 truncate">{account.fullName}</p>
+                                    <p className="text-xs text-gray-500 truncate">@{account.userName}</p>
+                                  </div>
+                                  {switchingId === account._id && (
+                                    <span className="ml-2 text-xs text-blue-600">Switching...</span>
+                                  )}
+                                </button>
+                                <button
+                                  onClick={(e) => handleRemoveAccount(account._id, e)}
+                                  className="opacity-0 group-hover:opacity-100 p-1 hover:bg-gray-200 rounded-full transition-opacity ml-2"
+                                  title="Remove account"
+                                >
+                                  <X className="w-3 h-3 text-gray-500" />
+                                </button>
+                              </div>
+                            ))
+                        )}
+                      </div>
+
+                      {/* Add account */}
+                      {!showAddAccountForm ? (
+                        <button
+                          onClick={() => { setShowAddAccountForm(true); setAddAccountError(""); }}
+                          className="w-full px-4 py-2 text-sm text-blue-600 hover:bg-gray-100 flex items-center space-x-2 border-t border-gray-200"
+                        >
+                          <UserPlus className="w-4 h-4" />
+                          <span>Add account</span>
+                        </button>
+                      ) : (
+                        <form onSubmit={handleAddAccountSubmit} className="px-4 py-3 border-t border-gray-200 space-y-2">
+                          <p className="text-xs font-semibold text-gray-600 mb-1">Sign in to another account</p>
+                          {addAccountError && <p className="text-xs text-red-600">{addAccountError}</p>}
+                          <input
+                            type="text"
+                            placeholder="Email or username"
+                            value={addAccountEmail}
+                            onChange={e => setAddAccountEmail(e.target.value)}
+                            required
+                            className="w-full px-3 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                          />
+                          <input
+                            type="password"
+                            placeholder="Password"
+                            value={addAccountPassword}
+                            onChange={e => setAddAccountPassword(e.target.value)}
+                            required
+                            className="w-full px-3 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                          />
+                          <div className="flex space-x-2">
+                            <button
+                              type="submit"
+                              disabled={addAccountLoading}
+                              className="flex-1 py-1.5 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-60"
+                            >
+                              {addAccountLoading ? 'Adding...' : 'Add'}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => { setShowAddAccountForm(false); setAddAccountError(""); }}
+                              className="flex-1 py-1.5 text-sm bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300"
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        </form>
+                      )}
+                    </div>
+                  )}
                   <div 
                     onClick={() => {
                       logout();

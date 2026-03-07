@@ -20,6 +20,12 @@ const generateAccessAndRefreshToken =async(userId)=>{
     return {accessToken,refreshToken};
 }
 
+const getCookieOptions = () => ({
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax"
+});
+
 
 const registerUser= asyncHandler(async (req,res)=>{
 
@@ -139,10 +145,7 @@ const loginUser= asyncHandler( async(req,res)=>{
         const {accessToken,refreshToken}=await generateAccessAndRefreshToken(userExist._id);
         const loggedInUser=await User.findById(userExist._id).select("-password -refreshToken");
 
-        const options={
-            httpOnly:true,
-            secure:true
-        };
+        const options = getCookieOptions();
 
         console.log(loggedInUser);
         return res
@@ -172,10 +175,7 @@ const logoutUser = asyncHandler( async (req,res)=>{
         }
     );
 
-    const options={
-        httpOnly:true,
-        secure:true
-    };
+    const options = getCookieOptions();
 
     return res
     .status(201)
@@ -208,10 +208,7 @@ const refreshAccessToken=asyncHandler(async(req,res)=>{
          throw new ApiError(400,"Refresh token is expired or used");
      }
  
-     const options={
-         httpOnly:true,
-         secure:true
-     }
+     const options = getCookieOptions();
  
      const {accessToken,refreshToken}=await generateAccessAndRefreshToken(user._id);
  
@@ -230,7 +227,7 @@ const refreshAccessToken=asyncHandler(async(req,res)=>{
          )
      );
    } catch (error) {
-        throw new ApiError(400,error?.message || "Invalid refresh token");
+       throw new ApiError(error?.statusCode || 401, error?.message || "Invalid refresh token");
    } 
 });
 
@@ -239,7 +236,7 @@ const changeCurrentPassword=asyncHandler(async (req,res)=>{
     const {oldPassword,newPassword}=req.body;
     const user=await User.findById(req.user?._id);
 
-    const isPasswordCorrect=user.isPasswordCorrect(oldPassword);
+    const isPasswordCorrect=await user.isPasswordCorrect(oldPassword);
     if(!isPasswordCorrect){
         throw new ApiError(400,"Invalid old password");
     }
@@ -255,6 +252,12 @@ const changeCurrentPassword=asyncHandler(async (req,res)=>{
 
 
 const getCurrentUser=asyncHandler(async (req,res)=>{
+    if (!req.user) {
+        return res
+        .status(200)
+        .json(new ApiResponse(200,null,"No authenticated user"))
+    }
+
     return res
     .status(200)
     .json(new ApiResponse(200,req.user,"current user fetched succuessfully"))
@@ -678,6 +681,193 @@ const toggleNotifyOnVideo=asyncHandler(async (req,res)=>{
     )
 })
 
+const toggleNotifyOnComment=asyncHandler(async (req,res)=>{
+
+    if(!req?.user) return new ApiError(404,"User must be logged in");
+
+    const user=req.user;
+    user.notifyOnComment=!user.notifyOnComment;
+    await user.save();
+
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(200,user,"Toggled successfully")
+    )
+})
+
+const toggleNotifyOnMention=asyncHandler(async (req,res)=>{
+
+    if(!req?.user) return new ApiError(404,"User must be logged in");
+
+    const user=req.user;
+    user.notifyOnMention=!user.notifyOnMention;
+    await user.save();
+
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(200,user,"Toggled successfully")
+    )
+})
+
+const toggleNotifyOnEmail=asyncHandler(async (req,res)=>{
+
+    if(!req?.user) return new ApiError(404,"User must be logged in");
+
+    const user=req.user;
+    user.notifyOnEmail=!user.notifyOnEmail;
+    await user.save();
+
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(200,user,"Toggled successfully")
+    )
+})
+
+
+// ─── Switch Account helpers ───────────────────────────────────────────────────
+
+// Read the list of saved account IDs from the signed JWT cookie
+const getSavedAccountIds = (req) => {
+    try {
+        const token = req.cookies?.savedAccounts;
+        if (!token) return [];
+        const decoded = jwt.verify(token, process.env.REFRESH_TOKEN_SECRET);
+        return Array.isArray(decoded.userIds) ? decoded.userIds : [];
+    } catch {
+        return [];
+    }
+};
+
+// Build a signed JWT that holds the saved account IDs
+const createSavedAccountsToken = (userIds) => {
+    return jwt.sign({ userIds }, process.env.REFRESH_TOKEN_SECRET, { expiresIn: '30d' });
+};
+
+// Shared cookie options for the savedAccounts cookie (30-day persistence)
+const savedAccountsCookieOptions = () => ({
+    ...getCookieOptions(),
+    maxAge: 30 * 24 * 60 * 60 * 1000
+});
+
+// POST /users/add-account
+// Log in a second account and add it to the saved accounts list.
+// Does NOT change the currently active session.
+const addAccount = asyncHandler(async (req, res) => {
+    const { email, userName, password } = req.body;
+
+    if (!(userName || email)) throw new ApiError(400, "Username or email is required");
+    if (!password) throw new ApiError(400, "Password is required");
+
+    const userExist = await User.findOne({ $or: [{ userName }, { email }] });
+    if (!userExist) throw new ApiError(404, "User does not exist");
+
+    const passwordCheck = await userExist.isPasswordCorrect(password);
+    if (!passwordCheck) throw new ApiError(401, "Password is incorrect");
+
+    // Prevent adding the currently active account again
+    if (req.user && req.user._id.toString() === userExist._id.toString()) {
+        throw new ApiError(400, "This account is already the active account");
+    }
+
+    let savedIds = getSavedAccountIds(req);
+
+    // Persist the currently active account in the list so the user can switch back
+    if (req.user && !savedIds.includes(req.user._id.toString())) {
+        savedIds.push(req.user._id.toString());
+    }
+
+    // Add the newly authenticated account
+    if (!savedIds.includes(userExist._id.toString())) {
+        savedIds.push(userExist._id.toString());
+    }
+
+    const accountInfo = await User.findById(userExist._id)
+        .select('_id userName fullName avatar email');
+
+    return res
+        .status(200)
+        .cookie('savedAccounts', createSavedAccountsToken(savedIds), savedAccountsCookieOptions())
+        .json(new ApiResponse(200, accountInfo, "Account added successfully"));
+});
+
+// POST /users/switch-account
+// Switch the active session to a previously saved account.
+const switchAccount = asyncHandler(async (req, res) => {
+    const { targetUserId } = req.body;
+
+    if (!targetUserId) throw new ApiError(400, "Target user ID is required");
+    if (!mongoose.Types.ObjectId.isValid(targetUserId)) throw new ApiError(400, "Invalid user ID");
+
+    const savedIds = getSavedAccountIds(req);
+    if (!savedIds.includes(targetUserId)) {
+        throw new ApiError(403, "Account not in saved accounts list. Add the account first.");
+    }
+
+    const targetUser = await User.findById(targetUserId);
+    if (!targetUser) throw new ApiError(404, "User not found");
+
+    // Keep the current account in the saved list (so we can switch back)
+    let updatedSavedIds = [...savedIds];
+    if (req.user && !updatedSavedIds.includes(req.user._id.toString())) {
+        updatedSavedIds.push(req.user._id.toString());
+    }
+
+    const { accessToken, refreshToken } = await generateAccessAndRefreshToken(targetUser._id);
+    const loggedInUser = await User.findById(targetUser._id).select('-password -refreshToken');
+
+    const options = getCookieOptions();
+
+    return res
+        .status(200)
+        .cookie('accessToken', accessToken, options)
+        .cookie('refreshToken', refreshToken, options)
+        .cookie('savedAccounts', createSavedAccountsToken(updatedSavedIds), savedAccountsCookieOptions())
+        .json(new ApiResponse(200, { user: loggedInUser, accessToken, refreshToken }, "Switched account successfully"));
+});
+
+// GET /users/saved-accounts
+// Return basic profile info for every account in the saved list.
+const getSavedAccounts = asyncHandler(async (req, res) => {
+    const savedIds = getSavedAccountIds(req);
+
+    if (savedIds.length === 0) {
+        return res.status(200).json(new ApiResponse(200, [], "No saved accounts"));
+    }
+
+    const objectIds = savedIds
+        .filter(id => mongoose.Types.ObjectId.isValid(id))
+        .map(id => new mongoose.Types.ObjectId(id));
+
+    const accounts = await User.find({ _id: { $in: objectIds } })
+        .select('_id userName fullName avatar email');
+
+    return res.status(200).json(new ApiResponse(200, accounts, "Saved accounts fetched successfully"));
+});
+
+// DELETE /users/saved-accounts/:accountId
+// Remove an account from the saved list (does not log that account out).
+const removeAccount = asyncHandler(async (req, res) => {
+    const { accountId } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(accountId)) throw new ApiError(400, "Invalid account ID");
+
+    if (req.user && req.user._id.toString() === accountId) {
+        throw new ApiError(400, "Cannot remove the currently active account. Sign out first.");
+    }
+
+    let savedIds = getSavedAccountIds(req);
+    savedIds = savedIds.filter(id => id !== accountId);
+
+    return res
+        .status(200)
+        .cookie('savedAccounts', createSavedAccountsToken(savedIds), savedAccountsCookieOptions())
+        .json(new ApiResponse(200, { removedAccountId: accountId }, "Account removed from saved accounts"));
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
 
 export {registerUser,
     loginUser,
@@ -696,7 +886,14 @@ export {registerUser,
     removeFromWatchLater,
     getUserChannelProfile,
     toggleNotifyOnPost,
-    toggleNotifyOnVideo
+    toggleNotifyOnVideo,
+    toggleNotifyOnComment,
+    toggleNotifyOnMention,
+    toggleNotifyOnEmail,
+    addAccount,
+    switchAccount,
+    getSavedAccounts,
+    removeAccount
 };
 
 

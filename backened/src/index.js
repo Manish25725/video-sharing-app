@@ -1,4 +1,4 @@
-//require('dotenv').config({path:"./env"});
+﻿//require('dotenv').config({path:"./env"});
 import { createServer } from 'http'
 import { Server } from 'socket.io'
 import connectDB from './db/index.js'
@@ -23,7 +23,7 @@ global.io = io
 
 connectDB()
 .then(()=>{
-    const PORT = process.env.PORT || 8004;
+    const PORT = process.env.PORT || 8000;
     
     // Socket.io connection handling
     io.on('connection', (socket) => {
@@ -47,40 +47,21 @@ connectDB()
         })
     })
     
-    server.listen(PORT)
-    console.log(`Server is running at port ${PORT}`)
+    server.on('error', (error) => {
+        if (error.code === 'EADDRINUSE') {
+            console.error(`Port ${PORT} is already in use. Please free the port and restart.`);
+            process.exit(1);
+        } else {
+            console.error('Server error:', error);
+            process.exit(1);
+        }
+    });
+
+    server.listen(PORT, () => {
+        console.log(`Server is running at port ${PORT}`);
+    });
 })
 .catch((error)=>{
     console.log("MONGODB connection failed!!!!", error);
-    
+    process.exit(1);
 })
-
-
-
-
-
-
-/*
-
-import express from "express";
-const app=express();
-(async ()=>{
-    try{
-        mongoose.connect(`${process.env.MONGO_URI}/${DB_NAME}`);
-        app.on("error",(error)=>{
-            console.log("Error: ",error);
-            throw error;
-        });
-
-        app.listen(process.env.PORT,()=>{
-            console.log(`app is listening on port ${process.env.PORT}`);
-        })
-    }
-    catch(error){
-        console.error("ERROR: ",error);
-        throw error;
-    }
-
-})()
-
-*/
