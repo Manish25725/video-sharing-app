@@ -58,21 +58,25 @@ const nmsConfig = {
 
 const nms = new NodeMediaServer(nmsConfig);
 
-// ── Start HLS transcoding for a stream ─────────────────────
+// ── Start HLS transcoding + MP4 recording for a stream ──────
 function startHls(streamKey) {
   if (!ffmpegAvailable) return;
   if (ffmpegProcesses.has(streamKey)) return; // already running
 
   const hlsDir = path.join(mediaRoot, "live", streamKey);
+  const recDir = path.join(mediaRoot, "recordings");
   fs.mkdirSync(hlsDir, { recursive: true });
+  fs.mkdirSync(recDir, { recursive: true });
 
   const rtmpUrl = `rtmp://127.0.0.1:${RTMP_PORT}/live/${streamKey}`;
   const m3u8    = path.join(hlsDir, "index.m3u8");
+  const recPath = path.join(recDir, `${streamKey}.mp4`);
 
-  // -re reads at native framerate; -c copy is zero-transcode (just remux)
+  // Dual FFmpeg output: HLS segments for live viewers + full MP4 saved as VOD
   const args = [
     "-re",
     "-i", rtmpUrl,
+    // ── HLS (live viewers) ──────────────────────────────────
     "-c:v", "copy",
     "-c:a", "aac",
     "-f", "hls",
@@ -81,6 +85,11 @@ function startHls(streamKey) {
     "-hls_flags", "delete_segments",
     "-hls_segment_filename", path.join(hlsDir, "seg%03d.ts"),
     m3u8,
+    // ── MP4 recording (full file for VOD after stream ends) ──
+    "-c:v", "copy",
+    "-c:a", "aac",
+    "-movflags", "+faststart",
+    recPath,
   ];
 
   const proc = spawn(ffmpegPath, args, { stdio: ["ignore", "ignore", "pipe"] });
@@ -98,7 +107,7 @@ function startHls(streamKey) {
     ffmpegProcesses.delete(streamKey);
   });
 
-  console.log(`[NMS] HLS transcoding started for: ${streamKey}`);
+  console.log(`[NMS] HLS + MP4 recording started for: ${streamKey}`);  console.log(`[NMS] Recording path: ${path.join(mediaRoot, "recordings", streamKey + ".mp4")}`);
 }
 
 // ── Stop HLS transcoding ────────────────────────────────────

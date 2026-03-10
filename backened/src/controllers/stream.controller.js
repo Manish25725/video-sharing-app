@@ -1,12 +1,21 @@
 import crypto from "crypto";
+import path from "path";
+import fs from "fs";
+import { fileURLToPath } from "url";
 import mongoose from "mongoose";
 import { Stream } from "../models/stream.model.js";
 import { ScheduledStream } from "../models/scheduledStream.model.js";
 import { Message } from "../models/message.model.js";
+import { Video } from "../models/video.model.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/Apiresponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+// Recordings are written by FFmpeg to: backened/public/media/recordings/<streamKey>.mp4
+const recordingsRoot = path.join(__dirname, "../../public/media/recordings");
 
 const RTMP_HOST = process.env.RTMP_HOST || "localhost";
 const HLS_HOST = process.env.HLS_HOST || "localhost";
@@ -198,7 +207,88 @@ const getRecordedStreams = asyncHandler(async (req, res) => {
 
   return res.status(200).json(new ApiResponse(200, streams, "Recorded streams fetched"));
 });
+/* ─── Save Stream as Video (VOD) ─────────────────────────── */
+const saveStreamAsVideo = asyncHandler(async (req, res) => {
+  const { streamKey } = req.params;
 
+  const stream = await Stream.findOne({ streamKey, streamerId: req.user._id });
+  if (!stream) throw new ApiError(404, "Stream not found or not yours");
+
+  // Already saved — return existing videoId
+  if (stream.savedVideoId) {
+    return res.status(200).json(
+      new ApiResponse(200, { videoId: stream.savedVideoId }, "Recording already saved")
+    );
+  }
+
+  const recPath = path.join(recordingsRoot, `${streamKey}.mp4`);
+  if (!fs.existsSync(recPath)) {
+    throw new ApiError(
+      404,
+      "Recording file not found. The stream may not have been recorded, or FFmpeg was unavailable."
+    );
+  }
+
+  // Upload to Cloudinary — uploadOnCloudinary deletes the local file on success
+  const uploaded = await uploadOnCloudinary(recPath);
+  if (!uploaded?.url) throw new ApiError(500, "Failed to upload recording to cloud storage");
+
+  // Thumbnail: use stream thumbnail if available, else derive from Cloudinary video URL
+  const thumbnailUrl =
+    stream.thumbnailUrl ||
+    uploaded.url.replace("/upload/", "/upload/so_0/").replace(/\.[^.]+$/, ".jpg");
+
+  const video = await Video.create({
+    videoFile: uploaded.url,
+    thumbnail: thumbnailUrl,
+    title: stream.title,
+    description: stream.description || "",
+    duration: uploaded.duration || 0,
+    views: 0,
+    isPublished: true,
+    videoType: "livestream",
+    owner: stream.streamerId,
+    streamKey, // links the video back to the stream for chat replay
+  });
+
+  stream.savedVideoId = video._id;
+  await stream.save();
+
+  return res.status(201).json(
+    new ApiResponse(201, { video, videoId: video._id }, "Stream saved as video successfully")
+  );
+});
+
+/* ─── Chat Replay for VOD ────────────────────────────────── */
+// Returns all chat messages for a stream with offsetSeconds calculated
+// from stream.startedAt — used by VideoPlayer to sync chat to playback time
+const getChatReplay = asyncHandler(async (req, res) => {
+  const { streamKey } = req.params;
+
+  const stream = await Stream.findOne({ streamKey }).lean();
+  if (!stream) throw new ApiError(404, "Stream not found");
+
+  const messages = await Message.find({ streamId: stream._id })
+    .populate("userId", "userName fullName avatar")
+    .sort({ createdAt: 1 })
+    .lean();
+
+  const startTime = stream.startedAt ? new Date(stream.startedAt).getTime() : null;
+
+  const replay = messages.map((msg) => ({
+    _id: msg._id,
+    username: msg.username,
+    message: msg.message,
+    userId: msg.userId,
+    createdAt: msg.createdAt,
+    // offsetSeconds = how many seconds after stream start this message appeared
+    offsetSeconds: startTime
+      ? Math.max(0, (new Date(msg.createdAt).getTime() - startTime) / 1000)
+      : null,
+  }));
+
+  return res.status(200).json(new ApiResponse(200, replay, "Chat replay fetched"));
+});
 export {
   goLive,
   endStream,
@@ -210,4 +300,6 @@ export {
   cancelScheduledStream,
   getStreamMessages,
   getRecordedStreams,
+  saveStreamAsVideo,
+  getChatReplay,
 };

@@ -62,7 +62,12 @@ const videoSchema = new Schema(
         },
         typeofVideo:{
             type:String,
-        }
+        },
+        // Set when this video was saved from a live stream recording
+        streamKey: {
+            type: String,
+            default: null,
+        },
     }, 
     {
         timestamps: true

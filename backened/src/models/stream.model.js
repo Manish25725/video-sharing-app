@@ -54,6 +54,11 @@ const streamSchema = new Schema(
     endedAt: {
       type: Date,
     },
+    savedVideoId: {
+      type: Schema.Types.ObjectId,
+      ref: "Video",
+      default: null,
+    },
   },
   { timestamps: true }
 );
