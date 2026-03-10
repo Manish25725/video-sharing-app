@@ -8,6 +8,23 @@ import jwt from "jsonwebtoken"
 import mongoose from "mongoose"
 
 
+const parseDevice = (ua = "") => {
+    if (!ua) return "Unknown device";
+    let browser = "Unknown browser";
+    let os = "Unknown OS";
+    if (ua.includes("Edg")) browser = "Edge";
+    else if (ua.includes("OPR") || ua.includes("Opera")) browser = "Opera";
+    else if (ua.includes("Chrome")) browser = "Chrome";
+    else if (ua.includes("Firefox")) browser = "Firefox";
+    else if (ua.includes("Safari")) browser = "Safari";
+    if (ua.includes("Android")) os = "Android";
+    else if (ua.includes("iPhone") || ua.includes("iPad")) os = "iOS";
+    else if (ua.includes("Windows")) os = "Windows";
+    else if (ua.includes("Mac")) os = "macOS";
+    else if (ua.includes("Linux")) os = "Linux";
+    return `${browser} on ${os}`;
+};
+
 const generateAccessAndRefreshToken =async(userId)=>{
 
     const user=await User.findById(userId);
@@ -145,6 +162,20 @@ const loginUser= asyncHandler( async(req,res)=>{
         const {accessToken,refreshToken}=await generateAccessAndRefreshToken(userExist._id);
         const loggedInUser=await User.findById(userExist._id).select("-password -refreshToken");
 
+        await User.findByIdAndUpdate(userExist._id, {
+            $push: {
+                sessions: {
+                    $each: [{
+                        refreshToken,
+                        device: parseDevice(req.headers["user-agent"]),
+                        ip: req.ip || req.socket?.remoteAddress || "Unknown",
+                        createdAt: new Date()
+                    }],
+                    $slice: -10
+                }
+            }
+        });
+
         const options = getCookieOptions();
 
         console.log(loggedInUser);
@@ -164,16 +195,12 @@ const loginUser= asyncHandler( async(req,res)=>{
 
 
 const logoutUser = asyncHandler( async (req,res)=>{
-    await User.findByIdAndUpdate(req.user._id,
-        {
-            $set:{
-                refreshToken:undefined
-            }
-        },
-        {
-            new:true
-        }
-    );
+    const currentRefreshToken = req.cookies?.refreshToken;
+    const updateOp = { $set: { refreshToken: undefined } };
+    if (currentRefreshToken) {
+        updateOp.$pull = { sessions: { refreshToken: currentRefreshToken } };
+    }
+    await User.findByIdAndUpdate(req.user._id, updateOp, { new: true });
 
     const options = getCookieOptions();
 
@@ -886,6 +913,29 @@ const removeAccount = asyncHandler(async (req, res) => {
 
 // ─────────────────────────────────────────────────────────────────────────────
 
+const getActiveSessions = asyncHandler(async (req, res) => {
+    const user = await User.findById(req.user._id).select("sessions");
+    const currentRefreshToken = req.cookies?.refreshToken;
+    const sessions = (user?.sessions || []).map(s => ({
+        id: s._id,
+        device: s.device,
+        ip: s.ip,
+        createdAt: s.createdAt,
+        current: s.refreshToken === currentRefreshToken
+    })).reverse();
+    return res.status(200).json(new ApiResponse(200, sessions, "Sessions fetched"));
+});
+
+const revokeOtherSessions = asyncHandler(async (req, res) => {
+    const currentRefreshToken = req.cookies?.refreshToken;
+    await User.findByIdAndUpdate(req.user._id, {
+        $pull: { sessions: { refreshToken: { $ne: currentRefreshToken } } }
+    });
+    return res.status(200).json(new ApiResponse(200, {}, "Other sessions revoked"));
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+
 export {registerUser,
     loginUser,
     logoutUser,
@@ -911,7 +961,9 @@ export {registerUser,
     switchAccount,
     getSavedAccounts,
     removeAccount,
-    updateLanguage
+    updateLanguage,
+    getActiveSessions,
+    revokeOtherSessions
 };
 
 

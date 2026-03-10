@@ -15,8 +15,10 @@ const userSchema = new Schema(
         email:{
             type:String,
             required:true,
+            unique:true,
             lowercase:true,
-            trim:true
+            trim:true,
+            index:true
         },
         fullName:{
             type:String,
@@ -42,7 +44,7 @@ const userSchema = new Schema(
 
             watchedAt:{
                 type:Date,
-                default:Date.now()
+                default:Date.now
             }
         }
         ],
@@ -64,6 +66,12 @@ const userSchema = new Schema(
         refreshToken:{
             type:String
         },
+        sessions:[{
+            refreshToken:{ type:String },
+            device:{ type:String, default:"Unknown device" },
+            ip:{ type:String, default:"Unknown" },
+            createdAt:{ type:Date, default:Date.now }
+        }],
         bio:{
             type:String,
             trim:true,

@@ -236,16 +236,16 @@ const SecurityTab = () => {
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState(null);
   const [twoFaEnabled, setTwoFaEnabled] = useState(false);
-  const [sessions] = useState([
-    {
-      id: 1,
-      device: "Chrome on Windows",
-      icon: MonitorSmartphone,
-      location: "Current session",
-      time: "Active now",
-      current: true,
-    },
-  ]);
+  const [sessions, setSessions] = useState([]);
+  const [sessionsLoading, setSessionsLoading] = useState(true);
+  const [revokingOthers, setRevokingOthers] = useState(false);
+
+  useEffect(() => {
+    api.get("/users/sessions")
+      .then(res => setSessions(res.data || []))
+      .catch(() => {})
+      .finally(() => setSessionsLoading(false));
+  }, []);
 
   const showToast = (msg, type = "success") => {
     setToast({ msg, type });
@@ -254,6 +254,18 @@ const SecurityTab = () => {
 
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
   const toggle = (k) => () => setShow((s) => ({ ...s, [k]: !s[k] }));
+
+  const handleRevokeOthers = async () => {
+    setRevokingOthers(true);
+    try {
+      await api.delete("/users/sessions/revoke-others");
+      setSessions(prev => prev.filter(s => s.current));
+      showToast("Other sessions have been logged out.");
+    } catch (err) {
+      showToast(err?.message || "Failed to revoke sessions.", "error");
+    }
+    setRevokingOthers(false);
+  };
 
   const handlePasswordChange = async (e) => {
     e.preventDefault();
@@ -335,27 +347,49 @@ const SecurityTab = () => {
 
       <Card title="Active Sessions" subtitle="Devices currently logged in to your account.">
         <div className="space-y-3 max-w-md">
-          {sessions.map((s) => (
-            <div key={s.id} className="flex items-center gap-3 p-3.5 border border-gray-200 rounded-xl bg-gray-50">
-              <div className="w-9 h-9 bg-indigo-100 rounded-full flex items-center justify-center flex-shrink-0">
-                <s.icon className="w-4 h-4 text-indigo-600" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-gray-800 truncate">{s.device}</p>
-                <div className="flex items-center gap-2 mt-0.5">
-                  <Clock className="w-3 h-3 text-gray-400" />
-                  <span className="text-xs text-gray-500">{s.time}</span>
-                  {s.current && (
-                    <span className="text-xs px-2 py-0.5 bg-emerald-100 text-emerald-700 rounded-full font-medium">Current</span>
+          {sessionsLoading ? (
+            <div className="flex items-center gap-2 text-sm text-gray-400 py-2">
+              <span className="w-4 h-4 border-2 border-gray-200 border-t-indigo-500 rounded-full animate-spin" />
+              Loading sessions…
+            </div>
+          ) : sessions.length === 0 ? (
+            <p className="text-sm text-gray-400 py-2">No active sessions found.</p>
+          ) : (
+            sessions.map((s) => (
+              <div key={s.id} className="flex items-center gap-3 p-3.5 border border-gray-200 rounded-xl bg-gray-50">
+                <div className="w-9 h-9 bg-indigo-100 rounded-full flex items-center justify-center flex-shrink-0">
+                  <MonitorSmartphone className="w-4 h-4 text-indigo-600" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-gray-800 truncate">{s.device}</p>
+                  <div className="flex items-center gap-2 mt-0.5">
+                    <Clock className="w-3 h-3 text-gray-400" />
+                    <span className="text-xs text-gray-500">
+                      {new Date(s.createdAt).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" })}
+                    </span>
+                    {s.current && (
+                      <span className="text-xs px-2 py-0.5 bg-emerald-100 text-emerald-700 rounded-full font-medium">Current</span>
+                    )}
+                  </div>
+                  {s.ip && s.ip !== "Unknown" && (
+                    <p className="text-xs text-gray-400 mt-0.5">{s.ip}</p>
                   )}
                 </div>
               </div>
-            </div>
-          ))}
-          <button className="flex items-center gap-2 text-sm text-red-600 hover:text-red-700 font-medium mt-2 transition-colors">
-            <LogOut className="w-4 h-4" />
-            Logout other sessions
-          </button>
+            ))
+          )}
+          {!sessionsLoading && sessions.filter(s => !s.current).length > 0 && (
+            <button
+              onClick={handleRevokeOthers}
+              disabled={revokingOthers}
+              className="flex items-center gap-2 text-sm text-red-600 hover:text-red-700 font-medium mt-2 transition-colors disabled:opacity-60"
+            >
+              {revokingOthers
+                ? <span className="w-4 h-4 border-2 border-red-200 border-t-red-500 rounded-full animate-spin" />
+                : <LogOut className="w-4 h-4" />}
+              {revokingOthers ? "Logging out…" : "Logout other sessions"}
+            </button>
+          )}
         </div>
       </Card>
     </div>

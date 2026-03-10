@@ -1,5 +1,5 @@
 import {Router} from "express"
-import { changeCurrentPassword, getCurrentUser, getUserChannelProfile, getWatchHistory, getWatchLater, getWatchLaterIds, addToWatchLater, removeFromWatchLater, loginUser, logoutUser, registerUser, updateDetails, updateUserAvatar, updateUserCoverImage,addToWatchHistory, toggleNotifyOnPost, toggleNotifyOnVideo, toggleNotifyOnComment, toggleNotifyOnMention, toggleNotifyOnEmail, addAccount, switchAccount, getSavedAccounts, removeAccount, updateLanguage } from "../controllers/user.controller.js";
+import { changeCurrentPassword, getCurrentUser, getUserChannelProfile, getWatchHistory, getWatchLater, getWatchLaterIds, addToWatchLater, removeFromWatchLater, loginUser, logoutUser, registerUser, updateDetails, updateUserAvatar, updateUserCoverImage,addToWatchHistory, toggleNotifyOnPost, toggleNotifyOnVideo, toggleNotifyOnComment, toggleNotifyOnMention, toggleNotifyOnEmail, addAccount, switchAccount, getSavedAccounts, removeAccount, updateLanguage, getActiveSessions, revokeOtherSessions } from "../controllers/user.controller.js";
 import {upload} from "../middlewares/multer.middleware.js"
 import { optionalAuth, verifyJWT } from "../middlewares/auth.middleware.js";
 import { refreshAccessToken } from "../controllers/user.controller.js";
@@ -70,6 +70,9 @@ router.route("/add-account").post(optionalAuth, addAccount);
 router.route("/switch-account").post(verifyJWT, switchAccount);
 router.route("/saved-accounts").get(optionalAuth, getSavedAccounts);
 router.route("/saved-accounts/:accountId").delete(verifyJWT, removeAccount);
+
+router.route("/sessions").get(verifyJWT, getActiveSessions);
+router.route("/sessions/revoke-others").delete(verifyJWT, revokeOtherSessions);
 
 
 export default router

@@ -50,15 +50,27 @@ const uploadOnCloudinary = async (localFilePath) =>{
     }
 }
 
-const deleteOnCloudinary=async(FilePath)=>{
+const extractPublicId = (url) => {
     try {
-        const response=await cloudinary.uploader.destroy(FilePath);
-        console.log(response);
-        return response;
-        
-    } catch (error) {
-        console.log("Cloudinary deletion error",error.message);
+        const uploadIndex = url.indexOf('/upload/');
+        if (uploadIndex === -1) return url;
+        let path = url.slice(uploadIndex + 8);   // after '/upload/'
+        path = path.replace(/^v\d+\//, '');       // strip version prefix e.g. v1234567/
+        return path.replace(/\.[^/.]+$/, '');     // strip file extension
+    } catch {
+        return url;
     }
-}
+};
+
+const deleteOnCloudinary = async (url) => {
+    if (!url) return;
+    try {
+        const publicId = extractPublicId(url);
+        const response = await cloudinary.uploader.destroy(publicId);
+        return response;
+    } catch (error) {
+        console.error("Cloudinary deletion error:", error.message);
+    }
+};
 
 export {uploadOnCloudinary,deleteOnCloudinary};
