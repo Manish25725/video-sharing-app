@@ -51,7 +51,7 @@ const EmptyState = ({ icon: Icon, title, subtitle, className = "" }) => (
 
 /* main component */
 const AdminDashboard = () => {
-  const { user, logout } = useAuth();
+  const { user, logout, adminLogout } = useAuth();
   const navigate = useNavigate();
 
   const [activeSection, setActiveSection] = useState("overview");
@@ -167,7 +167,7 @@ const AdminDashboard = () => {
           className={`w-full flex items-center ${sidebarCollapsed ? "justify-center" : "px-5"} py-2.5 text-slate-400 hover:text-white hover:bg-slate-800 transition-colors text-sm`}>
           {sidebarCollapsed ? <ChevronRight className="w-5 h-5" /> : <><ChevronLeft className="w-5 h-5" /><span className="ml-3">Collapse</span></>}
         </button>
-        <button onClick={async () => { await logout(); navigate("/"); }}
+        <button onClick={() => { adminLogout(); navigate("/admin-login"); }}
           className={`w-full flex items-center ${sidebarCollapsed ? "justify-center" : "px-5"} py-2.5 text-slate-400 hover:text-red-400 hover:bg-slate-800 transition-colors text-sm`}>
           <LogOut className="w-5 h-5 flex-shrink-0" />
           {!sidebarCollapsed && <span className="ml-3">Sign out</span>}
@@ -223,7 +223,7 @@ const AdminDashboard = () => {
               <button className={`w-full flex items-center gap-2 px-4 py-2.5 text-sm ${tp} ${rowHover} transition-colors`}>
                 <Shield className="w-4 h-4 text-indigo-500" /> Admin Settings
               </button>
-              <button onClick={async () => { await logout(); navigate("/"); }}
+              <button onClick={() => { adminLogout(); navigate("/admin-login"); }}
                 className={`w-full flex items-center gap-2 px-4 py-2.5 text-sm text-red-500 ${rowHover} transition-colors`}>
                 <LogOut className="w-4 h-4" /> Sign out
               </button>

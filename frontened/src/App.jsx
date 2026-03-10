@@ -1,7 +1,12 @@
 import { useState } from "react"
 import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate, useLocation } from "react-router-dom"
 import AdminDashboard from "./pages/AdminDashboard"
-import AdminLoginPage from "./pages/AdminLoginPage"
+import AdminLogin from "./pages/AdminLogin"
+import Login from "./pages/Login"
+import Signup from "./pages/Signup"
+import UploadAvatar from "./pages/UploadAvatar"
+import UploadCover from "./pages/UploadCover"
+import ProfileSettings from "./pages/ProfileSettings"
 import Header from "./components/HeaderNew"
 import Sidebar from "./components/Sidebar"
 import Home from "./pages/Home"
@@ -19,9 +24,9 @@ import CategoryVideos from "./pages/CategoryVideos"
 import Settings from "./pages/Settings"
 import Profile from "./pages/Profile"
 import Search from "./components/Search"
-import AuthPage from "./components/AuthPage"
 import { AuthProvider, useAuth } from "./contexts/AuthContext"
 import { LanguageProvider } from "./contexts/LanguageContext"
+import { SignupProvider } from "./contexts/SignupContext"
 
 function AppContent() {
   const { isLoggedIn, loading, user, isAdmin } = useAuth();
@@ -54,26 +59,35 @@ function AppContent() {
     );
   }
 
-  // Admin login page is accessible without being logged in
+  // Admin login page — accessible without any login
   if (location.pathname === "/admin-login") {
     return (
       <Routes>
-        <Route path="/admin-login" element={<AdminLoginPage />} />
+        <Route path="/admin-login" element={<AdminLogin />} />
       </Routes>
     );
   }
 
-  // Simple authentication check - show auth page if not logged in
+  // Not logged in — show auth + signup flow
   if (!isLoggedIn) {
-    return <AuthPage />;
+    return (
+      <SignupProvider>
+        <Routes>
+          <Route path="/signup" element={<Signup />} />
+          <Route path="/upload-avatar" element={<UploadAvatar />} />
+          <Route path="/upload-cover" element={<UploadCover />} />
+          <Route path="*" element={<Login />} />
+        </Routes>
+      </SignupProvider>
+    );
   }
 
-  // Admin panel gets its own full-screen layout (requires admin auth)
-  if (location.pathname.startsWith("/admin-panel")) {
+  // Admin dashboard — requires admin auth
+  if (location.pathname.startsWith("/admin-dashboard")) {
     return (
       <Routes>
-        <Route path="/admin-panel" element={isAdmin ? <AdminDashboard /> : <Navigate to="/" replace />} />
-        <Route path="/admin-panel/*" element={isAdmin ? <AdminDashboard /> : <Navigate to="/" replace />} />
+        <Route path="/admin-dashboard" element={isAdmin ? <AdminDashboard /> : <Navigate to="/admin-login" replace />} />
+        <Route path="/admin-dashboard/*" element={isAdmin ? <AdminDashboard /> : <Navigate to="/admin-login" replace />} />
       </Routes>
     );
   }
@@ -118,8 +132,8 @@ function AppContent() {
             <Route path="/profile" element={<Profile onVideoSelect={handleVideoSelect} />} />
             <Route path="/video/:videoId" element={<VideoPlayer />} />
             <Route path="/settings" element={<Settings />} />
+            <Route path="/profile-settings" element={<ProfileSettings />} />
             <Route path="/admin" element={user ? <MyChannel /> : <Navigate to="/" />} />
-            <Route path="/admin-panel" element={user ? <Navigate to="/admin-panel" replace /> : <Navigate to="/" />} />
             <Route path="*" element={<Navigate to="/" />} />
           </Routes>
         </main>

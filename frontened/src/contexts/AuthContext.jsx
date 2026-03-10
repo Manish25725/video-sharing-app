@@ -140,6 +140,10 @@ export const AuthProvider = ({ children }) => {
     setUser(userData);
   };
 
+  const adminLogout = () => {
+    setAdminStatus(false);
+  };
+
   const value = {
     user,
     isLoggedIn,
@@ -151,6 +155,7 @@ export const AuthProvider = ({ children }) => {
     login: handleLogin,
     register: handleRegister,
     logout: handleLogout,
+    adminLogout,
     addAccount: handleAddAccount,
     switchAccount: handleSwitchAccount,
     removeAccount: handleRemoveAccount,

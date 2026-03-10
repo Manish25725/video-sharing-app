@@ -56,15 +56,16 @@ const UploadCover = () => {
     setLoading(true);
     setError("");
 
-    const formData = new FormData();
-    formData.append("fullName", signupData.fullName);
-    formData.append("email", signupData.email);
-    formData.append("password", signupData.password);
-    formData.append("userName", signupData.userName);
-    formData.append("avatar", signupData.avatarFile);
-    formData.append("coverImage", signupData.coverFile);
-
-    const registerResult = await register(formData);
+    const registerResult = await register(
+      {
+        fullName: signupData.fullName,
+        email: signupData.email,
+        password: signupData.password,
+        userName: signupData.userName,
+      },
+      signupData.avatarFile,
+      signupData.coverFile
+    );
     if (!registerResult.success) {
       setError(registerResult.error || "Registration failed. Please try again.");
       setLoading(false);

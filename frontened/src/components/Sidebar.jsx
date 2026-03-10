@@ -16,8 +16,7 @@ import {
   Shield,
   User,
   MessageSquare,
-  List,
-  LayoutDashboard
+  List
 } from "lucide-react"
 import { Link, useLocation } from "react-router-dom"
 import { useAuth } from "../contexts/AuthContext"
@@ -49,7 +48,6 @@ const Sidebar = ({ isOpen }) => {
 
   const adminItems = [
     { icon: Shield, label: "My Channel", path: "/admin" },
-    { icon: LayoutDashboard, label: "Admin Panel", path: "/admin-panel" },
   ]
 
   return (
