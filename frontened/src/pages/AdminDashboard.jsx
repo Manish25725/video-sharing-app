@@ -2,48 +2,15 @@
 import {
   LayoutDashboard, Users, Video, Flag, MessageSquare, BarChart3,
   Settings, Bell, Search, ChevronLeft, ChevronRight, Eye, Trash2,
-  Edit, Shield, LogOut, Moon, Sun, Menu, X, CheckCircle, XCircle,
-  Clock, UserX, Play, ArrowUp, ArrowDown, TrendingUp, ThumbsUp,
-  MoreVertical, RefreshCw, Ban, Upload, AlertTriangle,
+  Edit, Shield, LogOut, Moon, Sun, CheckCircle,
+  ArrowUp, ArrowDown, TrendingUp, ThumbsUp,
+  RefreshCw, Ban, Upload, AlertTriangle,
 } from "lucide-react";
 import { videoService, transformVideosArray } from "../services/videoService";
 import { dashboardService } from "../services/dashboardService";
 import { useAuth } from "../contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import Report from "./Report";
-
-/* dummy data */
-const DUMMY_USERS = [
-  { id: 1, name: "Alice Martin", email: "alice@mail.com", avatar: "AM", role: "User", status: "Active", joined: "Jan 12, 2025", videos: 14 },
-  { id: 2, name: "John Doe", email: "john@mail.com", avatar: "JD", role: "Creator", status: "Active", joined: "Feb 3, 2025", videos: 42 },
-  { id: 3, name: "Sara Kim", email: "sara@mail.com", avatar: "SK", role: "User", status: "Banned", joined: "Mar 18, 2025", videos: 0 },
-  { id: 4, name: "Mike Wang", email: "mike@mail.com", avatar: "MW", role: "Creator", status: "Active", joined: "Apr 5, 2025", videos: 78 },
-  { id: 5, name: "Emma Lee", email: "emma@mail.com", avatar: "EL", role: "User", status: "Active", joined: "May 22, 2025", videos: 3 },
-  { id: 6, name: "Chris Park", email: "chris@mail.com", avatar: "CP", role: "Moderator", status: "Active", joined: "Jun 1, 2025", videos: 5 },
-  { id: 7, name: "Nina Ross", email: "nina@mail.com", avatar: "NR", role: "Creator", status: "Active", joined: "Jul 14, 2025", videos: 29 },
-  { id: 8, name: "Tom Blake", email: "tom@mail.com", avatar: "TB", role: "User", status: "Suspended", joined: "Aug 8, 2025", videos: 1 },
-];
-
-const DUMMY_COMMENTS = [
-  { id: 1, user: "alice_m", avatar: "AM", comment: "Great tutorial, very helpful!", video: "React Hooks Guide", date: "Mar 9", status: "Approved" },
-  { id: 2, user: "john_d", avatar: "JD", comment: "This content is garbage and offensive!", video: "Cooking Basics", date: "Mar 8", status: "Flagged" },
-  { id: 3, user: "sara_k", avatar: "SK", comment: "Buy cheap meds here spam link", video: "Travel Vlog", date: "Mar 8", status: "Spam" },
-  { id: 4, user: "mike_w", avatar: "MW", comment: "Absolutely loved this video, keep it up!", video: "Music Cover", date: "Mar 7", status: "Approved" },
-  { id: 5, user: "emma_l", avatar: "EL", comment: "I hate this creator, unsubscribed", video: "News Recap", date: "Mar 7", status: "Flagged" },
-  { id: 6, user: "chris_p", avatar: "CP", comment: "Win 1000 today click my profile link!", video: "Gaming Highlights", date: "Mar 6", status: "Spam" },
-  { id: 7, user: "nina_r", avatar: "NR", comment: "This is amazing, subscribed!", video: "DIY Crafts", date: "Mar 5", status: "Approved" },
-];
-
-const ANALYTICS_BAR_DATA = [
-  { label: "Mon", views: 8400, uploads: 4 },
-  { label: "Tue", views: 12300, uploads: 7 },
-  { label: "Wed", views: 9800, uploads: 5 },
-  { label: "Thu", views: 15600, uploads: 9 },
-  { label: "Fri", views: 18200, uploads: 12 },
-  { label: "Sat", views: 22400, uploads: 8 },
-  { label: "Sun", views: 17900, uploads: 6 },
-];
-const MAX_VIEWS = 22400;
 
 /* reusable micro-components */
 const Avatar = ({ initials, size = "md", gradient = "from-indigo-500 to-purple-600" }) => {
@@ -74,6 +41,14 @@ const StatusPill = ({ status }) => {
   );
 };
 
+const EmptyState = ({ icon: Icon, title, subtitle, className = "" }) => (
+  <div className={`py-14 text-center ${className}`}>
+    <Icon className="w-10 h-10 mx-auto mb-3 opacity-25" />
+    <p className="font-medium text-sm">{title}</p>
+    {subtitle && <p className="text-xs mt-1 opacity-70">{subtitle}</p>}
+  </div>
+);
+
 /* main component */
 const AdminDashboard = () => {
   const { user, logout } = useAuth();
@@ -88,14 +63,17 @@ const AdminDashboard = () => {
   const notifRef = useRef(null);
   const profileRef = useRef(null);
 
-  const [stats, setStats] = useState({ totalUsers: 12483, totalVideos: 3847, totalViews: 2841920, totalReports: 47, usersChange: 12.5, videosChange: 8.3, viewsChange: 23.1, reportsChange: -5.2 });
+  const [stats, setStats] = useState({
+    totalUsers: 0, totalVideos: 0, totalViews: 0, totalReports: 0,
+    usersChange: 0, videosChange: 0, viewsChange: 0, reportsChange: 0,
+  });
   const [recentVideos, setRecentVideos] = useState([]);
   const [allVideos, setAllVideos] = useState([]);
   const [dataLoading, setDataLoading] = useState(false);
   const [videoSearch, setVideoSearch] = useState("");
   const [userSearch, setUserSearch] = useState("");
-  const [users, setUsers] = useState(DUMMY_USERS);
-  const [comments, setComments] = useState(DUMMY_COMMENTS);
+  const [users, setUsers] = useState([]);
+  const [comments, setComments] = useState([]);
 
   useEffect(() => {
     const handler = (e) => {
@@ -118,8 +96,8 @@ const AdminDashboard = () => {
       if (statsRes?.success && statsRes.data) {
         setStats((p) => ({
           ...p,
-          totalViews: statsRes.data.totalViews || p.totalViews,
-          totalVideos: statsRes.data.totalVideos || p.totalVideos,
+          totalViews: statsRes.data.totalViews ?? p.totalViews,
+          totalVideos: statsRes.data.totalVideos ?? p.totalVideos,
         }));
       }
       if (videosRes?.success) {
@@ -155,13 +133,6 @@ const AdminDashboard = () => {
     { id: "settings",  icon: Settings,        label: "Settings" },
   ];
 
-  const notifications = [
-    { icon: Flag,          color: "text-red-500",    msg: "3 new reports submitted",           time: "2m ago" },
-    { icon: Users,         color: "text-blue-500",   msg: "New user registered: @emma_lee",    time: "15m ago" },
-    { icon: Video,         color: "text-violet-500", msg: "New video uploaded: React Guide",   time: "1h ago" },
-    { icon: AlertTriangle, color: "text-amber-500",  msg: "Flagged comment detected",          time: "3h ago" },
-  ];
-
   /* sidebar */
   const SidebarNav = () => (
     <aside className={`${sidebarBg} fixed left-0 top-0 h-full z-50 flex flex-col transition-all duration-300 ${sidebarCollapsed ? "w-16" : "w-64"}`}>
@@ -175,14 +146,10 @@ const AdminDashboard = () => {
         {navItems.map(({ id, icon: Icon, label, badge }) => {
           const active = activeSection === id;
           return (
-            <button
-              key={id}
-              onClick={() => setActiveSection(id)}
-              title={sidebarCollapsed ? label : undefined}
+            <button key={id} onClick={() => setActiveSection(id)} title={sidebarCollapsed ? label : undefined}
               className={`w-full flex items-center ${sidebarCollapsed ? "justify-center px-0" : "px-5"} py-3 text-sm font-medium transition-all relative ${
                 active ? "text-white bg-indigo-600/20 border-r-2 border-indigo-500" : "text-slate-400 hover:text-white hover:bg-slate-800"
-              }`}
-            >
+              }`}>
               <Icon className={`w-5 h-5 flex-shrink-0 ${active ? "text-indigo-400" : ""}`} />
               {!sidebarCollapsed && <span className="ml-3">{label}</span>}
               {!sidebarCollapsed && badge > 0 && (
@@ -196,16 +163,12 @@ const AdminDashboard = () => {
         })}
       </nav>
       <div className="border-t border-slate-800 py-3">
-        <button
-          onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-          className={`w-full flex items-center ${sidebarCollapsed ? "justify-center" : "px-5"} py-2.5 text-slate-400 hover:text-white hover:bg-slate-800 transition-colors text-sm`}
-        >
+        <button onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+          className={`w-full flex items-center ${sidebarCollapsed ? "justify-center" : "px-5"} py-2.5 text-slate-400 hover:text-white hover:bg-slate-800 transition-colors text-sm`}>
           {sidebarCollapsed ? <ChevronRight className="w-5 h-5" /> : <><ChevronLeft className="w-5 h-5" /><span className="ml-3">Collapse</span></>}
         </button>
-        <button
-          onClick={async () => { await logout(); navigate("/"); }}
-          className={`w-full flex items-center ${sidebarCollapsed ? "justify-center" : "px-5"} py-2.5 text-slate-400 hover:text-red-400 hover:bg-slate-800 transition-colors text-sm`}
-        >
+        <button onClick={async () => { await logout(); navigate("/"); }}
+          className={`w-full flex items-center ${sidebarCollapsed ? "justify-center" : "px-5"} py-2.5 text-slate-400 hover:text-red-400 hover:bg-slate-800 transition-colors text-sm`}>
           <LogOut className="w-5 h-5 flex-shrink-0" />
           {!sidebarCollapsed && <span className="ml-3">Sign out</span>}
         </button>
@@ -213,58 +176,49 @@ const AdminDashboard = () => {
     </aside>
   );
 
-  /* top navbar */
+  /* top navbar - clean, no clutter */
   const TopNavbar = () => (
-    <header className={`${navbarBg} border-b fixed top-0 right-0 z-40 flex items-center px-5 h-16 gap-4 transition-all duration-300 ${sidebarCollapsed ? "left-16" : "left-64"}`}>
-      <div className="relative flex-1 max-w-lg">
+    <header className={`${navbarBg} border-b fixed top-0 right-0 z-40 flex items-center px-5 h-16 gap-3 transition-all duration-300 ${sidebarCollapsed ? "left-16" : "left-64"}`}>
+      <div className="relative flex-1 max-w-md">
         <Search className={`absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 ${ts}`} />
-        <input type="text" placeholder="Search users, videos, reports..." value={topSearch} onChange={(e) => setTopSearch(e.target.value)}
-          className={`w-full pl-10 pr-4 py-2 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 ${inputCls}`} />
+        <input type="text" placeholder="Search..." value={topSearch} onChange={(e) => setTopSearch(e.target.value)}
+          className={`w-full pl-9 pr-4 py-2 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 ${inputCls}`} />
       </div>
-      <div className="flex items-center gap-2">
-        <button onClick={() => setIsDark(!isDark)} className={`p-2 rounded-xl transition-colors ${d ? "text-yellow-400 hover:bg-gray-800" : "text-gray-500 hover:bg-gray-100"}`}>
+      <div className="flex items-center gap-1 ml-auto">
+        <button onClick={() => setIsDark(!isDark)}
+          className={`p-2 rounded-xl transition-colors ${d ? "text-yellow-400 hover:bg-gray-800" : "text-gray-500 hover:bg-gray-100"}`}>
           {isDark ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
         </button>
-        <button onClick={fetchData} className={`p-2 rounded-xl transition-colors ${d ? "text-gray-400 hover:bg-gray-800" : "text-gray-500 hover:bg-gray-100"}`}>
-          <RefreshCw className={`w-5 h-5 ${dataLoading ? "animate-spin" : ""}`} />
-        </button>
         <div ref={notifRef} className="relative">
-          <button onClick={() => setShowNotifications(!showNotifications)} className={`p-2 rounded-xl transition-colors relative ${d ? "text-gray-400 hover:bg-gray-800" : "text-gray-500 hover:bg-gray-100"}`}>
+          <button onClick={() => setShowNotifications(!showNotifications)}
+            className={`p-2 rounded-xl transition-colors ${d ? "text-gray-400 hover:bg-gray-800" : "text-gray-500 hover:bg-gray-100"}`}>
             <Bell className="w-5 h-5" />
-            <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full" />
           </button>
           {showNotifications && (
-            <div className={`absolute right-0 top-12 w-80 ${d ? "bg-gray-900 border-gray-700" : "bg-white border-gray-200"} border rounded-2xl shadow-2xl z-50 overflow-hidden`}>
-              <div className={`px-4 py-3 border-b ${d ? "border-gray-700" : "border-gray-100"} flex items-center justify-between`}>
+            <div className={`absolute right-0 top-12 w-72 ${d ? "bg-gray-900 border-gray-700" : "bg-white border-gray-200"} border rounded-2xl shadow-2xl z-50 overflow-hidden`}>
+              <div className={`px-4 py-3 border-b ${d ? "border-gray-700" : "border-gray-100"}`}>
                 <h3 className={`font-semibold text-sm ${tp}`}>Notifications</h3>
-                <span className="text-xs text-indigo-600 font-medium cursor-pointer hover:underline">Mark all read</span>
               </div>
-              <div className="max-h-72 overflow-y-auto">
-                {notifications.map((n, i) => (
-                  <div key={i} className={`flex items-start gap-3 px-4 py-3 ${rowHover} cursor-pointer`}>
-                    <n.icon className={`w-4 h-4 mt-0.5 flex-shrink-0 ${n.color}`} />
-                    <div><p className={`text-sm ${tp}`}>{n.msg}</p><p className={`text-xs mt-0.5 ${ts}`}>{n.time}</p></div>
-                  </div>
-                ))}
+              <div className={`px-5 py-8 text-center ${ts}`}>
+                <Bell className="w-8 h-8 mx-auto mb-2 opacity-25" />
+                <p className="text-sm font-medium">No new notifications</p>
               </div>
             </div>
           )}
         </div>
         <div ref={profileRef} className="relative">
-          <button onClick={() => setShowProfile(!showProfile)} className="flex items-center gap-2 pl-2 pr-3 py-1.5 rounded-xl hover:bg-gray-100 transition-colors">
+          <button onClick={() => setShowProfile(!showProfile)}
+            className={`flex items-center gap-2 px-2 py-1.5 rounded-xl transition-colors ${d ? "hover:bg-gray-800" : "hover:bg-gray-100"}`}>
             <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-fuchsia-600 flex items-center justify-center text-white text-xs font-bold">
               {user?.fullName?.slice(0, 2).toUpperCase() || "AD"}
             </div>
-            <div className="text-left hidden sm:block">
-              <p className={`text-sm font-semibold leading-tight ${tp}`}>{user?.fullName || "Admin"}</p>
-              <p className={`text-xs ${ts}`}>Administrator</p>
-            </div>
+            <span className={`text-sm font-semibold hidden sm:block ${tp}`}>{user?.fullName?.split(" ")[0] || "Admin"}</span>
           </button>
           {showProfile && (
-            <div className={`absolute right-0 top-12 w-52 ${d ? "bg-gray-900 border-gray-700" : "bg-white border-gray-200"} border rounded-2xl shadow-2xl z-50 py-1 overflow-hidden`}>
+            <div className={`absolute right-0 top-12 w-48 ${d ? "bg-gray-900 border-gray-700" : "bg-white border-gray-200"} border rounded-2xl shadow-2xl z-50 py-1 overflow-hidden`}>
               <div className={`px-4 py-3 border-b ${d ? "border-gray-700" : "border-gray-100"}`}>
                 <p className={`font-semibold text-sm ${tp}`}>{user?.fullName || "Admin User"}</p>
-                <p className={`text-xs ${ts}`}>{user?.email || "admin@playvibe.com"}</p>
+                <p className={`text-xs ${ts}`}>{user?.email || ""}</p>
               </div>
               <button className={`w-full flex items-center gap-2 px-4 py-2.5 text-sm ${tp} ${rowHover} transition-colors`}>
                 <Shield className="w-4 h-4 text-indigo-500" /> Admin Settings
@@ -280,30 +234,47 @@ const AdminDashboard = () => {
     </header>
   );
 
-  /* stat card */
+  /* stat card with loading skeleton */
   const StatCard = ({ title, value, change, icon: Icon, gradient }) => (
     <div className={`${cardBg} border rounded-2xl p-6 shadow-sm hover:shadow-lg transition-all duration-200`}>
-      <div className="flex items-start justify-between mb-4">
-        <div>
-          <p className={`text-xs font-semibold uppercase tracking-wider ${ts} mb-1`}>{title}</p>
-          <p className={`text-3xl font-bold ${tp}`}>{typeof value === "number" ? value.toLocaleString() : value}</p>
+      {dataLoading ? (
+        <div className="space-y-3 animate-pulse">
+          <div className={`h-3 w-24 rounded ${d ? "bg-gray-800" : "bg-gray-100"}`} />
+          <div className={`h-8 w-20 rounded ${d ? "bg-gray-800" : "bg-gray-100"}`} />
+          <div className={`h-3 w-16 rounded ${d ? "bg-gray-800" : "bg-gray-100"}`} />
         </div>
-        <div className={`${gradient} p-3 rounded-xl shadow-sm`}><Icon className="w-6 h-6 text-white" /></div>
-      </div>
-      <div className={`flex items-center text-sm font-medium ${change >= 0 ? "text-emerald-600" : "text-red-500"}`}>
-        {change >= 0 ? <ArrowUp className="w-3.5 h-3.5 mr-1" /> : <ArrowDown className="w-3.5 h-3.5 mr-1" />}
-        {Math.abs(change)}%
-        <span className={`ml-1 font-normal text-xs ${ts}`}>vs last month</span>
-      </div>
+      ) : (
+        <>
+          <div className="flex items-start justify-between mb-4">
+            <div>
+              <p className={`text-xs font-semibold uppercase tracking-wider ${ts} mb-1`}>{title}</p>
+              <p className={`text-3xl font-bold ${tp}`}>{typeof value === "number" ? value.toLocaleString() : value}</p>
+            </div>
+            <div className={`${gradient} p-3 rounded-xl shadow-sm`}><Icon className="w-6 h-6 text-white" /></div>
+          </div>
+          <div className={`flex items-center text-sm font-medium ${change >= 0 ? "text-emerald-600" : "text-red-500"}`}>
+            {change >= 0 ? <ArrowUp className="w-3.5 h-3.5 mr-1" /> : <ArrowDown className="w-3.5 h-3.5 mr-1" />}
+            {Math.abs(change)}%
+            <span className={`ml-1 font-normal text-xs ${ts}`}>vs last month</span>
+          </div>
+        </>
+      )}
     </div>
   );
 
   /* overview */
   const OverviewSection = () => (
     <div className="space-y-6">
-      <div>
-        <h1 className={`text-2xl font-bold ${tp}`}>Dashboard Overview</h1>
-        <p className={`text-sm ${ts} mt-1`}>Welcome back, {user?.fullName?.split(" ")[0] || "Admin"}. Here is what is happening.</p>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className={`text-2xl font-bold ${tp}`}>Dashboard Overview</h1>
+          <p className={`text-sm ${ts} mt-1`}>Welcome back, {user?.fullName?.split(" ")[0] || "Admin"}.</p>
+        </div>
+        <button onClick={fetchData}
+          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium border transition-colors flex-shrink-0 ${d ? "border-gray-700 text-gray-300 hover:bg-gray-800" : "border-gray-200 text-gray-600 hover:bg-gray-50"}`}>
+          <RefreshCw className={`w-4 h-4 ${dataLoading ? "animate-spin" : ""}`} />
+          {dataLoading ? "Loading..." : "Refresh"}
+        </button>
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5">
         <StatCard title="Total Users"  value={stats.totalUsers}   change={stats.usersChange}   icon={Users} gradient="bg-gradient-to-br from-blue-500 to-indigo-600" />
@@ -313,9 +284,9 @@ const AdminDashboard = () => {
       </div>
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         {[
-          { label: "Review Reports",  icon: Flag,       color: "text-red-600 bg-red-50 hover:bg-red-100",     section: "reports" },
-          { label: "Manage Videos",   icon: Video,      color: "text-violet-600 bg-violet-50 hover:bg-violet-100", section: "videos" },
-          { label: "User Management", icon: Users,      color: "text-blue-600 bg-blue-50 hover:bg-blue-100",   section: "users" },
+          { label: "Review Reports",  icon: Flag,          color: "text-red-600 bg-red-50 hover:bg-red-100",            section: "reports" },
+          { label: "Manage Videos",   icon: Video,         color: "text-violet-600 bg-violet-50 hover:bg-violet-100",   section: "videos" },
+          { label: "User Management", icon: Users,         color: "text-blue-600 bg-blue-50 hover:bg-blue-100",         section: "users" },
           { label: "Mod Comments",    icon: MessageSquare, color: "text-emerald-600 bg-emerald-50 hover:bg-emerald-100", section: "comments" },
         ].map(({ label, icon: Icon, color, section }) => (
           <button key={label} onClick={() => setActiveSection(section)}
@@ -327,7 +298,7 @@ const AdminDashboard = () => {
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
         <div className={`xl:col-span-2 ${cardBg} border rounded-2xl shadow-sm`}>
           <div className={`flex items-center justify-between px-6 py-4 border-b ${d ? "border-gray-800" : "border-gray-100"}`}>
-            <h2 className={`font-semibold ${tp}`}>Recent Uploaded Videos</h2>
+            <h2 className={`font-semibold ${tp}`}>Recent Videos</h2>
             <button onClick={() => setActiveSection("videos")} className="text-xs text-indigo-600 font-medium hover:underline">View all</button>
           </div>
           <div className="overflow-x-auto">
@@ -341,21 +312,33 @@ const AdminDashboard = () => {
               </thead>
               <tbody className={`divide-y ${divider}`}>
                 {dataLoading ? (
-                  <tr><td colSpan={4} className={`px-5 py-8 text-center ${ts}`}>Loading...</td></tr>
-                ) : (recentVideos.length > 0 ? recentVideos : Array(5).fill(null).map((_, i) => ({
-                    id: i, title: `Sample Video ${i + 1}`, views: (i + 1) * 1200, isPublished: true,
-                    thumbnail: `https://picsum.photos/80/45?random=${i + 20}`, uploadTime: new Date().toISOString(),
-                  }))).map((v, i) => (
+                  [1,2,3,4,5].map((i) => (
+                    <tr key={i}>
+                      {[160, 60, 70, 70].map((w, j) => (
+                        <td key={j} className="px-5 py-4">
+                          <div className={`h-4 rounded animate-pulse ${d ? "bg-gray-800" : "bg-gray-100"}`} style={{ width: `${w}px` }} />
+                        </td>
+                      ))}
+                    </tr>
+                  ))
+                ) : recentVideos.length === 0 ? (
+                  <tr>
+                    <td colSpan={4} className={`px-5 py-12 text-center ${ts}`}>
+                      <Video className="w-8 h-8 mx-auto mb-2 opacity-25" />
+                      <p className="text-sm font-medium">No videos yet</p>
+                    </td>
+                  </tr>
+                ) : recentVideos.map((v, i) => (
                   <tr key={i} className={`${rowHover} transition-colors`}>
                     <td className="px-5 py-3">
                       <div className="flex items-center gap-3">
-                        <img src={v.thumbnail || `https://picsum.photos/64/36?random=${v.id}`} alt="" className="w-14 h-8 object-cover rounded-lg flex-shrink-0" />
+                        <img src={v.thumbnail} alt="" className="w-14 h-8 object-cover rounded-lg flex-shrink-0" />
                         <span className={`text-sm font-medium ${tp} line-clamp-1 max-w-[140px]`}>{v.title}</span>
                       </div>
                     </td>
                     <td className={`px-5 py-3 text-sm ${ts}`}>{(v.views || 0).toLocaleString()}</td>
                     <td className="px-5 py-3"><StatusPill status={v.isPublished !== false ? "Published" : "Unpublished"} /></td>
-                    <td className={`px-5 py-3 text-sm ${ts}`}>{v.uploadTime ? new Date(v.uploadTime).toLocaleDateString() : "Recently"}</td>
+                    <td className={`px-5 py-3 text-sm ${ts}`}>{v.uploadTime ? new Date(v.uploadTime).toLocaleDateString() : "—"}</td>
                   </tr>
                 ))}
               </tbody>
@@ -367,26 +350,7 @@ const AdminDashboard = () => {
             <h2 className={`font-semibold ${tp}`}>Recent Reports</h2>
             <button onClick={() => setActiveSection("reports")} className="text-xs text-indigo-600 font-medium hover:underline">View all</button>
           </div>
-          <div>
-            {[
-              { reason: "Spam / Misleading", user: "alice_m", time: "2m ago",  status: "Pending" },
-              { reason: "Violence / Graphic", user: "john_d", time: "15m ago", status: "Pending" },
-              { reason: "Privacy Violation",  user: "sara_k", time: "1h ago",  status: "Reviewed" },
-              { reason: "Hate Speech",        user: "mike_w", time: "3h ago",  status: "Removed" },
-              { reason: "Misinformation",     user: "emma_l", time: "5h ago",  status: "Pending" },
-            ].map((r, i) => (
-              <div key={i} className={`flex items-center gap-3 px-5 py-3 ${rowHover} cursor-pointer border-b ${d ? "border-gray-800" : "border-gray-50"} last:border-0`}>
-                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-red-400 to-rose-600 flex items-center justify-center flex-shrink-0">
-                  <Flag className="w-4 h-4 text-white" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className={`text-sm font-medium ${tp} truncate`}>{r.reason}</p>
-                  <p className={`text-xs ${ts}`}>@{r.user} · {r.time}</p>
-                </div>
-                <StatusPill status={r.status} />
-              </div>
-            ))}
-          </div>
+          <EmptyState icon={Flag} title="No recent reports" subtitle="Reports will appear here" className={ts} />
         </div>
       </div>
     </div>
@@ -395,8 +359,8 @@ const AdminDashboard = () => {
   /* users */
   const UsersSection = () => {
     const filtered = users.filter((u) => !userSearch.trim() ||
-      u.name.toLowerCase().includes(userSearch.toLowerCase()) ||
-      u.email.toLowerCase().includes(userSearch.toLowerCase()));
+      u.name?.toLowerCase().includes(userSearch.toLowerCase()) ||
+      u.email?.toLowerCase().includes(userSearch.toLowerCase()));
     const banUser = (id) => setUsers((prev) => prev.map((u) => u.id === id ? { ...u, status: u.status === "Banned" ? "Active" : "Banned" } : u));
     return (
       <div className="space-y-6">
@@ -413,7 +377,12 @@ const AdminDashboard = () => {
             <table className="w-full min-w-[700px]">
               <thead><tr className={thBg}>{["User","Role","Videos","Status","Joined","Actions"].map((h) => <th key={h} className="text-left px-5 py-3.5 text-xs font-semibold uppercase tracking-wider">{h}</th>)}</tr></thead>
               <tbody className={`divide-y ${divider}`}>
-                {filtered.map((u) => (
+                {filtered.length === 0 ? (
+                  <tr><td colSpan={6}>
+                    <EmptyState icon={Users} title={userSearch ? "No matching users" : "No users yet"}
+                      subtitle={userSearch ? "Try a different search term" : "Registered users will appear here"} className={ts} />
+                  </td></tr>
+                ) : filtered.map((u) => (
                   <tr key={u.id} className={`${rowHover} transition-colors`}>
                     <td className="px-5 py-4">
                       <div className="flex items-center gap-3"><Avatar initials={u.avatar} /><div><p className={`text-sm font-semibold ${tp}`}>{u.name}</p><p className={`text-xs ${ts}`}>{u.email}</p></div></div>
@@ -445,17 +414,13 @@ const AdminDashboard = () => {
 
   /* videos */
   const VideosSection = () => {
-    const videos = allVideos.length > 0 ? allVideos : Array(8).fill(null).map((_,i) => ({
-      id: i+1, title: `Demo Video ${i+1}`, views: (i+1)*3400, isPublished: i%3!==0,
-      thumbnail: `https://picsum.photos/80/45?random=${i+50}`, uploadTime: new Date().toISOString(), duration: (i+1)*180,
-    }));
-    const filtered = videos.filter((v) => !videoSearch.trim() || v.title?.toLowerCase().includes(videoSearch.toLowerCase()));
-    const fmt = (s) => { if(!s) return "00:00"; const m=Math.floor(s/60); const sc=Math.round(s%60); return `${m}:${sc.toString().padStart(2,"0")}`; };
+    const filtered = allVideos.filter((v) => !videoSearch.trim() || v.title?.toLowerCase().includes(videoSearch.toLowerCase()));
+    const fmt = (s) => { if (!s) return "—"; const m = Math.floor(s / 60); const sc = Math.round(s % 60); return `${m}:${sc.toString().padStart(2, "0")}`; };
     return (
       <div className="space-y-6">
-        <div><h1 className={`text-2xl font-bold ${tp}`}>Videos Management</h1><p className={`text-sm ${ts} mt-1`}>{videos.length} videos on platform</p></div>
+        <div><h1 className={`text-2xl font-bold ${tp}`}>Videos Management</h1><p className={`text-sm ${ts} mt-1`}>{allVideos.length} videos on platform</p></div>
         <div className={`${cardBg} border rounded-2xl shadow-sm`}>
-          <div className={`px-5 py-4 border-b ${d?"border-gray-800":"border-gray-100"}`}>
+          <div className={`px-5 py-4 border-b ${d ? "border-gray-800" : "border-gray-100"}`}>
             <div className="relative max-w-sm">
               <Search className={`absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 ${ts}`} />
               <input type="text" placeholder="Search videos..." value={videoSearch} onChange={(e) => setVideoSearch(e.target.value)}
@@ -466,21 +431,36 @@ const AdminDashboard = () => {
             <table className="w-full min-w-[700px]">
               <thead><tr className={thBg}>{["Video","Duration","Views","Status","Uploaded","Actions"].map((h)=><th key={h} className="text-left px-5 py-3.5 text-xs font-semibold uppercase tracking-wider">{h}</th>)}</tr></thead>
               <tbody className={`divide-y ${divider}`}>
-                {filtered.map((v)=>(
+                {dataLoading ? (
+                  [1,2,3,4,5].map((i) => (
+                    <tr key={i}>
+                      {[200,50,60,70,80,60].map((w, j) => (
+                        <td key={j} className="px-5 py-4">
+                          <div className={`h-4 rounded animate-pulse ${d ? "bg-gray-800" : "bg-gray-100"}`} style={{ width: `${w}px` }} />
+                        </td>
+                      ))}
+                    </tr>
+                  ))
+                ) : filtered.length === 0 ? (
+                  <tr><td colSpan={6}>
+                    <EmptyState icon={Video} title={videoSearch ? "No matching videos" : "No videos yet"}
+                      subtitle={videoSearch ? "Try a different search term" : undefined} className={ts} />
+                  </td></tr>
+                ) : filtered.map((v) => (
                   <tr key={v.id} className={`${rowHover} transition-colors`}>
                     <td className="px-5 py-4">
                       <div className="flex items-center gap-3">
                         <div className="relative flex-shrink-0">
-                          <img src={v.thumbnail||`https://picsum.photos/80/45?random=${v.id}`} alt="" className="w-20 h-12 object-cover rounded-lg" />
+                          <img src={v.thumbnail} alt="" className="w-20 h-12 object-cover rounded-lg" />
                           <div className="absolute bottom-1 right-1 bg-black/70 text-white text-[10px] px-1 rounded">{fmt(v.duration)}</div>
                         </div>
                         <span className={`text-sm font-medium ${tp} max-w-[180px] line-clamp-2`}>{v.title}</span>
                       </div>
                     </td>
                     <td className={`px-5 py-4 text-sm ${ts}`}>{fmt(v.duration)}</td>
-                    <td className={`px-5 py-4 text-sm ${ts}`}>{(v.views||0).toLocaleString()}</td>
-                    <td className="px-5 py-4"><StatusPill status={v.isPublished!==false?"Published":"Unpublished"}/></td>
-                    <td className={`px-5 py-4 text-sm ${ts}`}>{v.uploadTime?new Date(v.uploadTime).toLocaleDateString():"—"}</td>
+                    <td className={`px-5 py-4 text-sm ${ts}`}>{(v.views || 0).toLocaleString()}</td>
+                    <td className="px-5 py-4"><StatusPill status={v.isPublished !== false ? "Published" : "Unpublished"} /></td>
+                    <td className={`px-5 py-4 text-sm ${ts}`}>{v.uploadTime ? new Date(v.uploadTime).toLocaleDateString() : "—"}</td>
                     <td className="px-5 py-4">
                       <div className="flex items-center gap-1">
                         <button className="p-1.5 rounded-lg text-blue-500 hover:bg-blue-50 transition-colors"><Eye className="w-4 h-4"/></button>
@@ -507,7 +487,11 @@ const AdminDashboard = () => {
           <table className="w-full min-w-[700px]">
             <thead><tr className={thBg}>{["User","Comment","Video","Date","Status","Actions"].map((h)=><th key={h} className="text-left px-5 py-3.5 text-xs font-semibold uppercase tracking-wider">{h}</th>)}</tr></thead>
             <tbody className={`divide-y ${divider}`}>
-              {comments.map((c)=>(
+              {comments.length === 0 ? (
+                <tr><td colSpan={6}>
+                  <EmptyState icon={MessageSquare} title="No comments to moderate" subtitle="Flagged comments will appear here" className={ts} />
+                </td></tr>
+              ) : comments.map((c) => (
                 <tr key={c.id} className={`${rowHover} transition-colors`}>
                   <td className="px-5 py-4"><div className="flex items-center gap-2"><Avatar initials={c.avatar} size="sm"/><span className={`text-sm font-medium ${tp}`}>{c.user}</span></div></td>
                   <td className="px-5 py-4"><p className={`text-sm ${tp} max-w-[260px] line-clamp-2`}>{c.comment}</p></td>
@@ -532,66 +516,40 @@ const AdminDashboard = () => {
   /* analytics */
   const AnalyticsSection = () => (
     <div className="space-y-6">
-      <div><h1 className={`text-2xl font-bold ${tp}`}>Analytics</h1><p className={`text-sm ${ts} mt-1`}>Platform performance — last 7 days</p></div>
+      <div><h1 className={`text-2xl font-bold ${tp}`}>Analytics</h1><p className={`text-sm ${ts} mt-1`}>Platform performance overview</p></div>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
-          { label: "Avg Views/Day", value: "14,037", icon: Eye,        g: "from-sky-500 to-blue-600" },
-          { label: "New Users/Day", value: "243",    icon: TrendingUp, g: "from-violet-500 to-purple-700" },
-          { label: "Total Likes",   value: "128.4K", icon: ThumbsUp,   g: "from-rose-500 to-pink-600" },
-          { label: "Uploads/Day",   value: "7.3",    icon: Upload,     g: "from-emerald-500 to-teal-600" },
+          { label: "Total Views",  value: stats.totalViews.toLocaleString(),   icon: Eye,        g: "from-sky-500 to-blue-600" },
+          { label: "Total Videos", value: stats.totalVideos.toLocaleString(),  icon: Video,      g: "from-violet-500 to-purple-700" },
+          { label: "Total Users",  value: stats.totalUsers.toLocaleString(),   icon: Users,      g: "from-emerald-500 to-teal-600" },
+          { label: "Reports",      value: stats.totalReports.toLocaleString(), icon: Flag,       g: "from-rose-500 to-pink-600" },
         ].map(({ label, value, icon: Icon, g }) => (
           <div key={label} className={`${cardBg} border rounded-2xl p-5 shadow-sm`}>
-            <div className="flex items-center gap-3">
-              <div className={`bg-gradient-to-br ${g} p-2.5 rounded-xl`}><Icon className="w-4 h-4 text-white"/></div>
-              <div><p className={`text-xs ${ts}`}>{label}</p><p className={`text-xl font-bold ${tp}`}>{value}</p></div>
-            </div>
+            {dataLoading ? (
+              <div className="space-y-2 animate-pulse">
+                <div className={`h-3 w-20 rounded ${d ? "bg-gray-800" : "bg-gray-100"}`} />
+                <div className={`h-6 w-16 rounded ${d ? "bg-gray-800" : "bg-gray-100"}`} />
+              </div>
+            ) : (
+              <div className="flex items-center gap-3">
+                <div className={`bg-gradient-to-br ${g} p-2.5 rounded-xl`}><Icon className="w-4 h-4 text-white"/></div>
+                <div><p className={`text-xs ${ts}`}>{label}</p><p className={`text-xl font-bold ${tp}`}>{value}</p></div>
+              </div>
+            )}
           </div>
         ))}
       </div>
-      <div className={`${cardBg} border rounded-2xl p-6 shadow-sm`}>
-        <h2 className={`font-semibold ${tp} mb-6`}>Daily Views This Week</h2>
-        <div className="flex items-end gap-3 h-48">
-          {ANALYTICS_BAR_DATA.map(({ label, views }) => {
-            const pct = Math.round((views / MAX_VIEWS) * 100);
-            return (
-              <div key={label} className="flex-1 flex flex-col items-center gap-2">
-                <p className={`text-xs font-semibold ${ts}`}>{(views/1000).toFixed(1)}k</p>
-                <div className="w-full flex flex-col justify-end" style={{ height: "140px" }}>
-                  <div style={{ height: `${pct}%` }} className="w-full bg-gradient-to-t from-indigo-600 to-indigo-400 rounded-t-lg hover:from-indigo-700 transition-all duration-200 cursor-pointer" title={`${label}: ${views.toLocaleString()} views`} />
-                </div>
-                <p className={`text-xs ${ts}`}>{label}</p>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-      <div className={`${cardBg} border rounded-2xl p-6 shadow-sm`}>
-        <h2 className={`font-semibold ${tp} mb-5`}>Content Category Breakdown</h2>
-        <div className="space-y-4">
-          {[
-            { label: "Music",         pct: 28, color: "bg-indigo-500" },
-            { label: "Gaming",        pct: 22, color: "bg-violet-500" },
-            { label: "Education",     pct: 18, color: "bg-emerald-500" },
-            { label: "Entertainment", pct: 15, color: "bg-amber-500" },
-            { label: "News",          pct: 10, color: "bg-rose-500" },
-            { label: "Other",         pct:  7, color: "bg-gray-400" },
-          ].map(({ label, pct, color }) => (
-            <div key={label} className="flex items-center gap-4">
-              <span className={`text-sm w-28 flex-shrink-0 ${ts}`}>{label}</span>
-              <div className={`flex-1 ${d?"bg-gray-800":"bg-gray-100"} rounded-full h-2.5`}>
-                <div className={`${color} h-2.5 rounded-full`} style={{ width: `${pct}%` }} />
-              </div>
-              <span className={`text-sm font-semibold w-10 text-right ${tp}`}>{pct}%</span>
-            </div>
-          ))}
-        </div>
+      <div className={`${cardBg} border rounded-2xl p-10 shadow-sm text-center ${ts}`}>
+        <BarChart3 className="w-12 h-12 mx-auto mb-3 opacity-20" />
+        <p className="font-medium text-sm">Detailed analytics coming soon</p>
+        <p className="text-xs mt-2 opacity-70">Connect your analytics API to see charts and trends</p>
       </div>
     </div>
   );
 
   /* settings */
   const SettingsSection = () => {
-    const [form, setForm] = useState({ siteName: "PlayVibe", contactEmail: "admin@playvibe.com", maxUploadMb: "2048", allowRegistrations: true, requireEmailVerification: true, autoModerate: false });
+    const [form, setForm] = useState({ siteName: "PlayVibe", contactEmail: "", maxUploadMb: "2048", allowRegistrations: true, requireEmailVerification: true, autoModerate: false });
     return (
       <div className="space-y-6">
         <div><h1 className={`text-2xl font-bold ${tp}`}>Platform Settings</h1><p className={`text-sm ${ts} mt-1`}>Configure global platform preferences</p></div>

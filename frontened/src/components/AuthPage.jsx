@@ -1,16 +1,21 @@
 import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext.jsx';
-import { Eye, EyeOff, Upload } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Eye, EyeOff, Upload, Shield } from 'lucide-react';
 import Toast from './Toast.jsx';
 
 const AuthPage = ({ onAuthSuccess }) => {
   const [isLogin, setIsLogin] = useState(true);
+  const [isAdminLogin, setIsAdminLogin] = useState(false);
+  const [adminKey, setAdminKey] = useState('');
+  const [showAdminKey, setShowAdminKey] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
-  
-  const { login, register } = useAuth();
+
+  const { login, register, setAdminStatus } = useAuth();
+  const navigate = useNavigate();
 
   // Form states
   const [formData, setFormData] = useState({
@@ -50,9 +55,25 @@ const AuthPage = ({ onAuthSuccess }) => {
 
     try {
       if (isLogin) {
+        if (isAdminLogin) {
+          const expectedKey = import.meta.env.VITE_ADMIN_KEY;
+          if (!adminKey || adminKey !== expectedKey) {
+            const msg = 'Unauthorized: Invalid admin key.';
+            setError(msg);
+            showToast(msg, 'error');
+            setLoading(false);
+            return;
+          }
+        }
         const result = await login(formData.email, formData.password);
         if (result.success) {
-          showToast('Login successful! Welcome back.', 'success');
+          if (isAdminLogin) {
+            setAdminStatus(true);
+            showToast('Admin login successful!', 'success');
+            navigate('/admin-panel');
+          } else {
+            showToast('Login successful! Welcome back.', 'success');
+          }
         } else {
           const msg = result.error || 'Invalid credentials. Please try again.';
           setError(msg);
@@ -121,6 +142,8 @@ const AuthPage = ({ onAuthSuccess }) => {
 
   const toggleMode = () => {
     setIsLogin(!isLogin);
+    setIsAdminLogin(false);
+    setAdminKey('');
     resetForm();
   };
 
@@ -262,6 +285,53 @@ const AuthPage = ({ onAuthSuccess }) => {
                 </button>
               </div>
             </div>
+
+            {isLogin && (
+              <>
+                <div className="flex items-center justify-between pt-1">
+                  <label className="flex items-center gap-2 cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      checked={isAdminLogin}
+                      onChange={(e) => { setIsAdminLogin(e.target.checked); setAdminKey(''); }}
+                      className="w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                    />
+                    <span className="text-sm font-medium text-gray-700 flex items-center gap-1.5">
+                      <Shield className="w-4 h-4 text-indigo-600" />
+                      Sign in as Administrator
+                    </span>
+                  </label>
+                </div>
+
+                {isAdminLogin && (
+                  <div>
+                    <label htmlFor="adminKey" className="block text-sm font-medium text-gray-700">
+                      Admin Key
+                    </label>
+                    <div className="mt-1 relative">
+                      <input
+                        id="adminKey"
+                        name="adminKey"
+                        type={showAdminKey ? 'text' : 'password'}
+                        required={isAdminLogin}
+                        value={adminKey}
+                        onChange={(e) => setAdminKey(e.target.value)}
+                        className="appearance-none relative block w-full px-3 py-2 pr-10 border border-indigo-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                        placeholder="Enter your admin key"
+                      />
+                      <button
+                        type="button"
+                        className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                        onClick={() => setShowAdminKey(!showAdminKey)}
+                      >
+                        {showAdminKey ? <EyeOff className="h-5 w-5 text-gray-400" /> : <Eye className="h-5 w-5 text-gray-400" />}
+                      </button>
+                    </div>
+                    <p className="mt-1 text-xs text-indigo-600">Admin access requires a valid administrator key.</p>
+                  </div>
+                )}
+              </>
+            )}
           </div>
 
           <div>
@@ -276,7 +346,7 @@ const AuthPage = ({ onAuthSuccess }) => {
                   {isLogin ? 'Signing in...' : 'Creating account...'}
                 </div>
               ) : (
-                isLogin ? 'Sign in' : 'Create account'
+                isLogin ? (isAdminLogin ? 'Sign in as Admin' : 'Sign in') : 'Create account'
               )}
             </button>
           </div>

@@ -4,20 +4,7 @@ import {
   ChevronRight, Flag, AlertTriangle, Clock, XCircle, MoreVertical
 } from "lucide-react";
 
-const DUMMY_REPORTS = [
-  { id: 1, videoTitle: "How to make money fast scheme guide", thumbnail: "https://picsum.photos/80/45?random=1", reason: "Spam / Misleading", reportedBy: "alice_m", reportedByAvatar: "AM", date: "2026-03-09", status: "Pending", views: 12400, videoId: "v1" },
-  { id: 2, videoTitle: "Violent fight compilation uncut", thumbnail: "https://picsum.photos/80/45?random=2", reason: "Violence / Graphic", reportedBy: "john_doe", reportedByAvatar: "JD", date: "2026-03-08", status: "Pending", views: 8300, videoId: "v2" },
-  { id: 3, videoTitle: "Leaked private footage upload", thumbnail: "https://picsum.photos/80/45?random=3", reason: "Privacy Violation", reportedBy: "sara_k", reportedByAvatar: "SK", date: "2026-03-08", status: "Reviewed", views: 3200, videoId: "v3" },
-  { id: 4, videoTitle: "Hate speech group promotion video", thumbnail: "https://picsum.photos/80/45?random=4", reason: "Hate Speech", reportedBy: "mike_w", reportedByAvatar: "MW", date: "2026-03-07", status: "Removed", views: 5700, videoId: "v4" },
-  { id: 5, videoTitle: "Fake news about elections 2025", thumbnail: "https://picsum.photos/80/45?random=5", reason: "Misinformation", reportedBy: "emma_l", reportedByAvatar: "EL", date: "2026-03-07", status: "Pending", views: 21000, videoId: "v5" },
-  { id: 6, videoTitle: "Drug usage tutorial step by step", thumbnail: "https://picsum.photos/80/45?random=6", reason: "Harmful Content", reportedBy: "chris_p", reportedByAvatar: "CP", date: "2026-03-06", status: "Reviewed", views: 4500, videoId: "v6" },
-  { id: 7, videoTitle: "Stolen footage without credit", thumbnail: "https://picsum.photos/80/45?random=7", reason: "Copyright", reportedBy: "nina_r", reportedByAvatar: "NR", date: "2026-03-06", status: "Pending", views: 9800, videoId: "v7" },
-  { id: 8, videoTitle: "Scam advertisement for fake product", thumbnail: "https://picsum.photos/80/45?random=8", reason: "Spam / Misleading", reportedBy: "tom_b", reportedByAvatar: "TB", date: "2026-03-05", status: "Removed", views: 1200, videoId: "v8" },
-  { id: 9, videoTitle: "Explicit content uploaded by user", thumbnail: "https://picsum.photos/80/45?random=9", reason: "Sexual Content", reportedBy: "lucy_v", reportedByAvatar: "LV", date: "2026-03-05", status: "Removed", views: 6700, videoId: "v9" },
-  { id: 10, videoTitle: "Cyberbullying and harassment clip", thumbnail: "https://picsum.photos/80/45?random=10", reason: "Harassment", reportedBy: "alex_g", reportedByAvatar: "AG", date: "2026-03-04", status: "Pending", views: 3100, videoId: "v10" },
-  { id: 11, videoTitle: "Child safety concern footage", thumbnail: "https://picsum.photos/80/45?random=11", reason: "Child Safety", reportedBy: "pat_h", reportedByAvatar: "PH", date: "2026-03-04", status: "Reviewed", views: 880, videoId: "v11" },
-  { id: 12, videoTitle: "Dangerous stunt challenge for kids", thumbnail: "https://picsum.photos/80/45?random=12", reason: "Harmful Content", reportedBy: "dana_c", reportedByAvatar: "DC", date: "2026-03-03", status: "Pending", views: 15300, videoId: "v12" },
-];
+
 
 const REASONS = ["All Reasons", "Spam / Misleading", "Violence / Graphic", "Privacy Violation", "Hate Speech", "Misinformation", "Harmful Content", "Copyright", "Sexual Content", "Harassment", "Child Safety"];
 const STATUSES = ["All Status", "Pending", "Reviewed", "Removed"];
@@ -58,7 +45,7 @@ const ReasonBadge = ({ reason }) => {
 };
 
 const Report = ({ isDark = false }) => {
-  const [reports, setReports] = useState(DUMMY_REPORTS);
+  const [reports, setReports] = useState([]);
   const [search, setSearch] = useState("");
   const [filterReason, setFilterReason] = useState("All Reasons");
   const [filterStatus, setFilterStatus] = useState("All Status");

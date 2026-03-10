@@ -23,7 +23,7 @@ import { AuthProvider, useAuth } from "./contexts/AuthContext"
 import { LanguageProvider } from "./contexts/LanguageContext"
 
 function AppContent() {
-  const { isLoggedIn, loading, user } = useAuth();
+  const { isLoggedIn, loading, user, isAdmin } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -58,12 +58,12 @@ function AppContent() {
     return <AuthPage />;
   }
 
-  // Admin panel gets its own full-screen layout
+  // Admin panel gets its own full-screen layout (requires admin auth)
   if (location.pathname.startsWith("/admin-panel")) {
     return (
       <Routes>
-        <Route path="/admin-panel" element={<AdminDashboard />} />
-        <Route path="/admin-panel/*" element={<AdminDashboard />} />
+        <Route path="/admin-panel" element={isAdmin ? <AdminDashboard /> : <Navigate to="/" replace />} />
+        <Route path="/admin-panel/*" element={isAdmin ? <AdminDashboard /> : <Navigate to="/" replace />} />
       </Routes>
     );
   }

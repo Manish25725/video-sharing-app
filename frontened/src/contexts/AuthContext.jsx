@@ -16,6 +16,16 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [savedAccounts, setSavedAccounts] = useState([]);
+  const [isAdmin, setIsAdmin] = useState(() => localStorage.getItem('isAdmin') === 'true');
+
+  const setAdminStatus = (status) => {
+    setIsAdmin(status);
+    if (status) {
+      localStorage.setItem('isAdmin', 'true');
+    } else {
+      localStorage.removeItem('isAdmin');
+    }
+  };
 
   useEffect(() => {
     const initializeAuth = async () => {
@@ -78,6 +88,7 @@ export const AuthProvider = ({ children }) => {
     } finally {
       setUser(null);
       setIsLoggedIn(false);
+      setAdminStatus(false);
     }
   };
 
@@ -135,6 +146,8 @@ export const AuthProvider = ({ children }) => {
     isAuthenticated: isLoggedIn,
     loading,
     savedAccounts,
+    isAdmin,
+    setAdminStatus,
     login: handleLogin,
     register: handleRegister,
     logout: handleLogout,
