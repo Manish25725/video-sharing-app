@@ -32,12 +32,79 @@ import { subscriptionService } from '../services/subscriptionService';
 import { downloadService } from '../services/downloadService';
 import watchLaterService from '../services/watchLaterService';
 import watchHistoryService from '../services/watchHistoryService';
+import streamService from '../services/streamService';
 import { transformCommentsArray } from "../services/commentService";
 import { useAuth } from "../contexts/AuthContext";
 import { formatDate, formatTimeAgo } from "../utils/formatters";
 import AddToPlaylistModal from '../components/AddToPlaylistModal';
 import CommentComponent from '../components/CommentComponent';
 import '../styles/VideoPlayer.css';
+
+/* ─── Chat Replay Panel (for live stream recordings) ────────── */
+const formatOffset = (secs) => {
+  if (secs === null || secs === undefined) return "";
+  const m = Math.floor(secs / 60);
+  const s = Math.floor(secs % 60);
+  return `${m}:${s.toString().padStart(2, "0")}`;
+};
+
+const ChatReplayPanel = ({ messages, allMessages, loading }) => {
+  const endRef = useRef(null);
+  const prevCountRef = useRef(0);
+
+  useEffect(() => {
+    if (messages.length > prevCountRef.current) {
+      endRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
+    prevCountRef.current = messages.length;
+  }, [messages.length]);
+
+  return (
+    <div className="bg-white border border-gray-200 rounded-xl overflow-hidden sticky top-20">
+      <div className="px-4 py-3 border-b border-gray-100 bg-gray-50 flex items-center gap-2">
+        <MessageCircle className="w-4 h-4 text-red-500" />
+        <span className="font-semibold text-sm text-gray-900">Live Chat Replay</span>
+        {allMessages.length > 0 && (
+          <span className="ml-auto text-xs text-gray-400">
+            {messages.length} / {allMessages.length} messages
+          </span>
+        )}
+      </div>
+      <div className="h-[520px] overflow-y-auto p-3">
+        {loading ? (
+          <div className="flex items-center justify-center h-full">
+            <div className="w-6 h-6 border-2 border-indigo-200 border-t-indigo-600 rounded-full animate-spin" />
+          </div>
+        ) : allMessages.length === 0 ? (
+          <div className="flex flex-col items-center justify-center h-full gap-2 text-gray-400 text-center">
+            <MessageCircle className="w-10 h-10 opacity-20" />
+            <p className="text-sm">No chat was recorded for this stream.</p>
+          </div>
+        ) : messages.length === 0 ? (
+          <div className="flex flex-col items-center justify-center h-full gap-2 text-gray-400 text-center">
+            <MessageCircle className="w-10 h-10 opacity-20" />
+            <p className="text-sm">Play the video to see chat messages appear here.</p>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {messages.map((msg, i) => (
+              <div key={msg._id || i} className="flex gap-2">
+                <span className="text-[11px] text-gray-400 tabular-nums pt-0.5 flex-shrink-0 w-9">
+                  {formatOffset(msg.offsetSeconds)}
+                </span>
+                <div className="flex-1 min-w-0">
+                  <span className="text-xs font-semibold text-indigo-600 mr-1.5">{msg.username}</span>
+                  <span className="text-sm text-gray-800 break-words">{msg.message}</span>
+                </div>
+              </div>
+            ))}
+            <div ref={endRef} />
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
 
 const VideoPlayer = () => {
   const { videoId } = useParams()
@@ -73,6 +140,14 @@ const VideoPlayer = () => {
   
   // Playlist Modal state
   const [showPlaylistModal, setShowPlaylistModal] = useState(false)
+
+  // Video element ref (used for chat replay time sync)
+  const videoRef = useRef(null)
+
+  // Chat replay state (only active for live stream recordings that have video.streamKey)
+  const [chatReplay, setChatReplay] = useState([])
+  const [chatReplayLoading, setChatReplayLoading] = useState(false)
+  const [currentVideoTime, setCurrentVideoTime] = useState(0)
   
   useEffect(() => {
     if (videoId) {
@@ -103,6 +178,25 @@ const VideoPlayer = () => {
       document.removeEventListener('mousedown', handleClickOutside)
     }
   }, [showMoreMenu])
+
+  // Fetch chat replay messages when the video is a live stream recording
+  useEffect(() => {
+    if (!video?.streamKey) return;
+    setChatReplayLoading(true);
+    streamService.getChatReplay(video.streamKey)
+      .then(({ data }) => setChatReplay(Array.isArray(data) ? data : []))
+      .catch(() => setChatReplay([]))
+      .finally(() => setChatReplayLoading(false));
+  }, [video?.streamKey]);
+
+  // Sync chat replay messages with the video's current playback time
+  useEffect(() => {
+    const videoEl = videoRef.current;
+    if (!videoEl || !video?.streamKey) return;
+    const onTimeUpdate = () => setCurrentVideoTime(videoEl.currentTime);
+    videoEl.addEventListener('timeupdate', onTimeUpdate);
+    return () => videoEl.removeEventListener('timeupdate', onTimeUpdate);
+  }, [video]);
 
   const fetchVideoData = async () => {
     try {
@@ -703,6 +797,7 @@ const VideoPlayer = () => {
             <div className="aspect-video bg-black rounded-lg overflow-hidden mb-4 relative youtube-video-container">
               {video.videoFile ? (
                 <video
+                  ref={videoRef}
                   controls
                   className="w-full h-full object-contain youtube-video-player"
                   poster={video.thumbnail}
@@ -995,8 +1090,20 @@ const VideoPlayer = () => {
             </div>
           </div>
 
-          {/* Sidebar - Related Videos */}
+          {/* Sidebar - Chat Replay (live recordings) + Related Videos */}
           <div className="lg:w-96 lg:shrink-0">
+            {/* Chat replay panel — only shown for videos saved from live streams */}
+            {video.streamKey && (
+              <div className="mb-5">
+                <ChatReplayPanel
+                  messages={chatReplay.filter(
+                    (m) => m.offsetSeconds === null || m.offsetSeconds <= currentVideoTime
+                  )}
+                  allMessages={chatReplay}
+                  loading={chatReplayLoading}
+                />
+              </div>
+            )}
             <div className="space-y-3">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Related Videos</h3>
               {relatedVideos.length > 0 ? (

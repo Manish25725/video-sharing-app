@@ -351,6 +351,86 @@ const GoLive = () => {
             </div>
           </div>
         )}
+
+        {/* ── Step 3: Stream ended — save recording prompt ── */}
+        {step === "ended" && (
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 text-center space-y-6">
+            <div className="w-16 h-16 mx-auto rounded-full bg-red-100 flex items-center justify-center">
+              <Square className="w-8 h-8 text-red-500" />
+            </div>
+
+            <div>
+              <h2 className="text-xl font-bold text-gray-900">Stream Ended</h2>
+              <p className="text-sm text-gray-500 mt-1.5">
+                Save it as a video so anyone can watch it later — with the live chat replay included.
+              </p>
+            </div>
+
+            {savedVideoId ? (
+              /* ── Saved successfully ── */
+              <div className="space-y-4">
+                <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-100 flex flex-col items-center gap-2">
+                  <CheckCircle className="w-7 h-7 text-emerald-600" />
+                  <p className="text-sm font-semibold text-emerald-800">Recording saved successfully!</p>
+                  <p className="text-xs text-emerald-600">
+                    Chat messages are saved with exact timestamps — viewers see them appear as they watch.
+                  </p>
+                </div>
+                <button
+                  onClick={() => navigate(`/video/${savedVideoId}`)}
+                  className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-semibold transition-colors">
+                  View Recording →
+                </button>
+                <button
+                  onClick={() => {
+                    setStep("details");
+                    setTitle("");
+                    setDescription("");
+                    setEndedStreamKey(null);
+                    setSavedVideoId(null);
+                  }}
+                  className="w-full py-2 text-gray-400 text-sm hover:text-gray-600 transition-colors">
+                  Back to Dashboard
+                </button>
+              </div>
+            ) : (
+              /* ── Save / Skip buttons ── */
+              <div className="space-y-3">
+                <button
+                  onClick={handleSaveRecording}
+                  disabled={saving}
+                  className="w-full py-2.5 flex items-center justify-center gap-2 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 disabled:opacity-60 text-white rounded-xl text-sm font-semibold shadow-sm transition-all">
+                  {saving ? (
+                    <>
+                      <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      Uploading recording…
+                    </>
+                  ) : (
+                    <>
+                      <Video className="w-4 h-4" /> Save Stream as Video
+                    </>
+                  )}
+                </button>
+                {saving && (
+                  <p className="text-xs text-gray-400">
+                    This may take a few minutes depending on stream length. Please don't close this page.
+                  </p>
+                )}
+                <button
+                  onClick={() => {
+                    setStep("details");
+                    setTitle("");
+                    setDescription("");
+                    setEndedStreamKey(null);
+                  }}
+                  disabled={saving}
+                  className="w-full py-2 text-gray-400 text-sm hover:text-gray-600 transition-colors disabled:opacity-40">
+                  Skip — Don't Save
+                </button>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
