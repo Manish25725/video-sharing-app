@@ -1,6 +1,7 @@
-import { Search, Menu, Video, Bell, User, Users, Globe, HelpCircle, MessageSquare, LogOut, UserPlus, RotateCcw, X, ChevronLeft } from "lucide-react";
+import { Search, Menu, Video, Bell, User, Users, Globe, HelpCircle, MessageSquare, LogOut, UserPlus, RotateCcw, X, ChevronLeft, ChevronRight, Check } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { useAuth } from "../contexts/AuthContext";
+import { useLanguage } from "../contexts/LanguageContext";
 import { Link, useNavigate } from "react-router-dom";
 import NotificationBell from "./NotificationBell";
 
@@ -12,6 +13,10 @@ const Header = ({
   setShowSubscriptionMenu 
 }) => {
   const { user, logout, savedAccounts, switchAccount, addAccount, removeAccount } = useAuth();
+  const { language, setLanguage, t } = useLanguage();
+
+  // Language panel state
+  const [showLanguagePanel, setShowLanguagePanel] = useState(false);
   
   // Switch account panel state
   const [showSwitchPanel, setShowSwitchPanel] = useState(false);
@@ -100,6 +105,7 @@ const Header = ({
         setShowProfileMenu(false);
         setShowSwitchPanel(false);
         setShowAddAccountForm(false);
+        setShowLanguagePanel(false);
       }
       if (subscriptionMenuRef.current && !subscriptionMenuRef.current.contains(event.target)) {
         setShowSubscriptionMenu(false);
@@ -245,7 +251,7 @@ const Header = ({
                     className="px-4 py-2 hover:bg-gray-50 cursor-pointer flex items-center space-x-3"
                   >
                     <User className="w-5 h-5 text-gray-600" />
-                    <span className="text-gray-900">Your channel</span>
+                    <span className="text-gray-900">{t('yourChannel')}</span>
                   </div>
                   <div
                     onClick={() => { setShowSwitchPanel(true); setSwitchError(""); setShowAddAccountForm(false); }}
@@ -253,7 +259,7 @@ const Header = ({
                   >
                     <div className="flex items-center space-x-3">
                       <RotateCcw className="w-5 h-5 text-gray-600" />
-                      <span className="text-gray-900">Switch account</span>
+                      <span className="text-gray-900">{t('switchAccount')}</span>
                     </div>
                     {savedAccounts.filter(a => a._id !== user?._id).length > 0 && (
                       <span className="text-xs bg-blue-100 text-blue-700 rounded-full px-2 py-0.5 font-medium">
@@ -272,7 +278,7 @@ const Header = ({
                         >
                           <ChevronLeft className="w-4 h-4 text-gray-600" />
                         </button>
-                        <span className="text-sm font-semibold text-gray-700">Switch account</span>
+                        <span className="text-sm font-semibold text-gray-700">{t('switchAccount')}</span>
                       </div>
 
                       {switchError && (
@@ -332,7 +338,7 @@ const Header = ({
                           className="w-full px-4 py-2 text-sm text-blue-600 hover:bg-gray-100 flex items-center space-x-2 border-t border-gray-200"
                         >
                           <UserPlus className="w-4 h-4" />
-                          <span>Add account</span>
+                          <span>{t('addAccount')}</span>
                         </button>
                       ) : (
                         <form onSubmit={handleAddAccountSubmit} className="px-4 py-3 border-t border-gray-200 space-y-2">
@@ -382,20 +388,57 @@ const Header = ({
                     className="px-4 py-2 hover:bg-gray-50 cursor-pointer flex items-center space-x-3"
                   >
                     <LogOut className="w-5 h-5 text-gray-600" />
-                    <span className="text-gray-900">Sign out</span>
+                    <span className="text-gray-900">{t('signOut')}</span>
                   </div>
                 </div>
 
                 <div className="border-t border-gray-200 py-2">
-                  <div className="px-4 py-2">
-                    <p className="text-sm font-medium text-gray-600 mb-1">Language:</p>
-                    <div className="flex items-center space-x-2">
-                      <Globe className="w-4 h-4 text-gray-500" />
-                      <span className="text-sm text-gray-900">British English</span>
+                  {/* Language selector */}
+                  {!showLanguagePanel ? (
+                    <div
+                      onClick={() => setShowLanguagePanel(true)}
+                      className="px-4 py-2 hover:bg-gray-50 cursor-pointer flex items-center justify-between"
+                    >
+                      <div className="flex items-center space-x-2">
+                        <Globe className="w-4 h-4 text-gray-500" />
+                        <div>
+                          <p className="text-sm font-medium text-gray-600">{t('language')}:</p>
+                          <p className="text-sm text-gray-900">
+                            {language === 'hi' ? t('hindi') : t('english')}
+                          </p>
+                        </div>
+                      </div>
+                      <ChevronRight className="w-4 h-4 text-gray-400" />
                     </div>
-                  </div>
+                  ) : (
+                    <div className="bg-gray-50">
+                      <div className="px-4 py-2 flex items-center space-x-2 border-b border-gray-100">
+                        <button
+                          onClick={() => setShowLanguagePanel(false)}
+                          className="p-1 hover:bg-gray-200 rounded-full"
+                        >
+                          <ChevronLeft className="w-4 h-4 text-gray-600" />
+                        </button>
+                        <span className="text-sm font-semibold text-gray-700">{t('language')}</span>
+                      </div>
+                      <div
+                        onClick={() => { setLanguage('en'); setShowLanguagePanel(false); }}
+                        className="px-4 py-2 hover:bg-gray-100 cursor-pointer flex items-center justify-between"
+                      >
+                        <span className="text-sm text-gray-900">English</span>
+                        {language === 'en' && <Check className="w-4 h-4 text-blue-600" />}
+                      </div>
+                      <div
+                        onClick={() => { setLanguage('hi'); setShowLanguagePanel(false); }}
+                        className="px-4 py-2 hover:bg-gray-100 cursor-pointer flex items-center justify-between"
+                      >
+                        <span className="text-sm text-gray-900">हिंदी</span>
+                        {language === 'hi' && <Check className="w-4 h-4 text-blue-600" />}
+                      </div>
+                    </div>
+                  )}
                   <div className="px-4 py-2">
-                    <p className="text-sm font-medium text-gray-600 mb-1">Location:</p>
+                    <p className="text-sm font-medium text-gray-600 mb-1">{t('location')}:</p>
                     <span className="text-sm text-gray-900">India</span>
                   </div>
                 </div>
@@ -403,11 +446,11 @@ const Header = ({
                 <div className="border-t border-gray-200 py-2">
                   <div className="px-4 py-2 hover:bg-gray-50 cursor-pointer flex items-center space-x-3">
                     <HelpCircle className="w-5 h-5 text-gray-600" />
-                    <span className="text-gray-900">Help</span>
+                    <span className="text-gray-900">{t('help')}</span>
                   </div>
                   <div className="px-4 py-2 hover:bg-gray-50 cursor-pointer flex items-center space-x-3">
                     <MessageSquare className="w-5 h-5 text-gray-600" />
-                    <span className="text-gray-900">Send feedback</span>
+                    <span className="text-gray-900">{t('sendFeedback')}</span>
                   </div>
                 </div>
               </div>

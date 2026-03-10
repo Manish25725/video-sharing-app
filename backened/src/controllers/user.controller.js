@@ -727,6 +727,25 @@ const toggleNotifyOnEmail=asyncHandler(async (req,res)=>{
 })
 
 
+const updateLanguage = asyncHandler(async (req, res) => {
+    const { language } = req.body;
+
+    if (!["en", "hi"].includes(language)) {
+        throw new ApiError(400, "Invalid language. Supported: en, hi");
+    }
+
+    const user = await User.findByIdAndUpdate(
+        req.user._id,
+        { language },
+        { new: true }
+    ).select("-password -refreshToken");
+
+    return res
+        .status(200)
+        .json(new ApiResponse(200, user, "Language updated successfully"));
+});
+
+
 // ─── Switch Account helpers ───────────────────────────────────────────────────
 
 // Read the list of saved account IDs from the signed JWT cookie
@@ -893,7 +912,8 @@ export {registerUser,
     addAccount,
     switchAccount,
     getSavedAccounts,
-    removeAccount
+    removeAccount,
+    updateLanguage
 };
 
 

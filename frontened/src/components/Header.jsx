@@ -1,4 +1,4 @@
-import { Search, Menu, Video, Bell, User, Users, Globe, HelpCircle, MessageSquare, LogOut, UserPlus, RotateCcw, X, ChevronLeft } from "lucide-react";
+import { Search, Menu, Bell, User, Globe, HelpCircle, MessageSquare, LogOut, UserPlus, RotateCcw, X, ChevronLeft } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { useAuth } from "../contexts/AuthContext";
 import { Link, useNavigate } from "react-router-dom";
@@ -15,7 +15,6 @@ const Header = ({
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
   const profileMenuRef = useRef(null);
-  const subscriptionMenuRef = useRef(null);
 
   // Switch account panel state
   const [showSwitchPanel, setShowSwitchPanel] = useState(false);
@@ -84,15 +83,6 @@ const Header = ({
     }
   };
 
-  const [subscribers] = useState([
-    { id: 1, name: "Tech Review Channel", avatar: "TR", subscribers: "1.2M" },
-    { id: 2, name: "Coding Tutorials Pro", avatar: "CT", subscribers: "856K" },
-    { id: 3, name: "Design Academy", avatar: "DA", subscribers: "423K" },
-    { id: 4, name: "Music Producer Hub", avatar: "MP", subscribers: "2.1M" },
-    { id: 5, name: "Travel Vlogs", avatar: "TV", subscribers: "634K" },
-    { id: 6, name: "Cooking Master", avatar: "CM", subscribers: "987K" },
-  ]);
-
   // Close menus when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -101,16 +91,13 @@ const Header = ({
         setShowSwitchPanel(false);
         setShowAddAccountForm(false);
       }
-      if (subscriptionMenuRef.current && !subscriptionMenuRef.current.contains(event.target)) {
-        setShowSubscriptionMenu(false);
-      }
     };
 
     document.addEventListener('mousedown', handleClickOutside);
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [setShowProfileMenu, setShowSubscriptionMenu]);
+  }, [setShowProfileMenu]);
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-200">
@@ -150,48 +137,6 @@ const Header = ({
 
         {/* Right section */}
         <div className="flex items-center space-x-2">
-          <button className="p-2 hover:bg-gray-100 rounded-full transition-colors">
-            <Video className="w-6 h-6 text-gray-700" />
-          </button>
-          
-          {/* Subscriptions Button */}
-          <div className="relative">
-            <button 
-              onClick={() => setShowSubscriptionMenu(!showSubscriptionMenu)}
-              className="p-2 hover:bg-gray-100 rounded-full transition-colors"
-            >
-              <Users className="w-6 h-6 text-gray-700" />
-            </button>
-            
-            {/* Subscription Menu */}
-            {showSubscriptionMenu && (
-              <div 
-                ref={subscriptionMenuRef}
-                className="absolute right-0 mt-2 w-80 bg-white border border-gray-200 rounded-lg shadow-lg z-50"
-              >
-                <div className="p-4 border-b border-gray-200">
-                  <h3 className="font-semibold text-gray-900">Subscriptions</h3>
-                </div>
-                <div className="max-h-64 overflow-y-auto">
-                  {subscribers.map((subscriber) => (
-                    <div key={subscriber.id} className="flex items-center p-3 hover:bg-gray-50 cursor-pointer group">
-                      <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold mr-3">
-                        {subscriber.avatar}
-                      </div>
-                      <div className="flex-1">
-                        <p className="font-medium text-gray-900">{subscriber.name}</p>
-                        <p className="text-sm text-gray-500">{subscriber.subscribers} subscribers</p>
-                      </div>
-                      <div className="opacity-0 group-hover:opacity-100 transition-opacity">
-                        <Bell className="w-4 h-4 text-gray-500" />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-
           <NotificationBell />
           
           {/* Profile Menu */}

@@ -149,21 +149,13 @@ const getAllVideos = asyncHandler(async (req, res) => {
     };
   }
 
-  if (query){
-    filter.$or = [
-      {
-        title: {
-          $regex: query,
-          $options: "i",
-        },
-      },
-      {
-        description: {
-          $regex: query,
-          $options: "i",
-        },
-      },
-    ];
+  const queryWords = query ? query.split(/\s+/).filter(Boolean) : [];
+
+  if (queryWords.length > 0){
+    filter.$or = queryWords.flatMap(word => [
+      { title: { $regex: word, $options: "i" } },
+      { description: { $regex: word, $options: "i" } },
+    ]);
   }
 
   if(userId){
@@ -233,11 +225,21 @@ const getAllVideos = asyncHandler(async (req, res) => {
                 owner:1
             }
         },
-       {
-            $sort:{
-                [sortBy]: sortType== 'desc' ? -1 : 1
+        // Relevance scoring: rank by how many query words appear in title/description
+        ...(queryWords.length > 0 ? [{
+            $addFields: {
+                _relevanceScore: {
+                    $add: queryWords.flatMap(word => [
+                        { $cond: [{ $regexMatch: { input: "$title", regex: word, options: "i" } }, 2, 0] },
+                        { $cond: [{ $regexMatch: { input: { $ifNull: ["$description", ""] }, regex: word, options: "i" } }, 1, 0] }
+                    ])
+                }
             }
-        },
+        }, {
+            $sort: { _relevanceScore: -1, [sortBy]: sortType === 'desc' ? -1 : 1 }
+        }] : [{
+            $sort: { [sortBy]: sortType === 'desc' ? -1 : 1 }
+        }]),
         {
             $skip:skip
         },

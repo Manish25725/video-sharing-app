@@ -209,6 +209,17 @@ export const authService = {
       throw error;
     }
   },
+
+  // Update language preference
+  async updateLanguage(language) {
+    try {
+      const response = await apiClient.patch('/users/update-language', { language });
+      return response;
+    } catch (error) {
+      console.error('Update language error:', error);
+      throw error;
+    }
+  },
 };
 
 // Check if user is logged in by calling the API

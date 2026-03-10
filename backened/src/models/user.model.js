@@ -94,6 +94,12 @@ const userSchema = new Schema(
         notifyOnEmail:{
             type:Boolean,
             default:false
+        },
+
+        language:{
+            type:String,
+            enum:["en","hi"],
+            default:"en"
         }
 
     },{

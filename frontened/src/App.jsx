@@ -19,6 +19,7 @@ import Profile from "./pages/Profile"
 import Search from "./components/Search"
 import AuthPage from "./components/AuthPage"
 import { AuthProvider, useAuth } from "./contexts/AuthContext"
+import { LanguageProvider } from "./contexts/LanguageContext"
 
 function AppContent() {
   const { isLoggedIn, loading, user } = useAuth();
@@ -108,9 +109,11 @@ function AppContent() {
 function App() {
   return (
     <AuthProvider>
-      <Router>
-        <AppContent />
-      </Router>
+      <LanguageProvider>
+        <Router>
+          <AppContent />
+        </Router>
+      </LanguageProvider>
     </AuthProvider>
   )
 }
