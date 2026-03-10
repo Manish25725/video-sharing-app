@@ -4,54 +4,34 @@ import jwt from "jsonwebtoken"
 import { User } from "../models/user.model.js";
 
 
-export const verifyJWT=asyncHandler(async(req,_,next)=>{
-try {
-        const token=req.cookies?.accessToken || req.header("Authorization")?.replace("Bearer ","");
-        
-        if(!token){
-            throw new ApiError(401,"Unauthorized request");
-        }
+export const verifyJWT = asyncHandler(async (req, _, next) => {
+    const token = req.cookies?.accessToken || req.header("Authorization")?.replace("Bearer ", "");
+    if (!token) throw new ApiError(401, "Unauthorized request");
 
-        const decodedToken=jwt.verify(token,process.env.ACCESS_TOKEN_SECRET);
-    
-        const user=await User.findById(decodedToken?._id).select("-password -refreshToken");
-    
-        if(!user){
-            //Discuss about forntend...
-            throw new ApiError(401,"Invalid AccessToken");
-        }
-    
-        req.user=user;
-        next();
-
-} catch (error) {
-    // Log database connection errors specifically
-    if (error.message && error.message.includes('ENOTFOUND')) {
-        console.error('Database connection error:', error.message);
-        throw new ApiError(503, "Database connection failed. Please try again later.");
+    let decodedToken;
+    try {
+        decodedToken = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
+    } catch {
+        throw new ApiError(401, "Invalid or expired access token");
     }
-    throw new ApiError(401,error?.message || "Invalid access token");
-}
+
+    const user = await User.findById(decodedToken._id).select("-password -refreshToken -sessions");
+    if (!user) throw new ApiError(401, "Invalid access token");
+
+    req.user = user;
+    next();
 });
 
-// Optional authentication middleware - doesn't throw error if no token
 export const optionalAuth = asyncHandler(async (req, _, next) => {
     try {
         const token = req.cookies?.accessToken || req.header("Authorization")?.replace("Bearer ", "");
-        
         if (token) {
             const decodedToken = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
-            const user = await User.findById(decodedToken?._id).select("-password -refreshToken");
-            
-            if (user) {
-                req.user = user;
-            }
+            const user = await User.findById(decodedToken._id).select("-password -refreshToken -sessions");
+            if (user) req.user = user;
         }
-        
-        // Continue regardless of authentication status
-        next();
-    } catch (error) {
-        // If there's an error, just continue without setting req.user
-        next();
+    } catch {
+        // No-op: optional auth — proceed without user
     }
+    next();
 });

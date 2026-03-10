@@ -3,31 +3,6 @@ import cors from "cors"
 import cookieParser from 'cookie-parser';
 import path from 'path';
 import { fileURLToPath } from 'url';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-const app=express();
-
-app.use(cors({
-    origin: ["http://localhost:3000", "http://localhost:3001", "http://localhost:3002", "http://localhost:5173"],
-    credentials:true 
-}));
-
-app.use(express.json({limit:"16kb"}));
-app.use(express.urlencoded({extended:true,limit:"16kb"}));
-app.use(express.static("public"));
-app.use(cookieParser());
-
-// Serve HLS segments through Express so CORS headers are applied
-app.use("/live", (req, res, next) => {
-    res.setHeader("Access-Control-Allow-Origin", "*");
-    next();
-}, express.static(path.join(__dirname, "../public/media/live")));
-
-
-
-//routes import 
 import userRouter from './routes/user.routes.js'
 import videoRouter from "./routes/video.routes.js"
 import subscriptionRouter from "./routes/subscription.route.js"
@@ -41,7 +16,31 @@ import dislikeRouter from "./routes/dislike.route.js"
 import healthRouter from "./routes/health.route.js"
 import streamRouter from './routes/stream.route.js'
 import reportRouter from './routes/report.route.js'
-//routes declaration
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const app=express();
+
+const allowedOrigins = (process.env.ALLOWED_ORIGINS ||
+    "http://localhost:3000,http://localhost:3001,http://localhost:3002,http://localhost:5173")
+    .split(",").map(o => o.trim());
+
+app.use(cors({
+    origin: allowedOrigins,
+    credentials:true 
+}));
+
+app.use(express.json({limit:"16kb"}));
+app.use(express.urlencoded({extended:true,limit:"16kb"}));
+app.use(express.static("public"));
+app.use(cookieParser());
+
+// Serve HLS segments through Express so CORS headers are applied
+app.use("/live", (req, res, next) => {
+    res.setHeader("Access-Control-Allow-Origin", "*");
+    next();
+}, express.static(path.join(__dirname, "../public/media/live")));
 
 app.use("/api/v1/users",userRouter);
 app.use("/api/v1/videos",videoRouter);

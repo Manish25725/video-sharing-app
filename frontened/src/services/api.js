@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 // API Configuration and Base Setup
-const API_BASE_URL = 'http://localhost:8000/api/v1';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
 
 // Create axios instance
 const axiosInstance = axios.create({
@@ -12,15 +12,10 @@ const axiosInstance = axios.create({
   },
 });
 
-// Request interceptor - no need to manually add tokens (backend handles via cookies)
+// Request interceptor — kept for future auth header injection
 axiosInstance.interceptors.request.use(
-  (config) => {
-    // Backend automatically includes cookies with withCredentials: true
-    return config;
-  },
-  (error) => {
-    return Promise.reject(error);
-  }
+  (config) => config,
+  (error) => Promise.reject(error)
 );
 
 // Endpoints that should NEVER trigger a token-refresh attempt on 401.
@@ -85,22 +80,8 @@ class ApiClient {
   async get(endpoint, config = {}) {
     try {
       const response = await this.axios.get(endpoint, config);
-      // Log only comment-related requests
-      if (endpoint.includes('comment')) {
-        console.log(`GET ${endpoint} response:`, {
-          success: response.data?.success,
-          dataLength: Array.isArray(response.data?.data) ? response.data.data.length : 'not array',
-          message: response.data?.message
-        });
-      }
       return response.data;
     } catch (error) {
-      if (endpoint.includes('comment')) {
-        console.error(`GET ${endpoint} failed:`, {
-          status: error.response?.status,
-          message: error.response?.data?.message || error.message
-        });
-      }
       throw this.handleError(error);
     }
   }
@@ -108,27 +89,9 @@ class ApiClient {
   // POST request
   async post(endpoint, data = {}, config = {}) {
     try {
-      // Log only comment-related requests
-      if (endpoint.includes('comment')) {
-        console.log(`🔄 POST ${endpoint}`, { content: data.content });
-      }
       const response = await this.axios.post(endpoint, data, config);
-      if (endpoint.includes('comment')) {
-        console.log(`✅ POST ${endpoint} success:`, {
-          success: response.data?.success,
-          commentId: response.data?.data?._id,
-          message: response.data?.message
-        });
-      }
       return response.data;
     } catch (error) {
-      if (endpoint.includes('comment')) {
-        console.error(`❌ POST ${endpoint} failed:`, {
-          status: error.response?.status,
-          message: error.response?.data?.message || error.message,
-          data: error.response?.data
-        });
-      }
       throw this.handleError(error);
     }
   }
@@ -139,7 +102,6 @@ class ApiClient {
       const response = await this.axios.put(endpoint, data, config);
       return response.data;
     } catch (error) {
-      console.error(`PUT ${endpoint} failed:`, error);
       throw this.handleError(error);
     }
   }
@@ -150,7 +112,6 @@ class ApiClient {
       const response = await this.axios.patch(endpoint, data, config);
       return response.data;
     } catch (error) {
-      console.error(`PATCH ${endpoint} failed:`, error);
       throw this.handleError(error);
     }
   }
@@ -161,7 +122,6 @@ class ApiClient {
       const response = await this.axios.delete(endpoint, config);
       return response.data;
     } catch (error) {
-      console.error(`DELETE ${endpoint} failed:`, error);
       throw this.handleError(error);
     }
   }
@@ -169,18 +129,12 @@ class ApiClient {
   // File upload (FormData)
   async uploadFile(endpoint, formData, config = {}) {
     try {
-      const uploadConfig = {
+      const response = await this.axios.post(endpoint, formData, {
         ...config,
-        headers: {
-          'Content-Type': 'multipart/form-data',
-          ...config.headers,
-        },
-      };
-      
-      const response = await this.axios.post(endpoint, formData, uploadConfig);
+        headers: { 'Content-Type': 'multipart/form-data', ...config.headers },
+      });
       return response.data;
     } catch (error) {
-      console.error(`Upload to ${endpoint} failed:`, error);
       throw this.handleError(error);
     }
   }

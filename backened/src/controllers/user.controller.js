@@ -25,17 +25,15 @@ const parseDevice = (ua = "") => {
     return `${browser} on ${os}`;
 };
 
-const generateAccessAndRefreshToken =async(userId)=>{
-
-    const user=await User.findById(userId);
+const generateAccessAndRefreshToken = async (userOrId) => {
+    const user = (userOrId && typeof userOrId === 'object' && userOrId._id)
+        ? userOrId
+        : await User.findById(userOrId);
     const accessToken = user.generateAccessToken();
     const refreshToken = user.generateRefreshToken();
-
-    user.refreshToken=refreshToken;
-    await user.save({validateBeforeSave:false});
-
-    return {accessToken,refreshToken};
-}
+    await User.findByIdAndUpdate(user._id, { $set: { refreshToken } });
+    return { accessToken, refreshToken };
+};
 
 const getCookieOptions = () => ({
     httpOnly: true,
@@ -126,14 +124,11 @@ const registerUser= asyncHandler(async (req,res)=>{
         throw new ApiError(500,"Something went wrong while regestering the user");
     }
 
-    return res.
-        status(201)
-        .cookie("accessToken",accessToken,{
-            httpOnly:true,
-        })
-        .cookie("refreshToken",refreshToken,{
-            httpOnly:true
-        })
+    const regOptions = getCookieOptions();
+    return res
+        .status(201)
+        .cookie("accessToken",accessToken,regOptions)
+        .cookie("refreshToken",refreshToken,regOptions)
         .json(
         new ApiResponse(201,createdUser,"User registered Successfully")
     )
@@ -159,26 +154,28 @@ const loginUser= asyncHandler( async(req,res)=>{
         const passwordCheck=await userExist.isPasswordCorrect(password);
         if(!passwordCheck) throw new ApiError(401,"Password is incorrect");
 
-        const {accessToken,refreshToken}=await generateAccessAndRefreshToken(userExist._id);
-        const loggedInUser=await User.findById(userExist._id).select("-password -refreshToken");
+        const accessToken = userExist.generateAccessToken();
+        const refreshToken = userExist.generateRefreshToken();
+        const device = parseDevice(req.headers["user-agent"]);
+        const ip = req.ip || req.socket?.remoteAddress || "Unknown";
 
-        await User.findByIdAndUpdate(userExist._id, {
-            $push: {
-                sessions: {
-                    $each: [{
-                        refreshToken,
-                        device: parseDevice(req.headers["user-agent"]),
-                        ip: req.ip || req.socket?.remoteAddress || "Unknown",
-                        createdAt: new Date()
-                    }],
-                    $slice: -10
+        // Single DB write: persist refresh token + record session
+        const loggedInUser = await User.findByIdAndUpdate(
+            userExist._id,
+            {
+                $set: { refreshToken },
+                $push: {
+                    sessions: {
+                        $each: [{ refreshToken, device, ip, createdAt: new Date() }],
+                        $slice: -10
+                    }
                 }
-            }
-        });
+            },
+            { new: true }
+        ).select("-password -refreshToken -sessions");
 
         const options = getCookieOptions();
 
-        console.log(loggedInUser);
         return res
         .status(200)
         .cookie("accessToken",accessToken,options)
@@ -205,10 +202,10 @@ const logoutUser = asyncHandler( async (req,res)=>{
     const options = getCookieOptions();
 
     return res
-    .status(201)
+    .status(200)
     .clearCookie("accessToken",options)
     .clearCookie("refreshToken",options)
-    .json(new ApiResponse(201,{},"User logged out"));
+    .json(new ApiResponse(200,{},"User logged out"));
 })
 
 
@@ -308,7 +305,7 @@ const updateDetails= asyncHandler(async (req,res)=>{
         req.user?._id,
         { $set: updateFields },
         {new : true}    
-    ).select("-password");
+    ).select("-password -refreshToken -sessions");
 
     return res
     .status(200)
@@ -329,10 +326,8 @@ const updateUserAvatar=asyncHandler(async (req,res)=>{
         throw new ApiError(400,"Error while uploading");
     }
 
-    // deleting previous file from cloudinary
-    const asd=req.user?.avatar
-    deleteOnCloudinary(asd);
-
+    const oldAvatarUrl = req.user?.avatar;
+    deleteOnCloudinary(oldAvatarUrl);
 
     const user=await User.findByIdAndUpdate(
         req.user?._id,
@@ -342,9 +337,7 @@ const updateUserAvatar=asyncHandler(async (req,res)=>{
             }
         },
         { new :true}
-    ).select("-password");
-
-    //deleting old one from cloudinary
+    ).select("-password -refreshToken -sessions");
 
     return res
     .status(200)
@@ -368,9 +361,8 @@ const updateUserCoverImage=asyncHandler(async (req,res)=>{
         throw new ApiError(400,"Error while uploading an coverImage")
     }
 
-    //delete older files from cloudinary
-    const asd=req.user.coverImage;
-    deleteOnCloudinary(asd);
+    const oldCoverUrl = req.user.coverImage;
+    deleteOnCloudinary(oldCoverUrl);
 
     const user=await User.findByIdAndUpdate(
         req.user?._id,
@@ -380,7 +372,7 @@ const updateUserCoverImage=asyncHandler(async (req,res)=>{
         {
             new:true
         }
-    ).select("-password")
+    ).select("-password -refreshToken -sessions")
 
     return res
     .status(200)
@@ -409,29 +401,18 @@ const addToWatchHistory = asyncHandler(async (req, res) => {
         throw new ApiError(404, "Video not found");
     }
 
-    // Use req.user directly - no need to fetch from database again
-    const user = req.user;
-
-    // Create watch history entry
     const watchEntry = {
-        videoDetail: videoId,
+        videoDetail: new mongoose.Types.ObjectId(videoId),
         watchedAt: new Date()
     };
 
-    // Remove existing entry if present to avoid duplicates
-    user.watchHistory = user.watchHistory.filter(
-        entry => entry.videoDetail.toString() !== videoId
-    );
-
-    // Add new entry at the beginning (most recent first)
-    user.watchHistory.unshift(watchEntry);
-
-    // Keep only last 100 entries to prevent unlimited growth
-    if (user.watchHistory.length > 100) {
-        user.watchHistory = user.watchHistory.slice(0, 100);
-    }
-
-    await user.save();
+    // Atomically remove any existing entry for this video, then prepend the new one (capped at 100)
+    await User.findByIdAndUpdate(req.user._id, {
+        $pull: { watchHistory: { videoDetail: new mongoose.Types.ObjectId(videoId) } }
+    });
+    await User.findByIdAndUpdate(req.user._id, {
+        $push: { watchHistory: { $each: [watchEntry], $position: 0, $slice: 100 } }
+    });
 
     return res
         .status(200)
@@ -676,80 +657,22 @@ const getUserChannelProfile=asyncHandler(async(req,res)=>{
 })
 
 
-const toggleNotifyOnPost=asyncHandler( async (req,res)=>{
+// Generic boolean-toggle factory — avoids full document save and fixes silent-error bug
+const makeToggle = (field) => asyncHandler(async (req, res) => {
+    if (!req.user) throw new ApiError(401, "User must be logged in");
+    const updated = await User.findByIdAndUpdate(
+        req.user._id,
+        { $set: { [field]: !req.user[field] } },
+        { new: true }
+    ).select("-password -refreshToken -sessions");
+    return res.status(200).json(new ApiResponse(200, updated, "Toggled successfully"));
+});
 
-    if(!req?.user) return new ApiError(404,"User must be logged in");
-
-    const user=req.user;
-    user.notifyOnPost=!user.notifyOnPost;
-    await user.save();
-
-    return res
-    .status(201)
-    .json(
-        new ApiResponse(200,user,"Toggled successfully")
-    )
-})
-
-const toggleNotifyOnVideo=asyncHandler(async (req,res)=>{
-
-    if(!req?.user) return new ApiError(404,"User must be logged in");
-
-    const user=req.user;
-    user.notifyOnVideo=!user.notifyOnVideo;
-    await user.save();
-
-    return res
-    .status(201)
-    .json(
-        new ApiResponse(201,user,"Toggled successfully")
-    )
-})
-
-const toggleNotifyOnComment=asyncHandler(async (req,res)=>{
-
-    if(!req?.user) return new ApiError(404,"User must be logged in");
-
-    const user=req.user;
-    user.notifyOnComment=!user.notifyOnComment;
-    await user.save();
-
-    return res
-    .status(200)
-    .json(
-        new ApiResponse(200,user,"Toggled successfully")
-    )
-})
-
-const toggleNotifyOnMention=asyncHandler(async (req,res)=>{
-
-    if(!req?.user) return new ApiError(404,"User must be logged in");
-
-    const user=req.user;
-    user.notifyOnMention=!user.notifyOnMention;
-    await user.save();
-
-    return res
-    .status(200)
-    .json(
-        new ApiResponse(200,user,"Toggled successfully")
-    )
-})
-
-const toggleNotifyOnEmail=asyncHandler(async (req,res)=>{
-
-    if(!req?.user) return new ApiError(404,"User must be logged in");
-
-    const user=req.user;
-    user.notifyOnEmail=!user.notifyOnEmail;
-    await user.save();
-
-    return res
-    .status(200)
-    .json(
-        new ApiResponse(200,user,"Toggled successfully")
-    )
-})
+const toggleNotifyOnPost    = makeToggle("notifyOnPost");
+const toggleNotifyOnVideo   = makeToggle("notifyOnVideo");
+const toggleNotifyOnComment = makeToggle("notifyOnComment");
+const toggleNotifyOnMention = makeToggle("notifyOnMention");
+const toggleNotifyOnEmail   = makeToggle("notifyOnEmail");
 
 
 const updateLanguage = asyncHandler(async (req, res) => {
@@ -763,7 +686,7 @@ const updateLanguage = asyncHandler(async (req, res) => {
         req.user._id,
         { language },
         { new: true }
-    ).select("-password -refreshToken");
+    ).select("-password -refreshToken -sessions");
 
     return res
         .status(200)
