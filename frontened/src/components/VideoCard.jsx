@@ -7,6 +7,7 @@ import watchLaterService from '../services/watchLaterService';
 import { downloadService } from '../services/downloadService';
 import Toast from './Toast';
 import AddToPlaylistModal from './AddToPlaylistModal';
+import ReportModal from './ReportModal';
 import './VideoCard.css';
 import './VideoCard.css';
 
@@ -19,6 +20,7 @@ const VideoCard = ({ video, onVideoSelect }) => {
   const [isWatchLaterLoading, setIsWatchLaterLoading] = useState(false);
   const [toast, setToast] = useState({ show: false, message: '', type: '' });
   const [showPlaylistModal, setShowPlaylistModal] = useState(false);
+  const [showReportModal, setShowReportModal] = useState(false);
   const dropdownRef = useRef(null);
 
   // Close dropdown when clicking outside
@@ -213,8 +215,7 @@ const VideoCard = ({ video, onVideoSelect }) => {
 
   const handleReport = (e) => {
     e.stopPropagation();
-    // Implement report functionality
-    showToast('Report submitted', 'info');
+    setShowReportModal(true);
     setShowDropdown(false);
   };
 
@@ -379,6 +380,15 @@ const VideoCard = ({ video, onVideoSelect }) => {
         onClose={() => setShowPlaylistModal(false)}
         videoId={video.id || video._id}
         videoTitle={video.title}
+      />
+
+      {/* Report Modal */}
+      <ReportModal
+        isOpen={showReportModal}
+        onClose={() => setShowReportModal(false)}
+        targetType="video"
+        targetId={video.id || video._id}
+        onSuccess={() => showToast('Report submitted. Thank you!', 'success')}
       />
     </div>
   );
