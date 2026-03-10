@@ -1,6 +1,7 @@
 import { useState } from "react"
 import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate, useLocation } from "react-router-dom"
 import AdminDashboard from "./pages/AdminDashboard"
+import AdminLoginPage from "./pages/AdminLoginPage"
 import Header from "./components/HeaderNew"
 import Sidebar from "./components/Sidebar"
 import Home from "./pages/Home"
@@ -50,6 +51,15 @@ function AppContent() {
           <div className="text-lg text-gray-600">Loading...</div>
         </div>
       </div>
+    );
+  }
+
+  // Admin login page is accessible without being logged in
+  if (location.pathname === "/admin-login") {
+    return (
+      <Routes>
+        <Route path="/admin-login" element={<AdminLoginPage />} />
+      </Routes>
     );
   }
 

@@ -1,378 +1,243 @@
-import React, { useState } from 'react';
-import { useAuth } from '../contexts/AuthContext.jsx';
-import { useNavigate } from 'react-router-dom';
-import { Eye, EyeOff, Upload, Shield } from 'lucide-react';
-import Toast from './Toast.jsx';
+﻿import React, { useState } from "react";
+import { useAuth } from "../contexts/AuthContext.jsx";
+import { useNavigate } from "react-router-dom";
+import { Eye, EyeOff, Mail, Lock, User, AtSign, Shield, Play, Zap, Globe, Image } from "lucide-react";
+import Toast from "./Toast.jsx";
 
-const AuthPage = ({ onAuthSuccess }) => {
+const InputField = ({ icon: Icon, label, id, ...props }) => (
+  <div>
+    {label && <label htmlFor={id} className="block text-sm font-medium text-gray-700 mb-1.5">{label}</label>}
+    <div className="relative">
+      {Icon && <Icon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />}
+      <input
+        id={id}
+        {...props}
+        className={`w-full ${Icon ? "pl-10" : "pl-4"} pr-4 py-2.5 border border-gray-200 rounded-xl text-sm text-gray-900 placeholder-gray-400 bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 transition-all`}
+      />
+    </div>
+  </div>
+);
+
+const AuthPage = () => {
   const [isLogin, setIsLogin] = useState(true);
-  const [isAdminLogin, setIsAdminLogin] = useState(false);
-  const [adminKey, setAdminKey] = useState('');
-  const [showAdminKey, setShowAdminKey] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
+  const [error, setError] = useState("");
+  const [toast, setToast] = useState({ show: false, message: "", type: "success" });
+  const [formData, setFormData] = useState({ email: "", password: "", fullName: "", userName: "" });
+  const [files, setFiles] = useState({ avatar: null, coverImage: null });
 
-  const { login, register, setAdminStatus } = useAuth();
+  const { login, register } = useAuth();
   const navigate = useNavigate();
 
-  // Form states
-  const [formData, setFormData] = useState({
-    email: '',
-    password: '',
-    fullName: '',
-    userName: '',
-  });
-  
-  const [files, setFiles] = useState({
-    avatar: null,
-    coverImage: null,
-  });
-
-  const handleInputChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
-  };
-
-  const handleFileChange = (e) => {
-    setFiles({
-      ...files,
-      [e.target.name]: e.target.files[0],
-    });
-  };
-
-  const showToast = (message, type = 'success') => {
-    setToast({ show: true, message, type });
-  };
+  const handleInputChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
+  const handleFileChange = (e) => setFiles({ ...files, [e.target.name]: e.target.files[0] });
+  const showToast = (message, type = "success") => setToast({ show: true, message, type });
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setError('');
-
+    setError("");
     try {
       if (isLogin) {
-        if (isAdminLogin) {
-          const expectedKey = import.meta.env.VITE_ADMIN_KEY;
-          if (!adminKey || adminKey !== expectedKey) {
-            const msg = 'Unauthorized: Invalid admin key.';
-            setError(msg);
-            showToast(msg, 'error');
-            setLoading(false);
-            return;
-          }
-        }
         const result = await login(formData.email, formData.password);
         if (result.success) {
-          if (isAdminLogin) {
-            setAdminStatus(true);
-            showToast('Admin login successful!', 'success');
-            navigate('/admin-panel');
-          } else {
-            showToast('Login successful! Welcome back.', 'success');
-          }
+          showToast("Welcome back!", "success");
         } else {
-          const msg = result.error || 'Invalid credentials. Please try again.';
+          const msg = result.error || "Invalid credentials. Please try again.";
           setError(msg);
-          showToast(msg, 'error');
+          showToast(msg, "error");
         }
       } else {
-        // Registration validation
-        if (!files.avatar) {
-          setError('Avatar image is required');
-          setLoading(false);
-          return;
-        }
-
-        if (!files.coverImage) {
-          setError('Cover image is required');
-          setLoading(false);
-          return;
-        }
-
-        if (!formData.fullName.trim()) {
-          setError('Full name is required');
-          setLoading(false);
-          return;
-        }
-
-        if (!formData.userName.trim()) {
-          setError('Username is required');
-          setLoading(false);
-          return;
-        }
-
-        console.log('Registration data:', formData);
-        console.log('Files:', files);
-
+        if (!files.avatar) { setError("Avatar image is required"); setLoading(false); return; }
+        if (!files.coverImage) { setError("Cover image is required"); setLoading(false); return; }
+        if (!formData.fullName.trim()) { setError("Full name is required"); setLoading(false); return; }
+        if (!formData.userName.trim()) { setError("Username is required"); setLoading(false); return; }
         const result = await register(formData, files.avatar, files.coverImage);
         if (result.success) {
-          setError('');
-          setIsLogin(true); // Switch to login after successful registration
-          showToast('Registration successful! Please login with your credentials.', 'success');
-          resetForm();
+          setIsLogin(true);
+          showToast("Account created! Please sign in.", "success");
+          setFormData({ email: "", password: "", fullName: "", userName: "" });
+          setFiles({ avatar: null, coverImage: null });
+          setError("");
         } else {
-          setError(result.error || 'Registration failed');
+          setError(result.error || "Registration failed");
         }
       }
     } catch (err) {
-      console.error('Auth error:', err);
-      setError(err.message || 'An error occurred');
+      setError(err.message || "An error occurred");
     } finally {
       setLoading(false);
     }
   };
 
-  const resetForm = () => {
-    setFormData({
-      email: '',
-      password: '',
-      fullName: '',
-      userName: '',
-    });
-    setFiles({
-      avatar: null,
-      coverImage: null,
-    });
-    setError('');
-  };
-
   const toggleMode = () => {
     setIsLogin(!isLogin);
-    setIsAdminLogin(false);
-    setAdminKey('');
-    resetForm();
+    setFormData({ email: "", password: "", fullName: "", userName: "" });
+    setFiles({ avatar: null, coverImage: null });
+    setError("");
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
-        <div>
-          <div className="mx-auto h-12 w-12 bg-gradient-to-br from-indigo-600 to-fuchsia-600 rounded flex items-center justify-center">
-            <span className="text-white font-bold text-lg">PV</span>
+    <div className="min-h-screen flex">
+      {/* ── Left branding panel ── */}
+      <div className="hidden lg:flex lg:w-[45%] bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 flex-col justify-between p-12 relative overflow-hidden">
+        <div className="absolute top-0 left-0 w-96 h-96 bg-indigo-600/20 rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2 pointer-events-none" />
+        <div className="absolute bottom-0 right-0 w-80 h-80 bg-fuchsia-600/20 rounded-full blur-3xl translate-x-1/3 translate-y-1/3 pointer-events-none" />
+
+        {/* Logo */}
+        <div className="relative z-10 flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-fuchsia-600 flex items-center justify-center shadow-lg">
+            <Play className="w-5 h-5 text-white fill-current" />
           </div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            {isLogin ? 'Sign in to PlayVibe' : 'Create your PlayVibe account'}
-          </h2>
+          <span className="text-white font-bold text-2xl tracking-tight">PlayVibe</span>
         </div>
 
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          {error && (
-            <div className="rounded-md bg-red-50 p-4">
-              <div className="text-sm text-red-700">{error}</div>
+        {/* Tagline */}
+        <div className="relative z-10 space-y-8">
+          <div>
+            <h1 className="text-4xl font-bold text-white leading-tight">
+              Share your world<br />
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-fuchsia-400">one video at a time</span>
+            </h1>
+            <p className="mt-4 text-slate-400 text-base leading-relaxed">Upload, discover, and share stunning videos with a community of creators.</p>
+          </div>
+          <div className="space-y-4">
+            {[
+              { icon: Zap,    text: "Upload & stream in HD quality" },
+              { icon: Globe,  text: "Reach viewers across the globe" },
+              { icon: Shield, text: "Secure & private by default" },
+            ].map(({ icon: Icon, text }) => (
+              <div key={text} className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center flex-shrink-0">
+                  <Icon className="w-4 h-4 text-indigo-300" />
+                </div>
+                <span className="text-slate-300 text-sm">{text}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Admin link */}
+        <div className="relative z-10">
+          <button onClick={() => navigate("/admin-login")}
+            className="flex items-center gap-2 text-slate-600 hover:text-slate-300 transition-colors text-sm group">
+            <Shield className="w-4 h-4 group-hover:text-indigo-400 transition-colors" />
+            Administrator access
+          </button>
+        </div>
+      </div>
+
+      {/* ── Right form panel ── */}
+      <div className="flex-1 flex items-center justify-center p-6 bg-white">
+        <div className="w-full max-w-md">
+          {/* Mobile logo */}
+          <div className="lg:hidden flex items-center gap-2 mb-8">
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-fuchsia-600 flex items-center justify-center">
+              <Play className="w-4 h-4 text-white fill-current" />
             </div>
+            <span className="text-gray-900 font-bold text-xl">PlayVibe</span>
+          </div>
+
+          <div className="mb-8">
+            <h2 className="text-2xl font-bold text-gray-900">{isLogin ? "Welcome back" : "Create account"}</h2>
+            <p className="mt-1 text-sm text-gray-500">
+              {isLogin ? "Sign in to continue to PlayVibe" : "Join PlayVibe and start sharing"}
+            </p>
+          </div>
+
+          {error && (
+            <div className="mb-5 p-3.5 rounded-xl bg-red-50 border border-red-100 text-sm text-red-700">{error}</div>
           )}
 
-          <div className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-4">
             {!isLogin && (
               <>
+                <InputField icon={User} id="fullName" name="fullName" label="Full Name" type="text" required placeholder="John Doe" value={formData.fullName} onChange={handleInputChange} autoComplete="name" />
+                <InputField icon={AtSign} id="userName" name="userName" label="Username" type="text" required placeholder="johndoe" value={formData.userName} onChange={handleInputChange} autoComplete="username" />
+
+                {/* Avatar upload */}
                 <div>
-                  <label htmlFor="fullName" className="block text-sm font-medium text-gray-700">
-                    Full Name
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                    Avatar Image <span className="text-red-500">*</span>
                   </label>
-                  <input
-                    id="fullName"
-                    name="fullName"
-                    type="text"
-                    required={!isLogin}
-                    value={formData.fullName}
-                    onChange={handleInputChange}
-                    className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                    placeholder="Enter your full name"
-                  />
+                  <label className={`flex items-center gap-3 px-4 py-3 border-2 border-dashed rounded-xl cursor-pointer transition-colors ${files.avatar ? "border-indigo-400 bg-indigo-50" : "border-gray-200 hover:border-indigo-300 hover:bg-gray-50"}`}>
+                    <Image className="w-5 h-5 text-gray-400 flex-shrink-0" />
+                    <span className="text-sm text-gray-500 truncate">{files.avatar ? files.avatar.name : "Click to upload avatar photo"}</span>
+                    <input name="avatar" type="file" accept="image/*" required onChange={handleFileChange} className="sr-only" />
+                  </label>
                 </div>
 
+                {/* Cover upload */}
                 <div>
-                  <label htmlFor="userName" className="block text-sm font-medium text-gray-700">
-                    Username
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                    Cover Image <span className="text-red-500">*</span>
                   </label>
-                  <input
-                    id="userName"
-                    name="userName"
-                    type="text"
-                    required={!isLogin}
-                    value={formData.userName}
-                    onChange={handleInputChange}
-                    className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                    placeholder="Choose a username"
-                  />
-                </div>
-
-                <div>
-                  <label htmlFor="avatar" className="block text-sm font-medium text-gray-700">
-                    Avatar Image *
+                  <label className={`flex items-center gap-3 px-4 py-3 border-2 border-dashed rounded-xl cursor-pointer transition-colors ${files.coverImage ? "border-indigo-400 bg-indigo-50" : "border-gray-200 hover:border-indigo-300 hover:bg-gray-50"}`}>
+                    <Image className="w-5 h-5 text-gray-400 flex-shrink-0" />
+                    <span className="text-sm text-gray-500 truncate">{files.coverImage ? files.coverImage.name : "Click to upload channel cover"}</span>
+                    <input name="coverImage" type="file" accept="image/*" required onChange={handleFileChange} className="sr-only" />
                   </label>
-                  <div className="mt-1 flex items-center space-x-2">
-                    <input
-                      id="avatar"
-                      name="avatar"
-                      type="file"
-                      accept="image/*"
-                      required={!isLogin}
-                      onChange={handleFileChange}
-                      className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
-                    />
-                    <Upload className="h-5 w-5 text-gray-400" />
-                  </div>
-                </div>
-
-                <div>
-                  <label htmlFor="coverImage" className="block text-sm font-medium text-gray-700">
-                    Cover Image *
-                  </label>
-                  <div className="mt-1 flex items-center space-x-2">
-                    <input
-                      id="coverImage"
-                      name="coverImage"
-                      type="file"
-                      accept="image/*"
-                      required={!isLogin}
-                      onChange={handleFileChange}
-                      className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
-                    />
-                    <Upload className="h-5 w-5 text-gray-400" />
-                  </div>
                 </div>
               </>
             )}
 
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-                Email address
-              </label>
-              <input
-                id="email"
-                name="email"
-                type="email"
-                autoComplete={isLogin ? 'email' : 'new-email'}
-                required
-                value={formData.email}
-                onChange={handleInputChange}
-                className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                placeholder="Enter your email"
-              />
-            </div>
+            <InputField icon={Mail} id="email" name="email" label="Email address" type="email" autoComplete={isLogin ? "email" : "new-email"} required placeholder="you@example.com" value={formData.email} onChange={handleInputChange} />
 
+            {/* Password */}
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-                Password
-              </label>
-              <div className="mt-1 relative">
+              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1.5">Password</label>
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
                 <input
-                  id="password"
-                  name="password"
-                  type={showPassword ? 'text' : 'password'}
-                  autoComplete={isLogin ? 'current-password' : 'new-password'}
+                  id="password" name="password"
+                  type={showPassword ? "text" : "password"}
+                  autoComplete={isLogin ? "current-password" : "new-password"}
                   required
+                  placeholder={isLogin ? "Enter your password" : "Create a strong password"}
                   value={formData.password}
                   onChange={handleInputChange}
-                  className="appearance-none relative block w-full px-3 py-2 pr-10 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                  placeholder="Enter your password"
+                  className="w-full pl-10 pr-10 py-2.5 border border-gray-200 rounded-xl text-sm text-gray-900 placeholder-gray-400 bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 transition-all"
                 />
-                <button
-                  type="button"
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center"
-                  onClick={() => setShowPassword(!showPassword)}
-                >
-                  {showPassword ? (
-                    <EyeOff className="h-5 w-5 text-gray-400" />
-                  ) : (
-                    <Eye className="h-5 w-5 text-gray-400" />
-                  )}
+                <button type="button" onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors">
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
             </div>
 
-            {isLogin && (
-              <>
-                <div className="flex items-center justify-between pt-1">
-                  <label className="flex items-center gap-2 cursor-pointer select-none">
-                    <input
-                      type="checkbox"
-                      checked={isAdminLogin}
-                      onChange={(e) => { setIsAdminLogin(e.target.checked); setAdminKey(''); }}
-                      className="w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
-                    />
-                    <span className="text-sm font-medium text-gray-700 flex items-center gap-1.5">
-                      <Shield className="w-4 h-4 text-indigo-600" />
-                      Sign in as Administrator
-                    </span>
-                  </label>
-                </div>
-
-                {isAdminLogin && (
-                  <div>
-                    <label htmlFor="adminKey" className="block text-sm font-medium text-gray-700">
-                      Admin Key
-                    </label>
-                    <div className="mt-1 relative">
-                      <input
-                        id="adminKey"
-                        name="adminKey"
-                        type={showAdminKey ? 'text' : 'password'}
-                        required={isAdminLogin}
-                        value={adminKey}
-                        onChange={(e) => setAdminKey(e.target.value)}
-                        className="appearance-none relative block w-full px-3 py-2 pr-10 border border-indigo-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                        placeholder="Enter your admin key"
-                      />
-                      <button
-                        type="button"
-                        className="absolute inset-y-0 right-0 pr-3 flex items-center"
-                        onClick={() => setShowAdminKey(!showAdminKey)}
-                      >
-                        {showAdminKey ? <EyeOff className="h-5 w-5 text-gray-400" /> : <Eye className="h-5 w-5 text-gray-400" />}
-                      </button>
-                    </div>
-                    <p className="mt-1 text-xs text-indigo-600">Admin access requires a valid administrator key.</p>
-                  </div>
-                )}
-              </>
-            )}
-          </div>
-
-          <div>
-            <button
-              type="submit"
-              disabled={loading}
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:bg-indigo-400 disabled:cursor-not-allowed"
-            >
+            <button type="submit" disabled={loading}
+              className="w-full py-2.5 px-4 bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 active:scale-[0.99] text-white rounded-xl text-sm font-semibold shadow-sm hover:shadow-md transition-all mt-2 disabled:opacity-60 disabled:cursor-not-allowed">
               {loading ? (
-                <div className="flex items-center">
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                  {isLogin ? 'Signing in...' : 'Creating account...'}
-                </div>
+                <span className="flex items-center justify-center gap-2">
+                  <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  {isLogin ? "Signing in..." : "Creating account..."}
+                </span>
               ) : (
-                isLogin ? (isAdminLogin ? 'Sign in as Admin' : 'Sign in') : 'Create account'
+                isLogin ? "Sign in" : "Create account"
               )}
             </button>
-          </div>
+          </form>
 
-          <div className="text-center">
-            <button
-              type="button"
-              onClick={toggleMode}
-              className="text-indigo-600 hover:text-indigo-500 font-medium"
-            >
-              {isLogin 
-                ? "Don't have an account? Sign up" 
-                : "Already have an account? Sign in"
-              }
+          <div className="mt-6 text-center">
+            <button onClick={toggleMode} className="text-sm text-indigo-600 hover:text-indigo-700 font-medium transition-colors">
+              {isLogin ? "Don't have an account? Sign up" : "Already have an account? Sign in"}
             </button>
           </div>
-        </form>
+
+          {/* Mobile admin link */}
+          <div className="mt-8 pt-6 border-t border-gray-100 flex justify-center lg:hidden">
+            <button onClick={() => navigate("/admin-login")}
+              className="flex items-center gap-1.5 text-sm text-gray-400 hover:text-gray-600 transition-colors">
+              <Shield className="w-4 h-4" />
+              Administrator login
+            </button>
+          </div>
+        </div>
       </div>
 
-      {/* Toast notification */}
       {toast.show && (
-        <Toast
-          message={toast.message}
-          type={toast.type}
-          onClose={() => setToast({ show: false, message: '', type: 'success' })}
-        />
+        <Toast message={toast.message} type={toast.type} onClose={() => setToast({ show: false, message: "", type: "success" })} />
       )}
     </div>
   );
