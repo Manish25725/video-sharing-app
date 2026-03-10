@@ -5,7 +5,7 @@ import streamService from "../services/streamService.js";
 import {
   Radio, Copy, CheckCircle, Eye, EyeOff, Wifi, AlertTriangle,
   Play, Square, BookOpen, ChevronDown, ChevronUp, ExternalLink,
-  ImagePlus, X,
+  ImagePlus, X, Video,
 } from "lucide-react";
 
 const CopyField = ({ label, value, mono = false }) => {
@@ -63,6 +63,11 @@ const GoLive = () => {
   const [showObs, setShowObs] = useState(false);
   const [ending, setEnding] = useState(false);
 
+  // Post-stream: save recording state
+  const [endedStreamKey, setEndedStreamKey] = useState(null);
+  const [saving, setSaving] = useState(false);
+  const [savedVideoId, setSavedVideoId] = useState(null);
+
   // Re-hydrate if creator already has an active stream
   useEffect(() => {
     streamService.getMyStream()
@@ -119,14 +124,29 @@ const GoLive = () => {
     setEnding(true);
     try {
       await streamService.endStream(streamData.streamKey);
+      setEndedStreamKey(streamData.streamKey);
       setStreamData(null);
-      setStep("details");
-      setTitle("");
-      setDescription("");
+      setStep("ended"); // go to save-recording step
     } catch (err) {
       setError(err?.message || "Failed to end stream");
     } finally {
       setEnding(false);
+    }
+  };
+
+  const handleSaveRecording = async () => {
+    setSaving(true);
+    setError("");
+    try {
+      const { data } = await streamService.saveRecording(endedStreamKey);
+      setSavedVideoId(data.videoId);
+    } catch (err) {
+      setError(
+        err?.message ||
+          "Recording file not found. Make sure FFmpeg is installed and the stream ran for at least a few seconds."
+      );
+    } finally {
+      setSaving(false);
     }
   };
 
