@@ -52,9 +52,13 @@ const CommentComponent = ({
     if (!showReplies && replies.length === 0 && comment.repliesCount > 0) {
       setLoadingReplies(true);
       try {
-        const response = await commentService.getCommentReplies(comment.id);
+        // Use the correct endpoint depending on whether this is a comment or a reply
+        const isNestedReply = depth > 0 || comment.isReply;
+        const response = isNestedReply
+          ? await commentService.getReplyReplies(comment.id || comment._id)
+          : await commentService.getCommentReplies(comment.id || comment._id);
 
-        // Normalize the response from commentService.getCommentReplies
+        // Normalize the response from the service
         let repliesArray = [];
         if (response && response.success && response.data && response.data.replies) {
           repliesArray = response.data.replies;
@@ -105,7 +109,12 @@ const CommentComponent = ({
 
     setRepliesLoading(true);
     try {
-      const response = await commentService.addReply(comment.id || comment._id, replyContent);
+      // If this CommentComponent is rendering a reply (depth > 0), we must use
+      // addReplyToReply so the backend looks up a Reply document, not a Comment.
+      const isNestedReply = depth > 0 || comment.isReply;
+      const response = isNestedReply
+        ? await commentService.addReplyToReply(comment.id || comment._id, replyContent)
+        : await commentService.addReply(comment.id || comment._id, replyContent);
       
       if (!response || !response.data) {
         throw new Error('Invalid response from server');
@@ -303,7 +312,7 @@ const CommentComponent = ({
           )}
 
           {/* Show Replies Button */}
-          {comment.repliesCount > 0 && (
+          {(comment.repliesCount > 0 || replies.length > 0) && (
             <button
               onClick={handleToggleReplies}
               className="flex items-center space-x-1 mt-2 text-xs text-blue-600 hover:text-blue-800 transition-colors"

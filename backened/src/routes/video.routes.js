@@ -4,7 +4,7 @@ import {upload} from "../middlewares/multer.middleware.js"
 import { verifyJWT } from "../middlewares/auth.middleware.js"
 import { videoFilter } from "../middlewares/viedeoFilter.middleware.js";
 import { imageFilter } from "../middlewares/imageFilter.middleware.js";
-import { getAllVideos,  publishVideo,getVideoById, updateVideo, deleteVideo, togglePublishStatus, incrementVideoViews, getVideoStats, downloadVideo, getDownloadInfo,getTrendingVideos} from "../controllers/video.controller.js";
+import { getAllVideos,  publishVideo,getVideoById, updateVideo, deleteVideo, togglePublishStatus, incrementVideoViews, getVideoStats, downloadVideo, getDownloadInfo,getTrendingVideos, getRelatedVideos} from "../controllers/video.controller.js";
 
 
 
@@ -19,6 +19,9 @@ router.route("/getvideo/:videoId").get(getVideoById)
 
 // Public route for trending videos
 router.route("/get-trending-videos").get(getTrendingVideos);
+
+// Public route for related videos
+router.route("/:videoId/related").get(getRelatedVideos);
 
 // Public route for incrementing views - no auth needed
 router.route("/increment-views/:videoId").patch(incrementVideoViews);

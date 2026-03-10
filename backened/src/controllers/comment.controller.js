@@ -347,6 +347,9 @@ const addReply = asyncHandler(async (req, res) => {
     const populatedReply = await Reply.findById(reply._id)
         .populate("owner", "userName fullName avatar");
 
+    // Increment the parent comment's reply count
+    await Comment.findByIdAndUpdate(commentId, { $inc: { totalReplies: 1 } });
+
     return res
         .status(201)
         .json(

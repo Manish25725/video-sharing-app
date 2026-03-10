@@ -40,6 +40,7 @@ import AddToPlaylistModal from '../components/AddToPlaylistModal';
 import CommentComponent from '../components/CommentComponent';
 import ReportModal from '../components/ReportModal';
 import Toast from '../components/Toast';
+import RelatedVideos from '../components/RelatedVideos';
 import '../styles/VideoPlayer.css';
 
 /* ─── Chat Replay Panel (for live stream recordings) ────────── */
@@ -123,7 +124,6 @@ const VideoPlayer = () => {
   const [isSubscribed, setIsSubscribed] = useState(false)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
-  const [relatedVideos, setRelatedVideos] = useState([])
   const [comments, setComments] = useState([])
   const [newComment, setNewComment] = useState("")
   const [commentsLoading, setCommentsLoading] = useState(false)
@@ -157,7 +157,6 @@ const VideoPlayer = () => {
     if (videoId) {
       fetchVideoData()
       fetchVideoStats()
-      fetchRelatedVideos()
       fetchComments()
       // Check if video is in watch later list
       if (user) {
@@ -560,30 +559,7 @@ const VideoPlayer = () => {
         return comment;
       })
     );
-  };  const fetchRelatedVideos = async () => {
-    try {
-      const response = await videoService.getAllVideos(1, 10)
-      if (response && response.data) {
-        // Filter out current video and transform data
-        const filteredVideos = response.data
-          .filter(v => v._id !== videoId)
-          .slice(0, 10)
-          .map(v => ({
-            id: v._id,
-            title: v.title,
-            thumbnail: v.thumbnail,
-            channelName: v.owner?.fullName || v.owner?.userName || 'Unknown',
-            channelAvatar: v.owner?.avatar,
-            views: v.views || 0,
-            uploadTime: formatTimeAgo(v.createdAt),
-            duration: v.duration || "0:00"
-          }))
-        setRelatedVideos(filteredVideos)
-      }
-    } catch (err) {
-      console.error("Error fetching related videos:", err)
-    }
-  }
+  };
 
   const fetchComments = async () => {
     try {
@@ -1107,47 +1083,7 @@ const VideoPlayer = () => {
               </div>
             )}
             <div className="space-y-3">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Related Videos</h3>
-              {relatedVideos.length > 0 ? (
-                relatedVideos.map((relatedVideo) => (
-                  <div
-                    key={relatedVideo.id}
-                    className="flex space-x-3 cursor-pointer hover:bg-gray-50 p-2 rounded-lg transition-colors group"
-                    onClick={() => window.location.href = `/video/${relatedVideo.id}`}
-                  >
-                    <div className="relative flex-shrink-0">
-                      <img
-                        src={relatedVideo.thumbnail || "/placeholder.svg?height=94&width=168&text=Video"}
-                        alt={relatedVideo.title}
-                        className="w-40 h-24 object-cover rounded-lg"
-                      />
-                      <div className="absolute bottom-1 right-1 bg-black bg-opacity-80 text-white text-xs px-1 py-0.5 rounded">
-                        5:32
-                      </div>
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <h4 className="font-medium text-sm text-gray-900 line-clamp-2 mb-1 group-hover:text-blue-600">
-                        {relatedVideo.title}
-                      </h4>
-                      <p className="text-xs text-gray-600 mb-1 hover:text-gray-800">
-                        {relatedVideo.owner?.fullName || relatedVideo.owner?.userName}
-                      </p>
-                      <div className="flex items-center space-x-1 text-xs text-gray-500">
-                        <span>{(relatedVideo.views || 0).toLocaleString()} views</span>
-                        <span>•</span>
-                        <span>{formatTimeAgo(relatedVideo.createdAt)}</span>
-                      </div>
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <div className="text-center py-8 text-gray-500">
-                  <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                    <Play className="w-8 h-8 text-gray-400" />
-                  </div>
-                  <p>No related videos found</p>
-                </div>
-              )}
+              <RelatedVideos videoId={videoId} />
             </div>
           </div>
         </div>

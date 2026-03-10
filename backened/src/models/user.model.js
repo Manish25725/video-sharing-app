@@ -64,6 +64,11 @@ const userSchema = new Schema(
         refreshToken:{
             type:String
         },
+        bio:{
+            type:String,
+            trim:true,
+            default:""
+        },
         watchLater:[
             {
             type:mongoose.Schema.Types.ObjectId,

@@ -179,6 +179,16 @@ export const videoService = {
       console.log("get trending video error", error);
       return { success: false, data: [] };
     }
+  },
+
+  async getRelatedVideos(videoId) {
+    try {
+      const response = await apiClient.get(`/videos/${videoId}/related`);
+      return response;
+    } catch (error) {
+      console.error('Get related videos error:', error);
+      return { success: false, data: [] };
+    }
   }
 };
 

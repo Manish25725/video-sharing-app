@@ -723,7 +723,83 @@ const getDownloadInfo = asyncHandler(async (req, res) => {
 
 
 
+const getRelatedVideos = asyncHandler(async (req, res) => {
+    const { videoId } = req.params;
+
+    if (!isValidObjectId(videoId)) {
+        throw new ApiError(400, "Invalid video ID");
+    }
+
+    const currentVideo = await Video.findById(videoId).select("videoType");
+    if (!currentVideo) {
+        throw new ApiError(404, "Video not found");
+    }
+
+    const currentVideoId = new mongoose.Types.ObjectId(videoId);
+
+    const ownerLookup = {
+        $lookup: {
+            from: "users",
+            localField: "owner",
+            foreignField: "_id",
+            as: "owner",
+            pipeline: [{ $project: { fullName: 1, userName: 1, avatar: 1 } }]
+        }
+    };
+
+    const projectStage = {
+        $project: {
+            thumbnail: 1,
+            title: 1,
+            duration: 1,
+            views: 1,
+            owner: { $arrayElemAt: ["$owner", 0] },
+            createdAt: 1,
+            videoType: 1
+        }
+    };
+
+    // Find videos with same videoType, excluding the current one
+    let related = await Video.aggregate([
+        {
+            $match: {
+                _id: { $ne: currentVideoId },
+                isPublished: true,
+                isBlocked: { $ne: true },
+                videoType: currentVideo.videoType
+            }
+        },
+        { $sort: { views: -1, createdAt: -1 } },
+        { $limit: 10 },
+        ownerLookup,
+        projectStage
+    ]);
+
+    // Fallback: if fewer than 3 same-type results, pad with popular videos
+    if (related.length < 3) {
+        const excludeIds = [currentVideoId, ...related.map(v => v._id)];
+        const fallback = await Video.aggregate([
+            {
+                $match: {
+                    _id: { $nin: excludeIds },
+                    isPublished: true,
+                    isBlocked: { $ne: true }
+                }
+            },
+            { $sort: { views: -1, createdAt: -1 } },
+            { $limit: 10 - related.length },
+            ownerLookup,
+            projectStage
+        ]);
+        related = [...related, ...fallback];
+    }
+
+    return res.status(200).json(
+        new ApiResponse(200, related, "Related videos fetched successfully")
+    );
+});
+
 export {getAllVideos,publishVideo,getVideoById,updateVideo,deleteVideo,togglePublishStatus,incrementVideoViews,getVideoStats,downloadVideo,getDownloadInfo
-    ,getTrendingVideos
+    ,getTrendingVideos,getRelatedVideos
 }
 

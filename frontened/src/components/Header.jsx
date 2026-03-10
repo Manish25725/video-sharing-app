@@ -3,6 +3,7 @@ import { useState, useEffect, useRef } from "react";
 import { useAuth } from "../contexts/AuthContext";
 import { Link, useNavigate } from "react-router-dom";
 import NotificationBell from "./NotificationBell";
+import VoiceSearch from "./VoiceSearch";
 
 const Header = ({ 
   onMenuClick, 
@@ -83,6 +84,11 @@ const Header = ({
     }
   };
 
+  const handleVoiceResult = (text) => {
+    setSearchQuery(text);
+    navigate(`/search?q=${encodeURIComponent(text)}`);
+  };
+
   // Close menus when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -117,16 +123,23 @@ const Header = ({
 
         {/* Center section - Search */}
         <div className="flex-1 max-w-2xl mx-4">
-          <div className="relative flex">
-            <input
-              type="text"
-              placeholder="Search videos..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              onKeyDown={handleSearchKeyDown}
-              className="w-full px-4 py-2 border border-gray-300 rounded-l-full focus:outline-none focus:border-blue-500"
-            />
-            <button 
+          <div className="flex items-stretch">
+            {/* Input wrapper — mic sits inside on the right */}
+            <div className="relative flex-1">
+              <input
+                type="text"
+                placeholder="Search videos..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyDown={handleSearchKeyDown}
+                className="w-full pl-4 pr-10 py-2 border border-gray-300 rounded-l-full focus:outline-none focus:border-blue-500"
+              />
+              {/* Microphone button inside the input */}
+              <div className="absolute right-2 top-1/2 -translate-y-1/2">
+                <VoiceSearch onResult={handleVoiceResult} />
+              </div>
+            </div>
+            <button
               onClick={handleSearch}
               className="px-6 py-2 bg-gray-50 border border-l-0 border-gray-300 rounded-r-full hover:bg-gray-100 focus:outline-none"
             >
