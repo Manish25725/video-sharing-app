@@ -1,5 +1,6 @@
 import { useState } from "react"
-import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from "react-router-dom"
+import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate, useLocation } from "react-router-dom"
+import AdminDashboard from "./pages/AdminDashboard"
 import Header from "./components/HeaderNew"
 import Sidebar from "./components/Sidebar"
 import Home from "./pages/Home"
@@ -24,6 +25,7 @@ import { LanguageProvider } from "./contexts/LanguageContext"
 function AppContent() {
   const { isLoggedIn, loading, user } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [showSubscriptionMenu, setShowSubscriptionMenu] = useState(false);
@@ -54,6 +56,16 @@ function AppContent() {
   // Simple authentication check - show auth page if not logged in
   if (!isLoggedIn) {
     return <AuthPage />;
+  }
+
+  // Admin panel gets its own full-screen layout
+  if (location.pathname.startsWith("/admin-panel")) {
+    return (
+      <Routes>
+        <Route path="/admin-panel" element={<AdminDashboard />} />
+        <Route path="/admin-panel/*" element={<AdminDashboard />} />
+      </Routes>
+    );
   }
 
   // Main layout with sidebar and routing
@@ -97,6 +109,7 @@ function AppContent() {
             <Route path="/video/:videoId" element={<VideoPlayer />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="/admin" element={user ? <MyChannel /> : <Navigate to="/" />} />
+            <Route path="/admin-panel" element={user ? <Navigate to="/admin-panel" replace /> : <Navigate to="/" />} />
             <Route path="*" element={<Navigate to="/" />} />
           </Routes>
         </main>
