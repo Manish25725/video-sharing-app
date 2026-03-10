@@ -156,9 +156,12 @@ const Header = ({
 
         {/* Right section */}
         <div className="flex items-center space-x-2">
-          <button className="p-2 hover:bg-gray-100 rounded-full transition-colors">
-            <Video className="w-6 h-6 text-gray-700" />
-          </button>
+          {user && (
+            <Link to="/go-live" title="Go Live"
+              className="p-2 hover:bg-red-50 rounded-full transition-colors group">
+              <Video className="w-6 h-6 text-gray-700 group-hover:text-red-600 transition-colors" />
+            </Link>
+          )}
           
           {/* Subscriptions Button */}
           <div className="relative">

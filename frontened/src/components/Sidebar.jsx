@@ -1,5 +1,4 @@
 import {
-  Home,
   TrendingUp,
   Music,
   Film,
@@ -11,12 +10,11 @@ import {
   History,
   Clock,
   ThumbsUp,
-  Users,
-  Settings,
   Shield,
-  User,
-  MessageSquare,
-  List
+  List,
+  Radio,
+  Calendar,
+  Settings,
 } from "lucide-react"
 import { Link, useLocation } from "react-router-dom"
 import { useAuth } from "../contexts/AuthContext"
@@ -25,25 +23,28 @@ const Sidebar = ({ isOpen }) => {
   const location = useLocation();
   const currentPath = location.pathname;
   const { user } = useAuth();
+
   const menuItems = [
-    { icon: Home, label: "Home", path: "/" },
-    { icon: Users, label: "Subscriptions", path: "/subscriptions" },
-    { icon: MessageSquare, label: "Tweets", path: "/tweets" },
-    { icon: TrendingUp, label: "Trending", path: "/trending" },
-    { icon: Music, label: "Music", path: "/music" },
-    { icon: Film, label: "Movies", path: "/movies" },
-    { icon: Gamepad2, label: "Gaming", path: "/gaming" },
-    { icon: Newspaper, label: "News", path: "/news" },
-    { icon: Trophy, label: "Sports", path: "/sports" },
-    { icon: Lightbulb, label: "Learning", path: "/learning" },
-    { icon: Shirt, label: "Fashion", path: "/fashion" },
+    { icon: TrendingUp, label: "Trending",  path: "/trending" },
+    { icon: Music,      label: "Music",     path: "/music" },
+    { icon: Film,       label: "Movies",    path: "/movies" },
+    { icon: Gamepad2,   label: "Gaming",    path: "/gaming" },
+    { icon: Newspaper,  label: "News",      path: "/news" },
+    { icon: Trophy,     label: "Sports",    path: "/sports" },
+    { icon: Lightbulb,  label: "Learning",  path: "/learning" },
+    { icon: Shirt,      label: "Fashion",   path: "/fashion" },
   ]
 
   const libraryItems = [
-    { icon: History, label: "History", path: "/watch-history" },
-    { icon: Clock, label: "Watch later", path: "/watch-later" },
-    { icon: ThumbsUp, label: "Liked videos", path: "/liked-videos" },
-    { icon: List, label: "Playlists", path: "/playlists" },
+    { icon: History,   label: "History",      path: "/watch-history" },
+    { icon: Clock,     label: "Watch later",  path: "/watch-later" },
+    { icon: ThumbsUp,  label: "Liked videos", path: "/liked-videos" },
+    { icon: List,      label: "Playlists",    path: "/playlists" },
+  ]
+
+  const liveItems = [
+    { icon: Radio,    label: "Live Now",        path: "/live" },
+    { icon: Calendar, label: "Upcoming Streams", path: "/scheduled-streams" },
   ]
 
   const adminItems = [
@@ -113,6 +114,27 @@ const Sidebar = ({ isOpen }) => {
                     }`}
                   >
                     <item.icon className="w-6 h-6 text-gray-700" />
+                    <span className="ml-6 text-gray-900">{item.label}</span>
+                  </Link>
+                ))}
+              </div>
+              <hr className="border-gray-200 mx-4 mb-4" />
+
+              {/* Live */}
+              <div className="mb-6">
+                <h3 className="px-4 mb-2 text-sm font-semibold text-gray-500 uppercase tracking-wider flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
+                  Live
+                </h3>
+                {liveItems.map((item, index) => (
+                  <Link
+                    key={index}
+                    to={item.path}
+                    className={`w-full flex items-center px-4 py-2 text-left hover:bg-gray-100 transition-colors ${
+                      currentPath === item.path ? "bg-gray-100" : ""
+                    }`}
+                  >
+                    <item.icon className={`w-6 h-6 ${item.icon === Radio ? "text-red-500" : "text-gray-700"}`} />
                     <span className="ml-6 text-gray-900">{item.label}</span>
                   </Link>
                 ))}

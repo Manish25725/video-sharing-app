@@ -3,6 +3,9 @@ import { createServer } from 'http'
 import { Server } from 'socket.io'
 import connectDB from './db/index.js'
 import {app} from './app.js'
+import { nms } from './liveServer.js'
+import { Stream } from './models/stream.model.js'
+import { Message } from './models/message.model.js'
 import dotenv from "dotenv"
 
 dotenv.config({
@@ -41,9 +44,84 @@ connectDB()
             console.log(`User joined video room: ${videoId}`)
         })
         
-        // Handle disconnect
+        // ── Live stream: join room ─────────────────────────────
+        socket.on('join-stream', async ({ streamKey, userId, username }) => {
+            if (!streamKey) return
+            socket.join(`stream:${streamKey}`)
+            socket._streamKey = streamKey
+
+            // Track viewers in-memory
+            if (!global.streamViewers) global.streamViewers = new Map()
+            if (!global.streamViewers.has(streamKey)) {
+                global.streamViewers.set(streamKey, new Set())
+            }
+            global.streamViewers.get(streamKey).add(socket.id)
+            const count = global.streamViewers.get(streamKey).size
+
+            try {
+                await Stream.findOneAndUpdate({ streamKey }, { viewerCount: count })
+            } catch {}
+            io.to(`stream:${streamKey}`).emit('viewer-count', { count })
+            console.log(`[Socket] Viewer joined stream ${streamKey} (total: ${count})`)
+        })
+
+        // ── Live stream: leave room ───────────────────────────
+        socket.on('leave-stream', async ({ streamKey }) => {
+            if (!streamKey) return
+            socket.leave(`stream:${streamKey}`)
+            socket._streamKey = null
+            if (global.streamViewers?.has(streamKey)) {
+                global.streamViewers.get(streamKey).delete(socket.id)
+                const count = global.streamViewers.get(streamKey).size
+                try {
+                    await Stream.findOneAndUpdate({ streamKey }, { viewerCount: count })
+                } catch {}
+                io.to(`stream:${streamKey}`).emit('viewer-count', { count })
+            }
+        })
+
+        // ── Live chat: send message ───────────────────────────
+        socket.on('chat-message', async (data) => {
+            const { streamKey, message, userId, username } = data || {}
+            if (!streamKey || !message?.trim()) return
+
+            // Basic sanitization: strip HTML tags
+            const sanitized = message.trim().replace(/<[^>]*>/g, '').substring(0, 500)
+            const safeUsername = (username || 'Viewer').replace(/<[^>]*>/g, '').substring(0, 60)
+
+            try {
+                const stream = await Stream.findOne({ streamKey })
+                if (!stream) return
+
+                const msg = await Message.create({
+                    streamId: stream._id,
+                    userId: userId || null,
+                    username: safeUsername,
+                    message: sanitized,
+                })
+
+                io.to(`stream:${streamKey}`).emit('chat-message', {
+                    _id: msg._id,
+                    username: msg.username,
+                    message: msg.message,
+                    createdAt: msg.createdAt,
+                })
+            } catch (err) {
+                console.error('[Socket] Chat error:', err.message)
+            }
+        })
+
+        // ── Handle disconnect: clean up viewer tracking ───────
         socket.on('disconnect', () => {
             console.log('User disconnected:', socket.id)
+            const streamKey = socket._streamKey
+            if (streamKey && global.streamViewers?.has(streamKey)) {
+                global.streamViewers.get(streamKey).delete(socket.id)
+                const count = global.streamViewers.get(streamKey).size
+                Stream.findOneAndUpdate({ streamKey }, { viewerCount: count })
+                    .then(() => io.to(`stream:${streamKey}`).emit('viewer-count', { count }))
+                    .catch(() => {})
+            }
         })
     })
     
@@ -59,6 +137,10 @@ connectDB()
 
     server.listen(PORT, () => {
         console.log(`Server is running at port ${PORT}`);
+        // Start RTMP/HLS streaming server
+        nms.run();
+        console.log(`[NMS] RTMP server on port ${process.env.RTMP_PORT || 1935}`);
+        console.log(`[NMS] HLS  server on port ${process.env.HLS_PORT  || 8001}`);
     });
 })
 .catch((error)=>{

@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react"
-import { Upload, Plus, List, BarChart3, Users, Video, Trash2, Edit, Eye, Play, MoreVertical, Settings, Bell, Heart, MessageCircle, Share2, FolderPlus, FolderEdit } from "lucide-react"
+import { Link } from "react-router-dom"
+import { Upload, Plus, List, BarChart3, Users, Video, Trash2, Edit, Eye, Play, MoreVertical, Settings, Bell, Heart, MessageCircle, Share2, FolderPlus, FolderEdit, Radio } from "lucide-react"
 import { videoService, transformVideosArray } from "../services/videoService"
 import { dashboardService } from "../services/dashboardService"
 import { likeService } from "../services/likeService"
@@ -827,7 +828,16 @@ const MyChannel = () => {
 
   return (
     <div className="p-6">
-      <h1 className="text-3xl font-bold text-gray-900 mb-8">My Channel</h1>
+      <div className="flex items-center justify-between mb-8">
+        <h1 className="text-3xl font-bold text-gray-900">My Channel</h1>
+        <Link
+          to="/go-live"
+          className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium text-sm"
+        >
+          <Radio className="w-4 h-4" />
+          Go Live
+        </Link>
+      </div>
       
       {/* Tab Navigation */}
       <div className="mb-8">

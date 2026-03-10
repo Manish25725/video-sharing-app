@@ -13,6 +13,11 @@ const streamSchema = new Schema(
       default: "",
       maxlength: 500,
     },
+    category: {
+      type: String,
+      default: "",
+      trim: true,
+    },
     streamKey: {
       type: String,
       required: true,

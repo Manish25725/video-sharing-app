@@ -1,7 +1,11 @@
 import VideoCard from "../components/VideoCard.jsx";
+import LiveStreamCard from "../components/LiveStreamCard.jsx";
 import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import { videoService, transformVideosArray } from "../services/videoService.js";
 import { useAuth } from "../contexts/AuthContext.jsx";
+import streamService from "../services/streamService.js";
+import { Radio, Calendar, ChevronRight } from "lucide-react";
 
 
 const Home = ({ onVideoSelect }) => {
@@ -12,6 +16,8 @@ const Home = ({ onVideoSelect }) => {
   const [error, setError] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [liveStreams, setLiveStreams] = useState([]);
+  const [scheduledStreams, setScheduledStreams] = useState([]);
 
   const categories = [
     "All",
@@ -23,6 +29,16 @@ const Home = ({ onVideoSelect }) => {
     "Learning",
     "Fashion"
   ];
+
+  // Fetch live + scheduled streams once on mount
+  useEffect(() => {
+    streamService.getLiveStreams().then(r => {
+      if (r.success) setLiveStreams(r.data.slice(0, 4));
+    }).catch(() => {});
+    streamService.getScheduledStreams().then(r => {
+      if (r.success) setScheduledStreams(r.data.slice(0, 3));
+    }).catch(() => {});
+  }, []);
 
   // Fetch videos from backend
   useEffect(() => {
@@ -90,6 +106,54 @@ const Home = ({ onVideoSelect }) => {
       {error && (
         <div className="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded">
           {error}
+        </div>
+      )}
+
+      {/* Live Now Strip */}
+      {liveStreams.length > 0 && (
+        <div className="mb-8">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <Radio className="w-5 h-5 text-red-500" />
+              <h2 className="text-lg font-semibold text-gray-900">Live Now</h2>
+              <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+            </div>
+            <Link to="/live" className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-800">
+              View all <ChevronRight className="w-4 h-4" />
+            </Link>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {liveStreams.map(stream => (
+              <LiveStreamCard key={stream._id} stream={stream} />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Upcoming Streams Strip */}
+      {scheduledStreams.length > 0 && (
+        <div className="mb-8">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <Calendar className="w-5 h-5 text-indigo-500" />
+              <h2 className="text-lg font-semibold text-gray-900">Upcoming Streams</h2>
+            </div>
+            <Link to="/scheduled-streams" className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-800">
+              View all <ChevronRight className="w-4 h-4" />
+            </Link>
+          </div>
+          <div className="flex gap-4 overflow-x-auto pb-2">
+            {scheduledStreams.map(s => (
+              <Link key={s._id} to="/scheduled-streams"
+                className="flex-shrink-0 w-64 bg-white border border-gray-200 rounded-xl p-4 hover:shadow-md transition-shadow">
+                <p className="font-medium text-gray-900 truncate">{s.title}</p>
+                <p className="text-sm text-gray-500 mt-1 line-clamp-2">{s.description}</p>
+                <p className="text-xs text-indigo-600 mt-2 font-medium">
+                  {new Date(s.scheduledAt).toLocaleString()}
+                </p>
+              </Link>
+            ))}
+          </div>
         </div>
       )}
 

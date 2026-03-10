@@ -6,6 +6,7 @@ import { Message } from "../models/message.model.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/Apiresponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
+import { uploadOnCloudinary } from "../utils/cloudinary.js";
 
 const RTMP_HOST = process.env.RTMP_HOST || "localhost";
 const HLS_HOST = process.env.HLS_HOST || "localhost";
@@ -21,7 +22,7 @@ const rtmpUrl = () => `rtmp://${RTMP_HOST}/live`;
 
 /* ─── Go Live ─────────────────────────────────────────────── */
 const goLive = asyncHandler(async (req, res) => {
-  const { title, description } = req.body;
+  const { title, description, category } = req.body;
   if (!title?.trim()) throw new ApiError(400, "Stream title is required");
 
   // If already live, return existing stream
@@ -37,10 +38,19 @@ const goLive = asyncHandler(async (req, res) => {
     );
   }
 
+  // Upload thumbnail if provided
+  let thumbnailUrl = "";
+  if (req.file?.path) {
+    const uploaded = await uploadOnCloudinary(req.file.path);
+    if (uploaded?.url) thumbnailUrl = uploaded.url;
+  }
+
   const streamKey = generateStreamKey(String(req.user._id));
   const stream = await Stream.create({
     title: title.trim(),
     description: description?.trim() || "",
+    category: category?.trim() || "",
+    thumbnailUrl,
     streamKey,
     streamerId: req.user._id,
     isLive: false,
@@ -122,7 +132,8 @@ const scheduleStream = asyncHandler(async (req, res) => {
 
   const date = new Date(scheduledAt);
   if (isNaN(date.getTime())) throw new ApiError(400, "Invalid date format");
-  if (date < new Date()) throw new ApiError(400, "Scheduled time must be in the future");
+  // Allow 60 s of clock skew between browser and server
+  if (date < new Date(Date.now() - 60_000)) throw new ApiError(400, "Scheduled time must be in the future");
 
   const scheduled = await ScheduledStream.create({
     title: title.trim(),

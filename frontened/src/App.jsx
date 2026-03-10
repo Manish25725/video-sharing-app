@@ -7,6 +7,10 @@ import Signup from "./pages/Signup"
 import UploadAvatar from "./pages/UploadAvatar"
 import UploadCover from "./pages/UploadCover"
 import ProfileSettings from "./pages/ProfileSettings"
+import LiveStreams from "./pages/LiveStreams"
+import LiveStream from "./pages/LiveStream"
+import GoLive from "./pages/GoLive"
+import ScheduledStreams from "./pages/ScheduledStreams"
 import Header from "./components/HeaderNew"
 import Sidebar from "./components/Sidebar"
 import Home from "./pages/Home"
@@ -131,6 +135,10 @@ function AppContent() {
             <Route path="/profile/:userId" element={<Profile onVideoSelect={handleVideoSelect} />} />
             <Route path="/profile" element={<Profile onVideoSelect={handleVideoSelect} />} />
             <Route path="/video/:videoId" element={<VideoPlayer />} />
+            <Route path="/live" element={<LiveStreams />} />
+            <Route path="/live/:streamKey" element={<LiveStream />} />
+            <Route path="/go-live" element={user ? <GoLive /> : <Navigate to="/" />} />
+            <Route path="/scheduled-streams" element={<ScheduledStreams />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="/profile-settings" element={<ProfileSettings />} />
             <Route path="/admin" element={user ? <MyChannel /> : <Navigate to="/" />} />
