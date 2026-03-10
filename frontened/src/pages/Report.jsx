@@ -1,19 +1,21 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Eye, Trash2, CheckCircle, UserX, Search, Filter, ChevronLeft,
   ChevronRight, Flag, AlertTriangle, Clock, XCircle, MoreVertical
 } from "lucide-react";
+import reportService from "../services/reportService.js";
 
 
-
-const REASONS = ["All Reasons", "Spam / Misleading", "Violence / Graphic", "Privacy Violation", "Hate Speech", "Misinformation", "Harmful Content", "Copyright", "Sexual Content", "Harassment", "Child Safety"];
-const STATUSES = ["All Status", "Pending", "Reviewed", "Removed"];
+const REASONS = ["All Reasons", "Spam or misleading", "Harassment or bullying", "Hate speech", "Violence", "Copyright violation", "Other"];
+const STATUSES = ["All Status", "Pending", "Reviewed", "Resolved"];
+const TYPES = ["All Types", "Video", "Comment"];
 const PAGE_SIZE = 8;
 
 const StatusBadge = ({ status }) => {
   const map = {
     Pending:  { cls: "bg-amber-100 text-amber-700 border-amber-200",  icon: Clock },
     Reviewed: { cls: "bg-blue-100 text-blue-700 border-blue-200",    icon: CheckCircle },
+    Resolved: { cls: "bg-green-100 text-green-700 border-green-200", icon: CheckCircle },
     Removed:  { cls: "bg-red-100 text-red-700 border-red-200",       icon: XCircle },
   };
   const { cls, icon: Icon } = map[status] || map.Pending;
@@ -26,16 +28,12 @@ const StatusBadge = ({ status }) => {
 
 const ReasonBadge = ({ reason }) => {
   const colorMap = {
-    "Spam / Misleading": "bg-orange-100 text-orange-700",
-    "Violence / Graphic": "bg-red-100 text-red-700",
-    "Privacy Violation": "bg-purple-100 text-purple-700",
-    "Hate Speech": "bg-rose-100 text-rose-700",
-    "Misinformation": "bg-yellow-100 text-yellow-700",
-    "Harmful Content": "bg-red-100 text-red-700",
-    "Copyright": "bg-indigo-100 text-indigo-700",
-    "Sexual Content": "bg-pink-100 text-pink-700",
-    "Harassment": "bg-orange-100 text-orange-700",
-    "Child Safety": "bg-rose-100 text-rose-800",
+    "Spam or misleading": "bg-orange-100 text-orange-700",
+    "Harassment or bullying": "bg-orange-100 text-orange-700",
+    "Hate speech": "bg-rose-100 text-rose-700",
+    "Violence": "bg-red-100 text-red-700",
+    "Copyright violation": "bg-indigo-100 text-indigo-700",
+    "Other": "bg-gray-100 text-gray-700",
   };
   return (
     <span className={`px-2 py-1 text-xs font-medium rounded-full ${colorMap[reason] || "bg-gray-100 text-gray-700"}`}>
@@ -46,11 +44,54 @@ const ReasonBadge = ({ reason }) => {
 
 const Report = ({ isDark = false }) => {
   const [reports, setReports] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [filterReason, setFilterReason] = useState("All Reasons");
   const [filterStatus, setFilterStatus] = useState("All Status");
+  const [filterType, setFilterType] = useState("All Types");
   const [page, setPage] = useState(1);
   const [openMenu, setOpenMenu] = useState(null);
+
+  // Map raw API report to UI shape
+  const mapReport = (r) => {
+    const reporterName = r.reportedBy?.fullName || r.reportedBy?.userName || "Unknown";
+    const isVideo = r.reportType === "video";
+    const contentTitle = isVideo
+      ? (r.videoId?.title || "Deleted video")
+      : ("Comment: " + (r.commentId?.content?.substring(0, 60) || "Deleted comment") + (r.commentId?.content?.length > 60 ? "…" : ""));
+    const thumbnail = isVideo ? r.videoId?.thumbnail : null;
+    const capitalizeFirst = (s) => s ? s.charAt(0).toUpperCase() + s.slice(1) : "Pending";
+    return {
+      id: r._id,
+      videoTitle: contentTitle,
+      thumbnail,
+      reportedBy: reporterName,
+      reportedByAvatar: reporterName.charAt(0).toUpperCase(),
+      reason: r.reason,
+      date: r.createdAt,
+      status: capitalizeFirst(r.status),
+      reportType: r.reportType,
+      description: r.description,
+    };
+  };
+
+  const fetchReports = async () => {
+    setLoading(true);
+    try {
+      const res = await reportService.getReports({ limit: 200 });
+      const data = res?.data?.reports || res?.data || [];
+      setReports(Array.isArray(data) ? data.map(mapReport) : []);
+    } catch (err) {
+      console.error("Failed to fetch reports:", err);
+      setReports([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchReports();
+  }, []);
 
   const dm = isDark;
   const cardBg = dm ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200";
@@ -70,23 +111,43 @@ const Report = ({ isDark = false }) => {
       r.reportedBy.toLowerCase().includes(search.toLowerCase());
     const matchReason = filterReason === "All Reasons" || r.reason === filterReason;
     const matchStatus = filterStatus === "All Status" || r.status === filterStatus;
-    return matchSearch && matchReason && matchStatus;
+    const matchType = filterType === "All Types" || r.reportType === filterType.toLowerCase();
+    return matchSearch && matchReason && matchStatus && matchType;
   });
 
   const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
   const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
-  const updateStatus = (id, status) => {
+  const updateStatus = async (id, status) => {
+    const apiStatus = status.toLowerCase();
+    // Optimistic update
     setReports((prev) => prev.map((r) => (r.id === id ? { ...r, status } : r)));
     setOpenMenu(null);
+    try {
+      await reportService.updateStatus(id, apiStatus);
+    } catch (err) {
+      console.error("Failed to update report status:", err);
+      // Revert on failure
+      fetchReports();
+    }
   };
-  const removeReport = (id) => {
-    updateStatus(id, "Removed");
+
+  const removeReport = async (id) => {
+    if (!window.confirm("This will permanently delete the reported content. Are you sure?")) return;
+    // Optimistic update
+    setReports((prev) => prev.map((r) => (r.id === id ? { ...r, status: "Resolved" } : r)));
+    setOpenMenu(null);
+    try {
+      await reportService.deleteContent(id);
+    } catch (err) {
+      console.error("Failed to delete content:", err);
+      fetchReports();
+    }
   };
 
   const pendingCount = reports.filter((r) => r.status === "Pending").length;
   const reviewedCount = reports.filter((r) => r.status === "Reviewed").length;
-  const removedCount = reports.filter((r) => r.status === "Removed").length;
+  const resolvedCount = reports.filter((r) => r.status === "Resolved").length;
 
   return (
     <div className="space-y-6">

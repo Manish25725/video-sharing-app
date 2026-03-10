@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
-import { ThumbsUp, ThumbsDown, MessageCircle, ChevronDown, ChevronUp } from 'lucide-react';
+import { ThumbsUp, ThumbsDown, MessageCircle, ChevronDown, ChevronUp, Flag } from 'lucide-react';
 import { formatTimeAgo } from '../utils/formatters';
 import { commentService } from '../services/commentService';
+import ReportModal from './ReportModal';
+import Toast from './Toast';
 
 import { useEffect } from 'react';
 
@@ -17,6 +19,8 @@ const CommentComponent = ({
   const [showReplies, setShowReplies] = useState(false);
   const [showReplyForm, setShowReplyForm] = useState(false);
   const [replyContent, setReplyContent] = useState('');
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [reportToast, setReportToast] = useState(null);
   const [repliesLoading, setRepliesLoading] = useState(false);
   const [replies, setReplies] = useState(comment.replies || []);
   const [loadingReplies, setLoadingReplies] = useState(false);
@@ -244,6 +248,17 @@ const CommentComponent = ({
                 {showReplyForm ? 'Cancel' : 'Reply'}
               </button>
             )}
+
+            {/* Report Button */}
+            {user && (
+              <button
+                title="Report comment"
+                onClick={() => setShowReportModal(true)}
+                className="hover:text-red-600 transition-colors"
+              >
+                <Flag className="w-3 h-3" />
+              </button>
+            )}
           </div>
 
           {/* Reply Form */}
@@ -326,6 +341,26 @@ const CommentComponent = ({
           )}
         </div>
       </div>
+
+      {/* Report Comment Modal */}
+      {showReportModal && (
+        <ReportModal
+          isOpen={showReportModal}
+          onClose={() => setShowReportModal(false)}
+          targetType="comment"
+          targetId={comment.id || comment._id}
+          onSuccess={() => setReportToast("Report submitted. Thank you for helping keep our platform safe.")}
+        />
+      )}
+
+      {/* Report Toast */}
+      {reportToast && (
+        <Toast
+          message={reportToast}
+          type="success"
+          onClose={() => setReportToast(null)}
+        />
+      )}
     </div>
   );
 };

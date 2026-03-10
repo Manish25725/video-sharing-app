@@ -38,6 +38,8 @@ import { useAuth } from "../contexts/AuthContext";
 import { formatDate, formatTimeAgo } from "../utils/formatters";
 import AddToPlaylistModal from '../components/AddToPlaylistModal';
 import CommentComponent from '../components/CommentComponent';
+import ReportModal from '../components/ReportModal';
+import Toast from '../components/Toast';
 import '../styles/VideoPlayer.css';
 
 /* ─── Chat Replay Panel (for live stream recordings) ────────── */
@@ -148,6 +150,8 @@ const VideoPlayer = () => {
   const [chatReplay, setChatReplay] = useState([])
   const [chatReplayLoading, setChatReplayLoading] = useState(false)
   const [currentVideoTime, setCurrentVideoTime] = useState(0)
+  const [showReportModal, setShowReportModal] = useState(false)
+  const [reportToast, setReportToast] = useState(null)
   
   useEffect(() => {
     if (videoId) {
@@ -426,10 +430,8 @@ const VideoPlayer = () => {
 
   // Handle report video
   const handleReportVideo = () => {
-    if (window.confirm('Are you sure you want to report this video?')) {
-      alert('Report submitted. Thank you for helping keep our platform safe.')
-      setShowMoreMenu(false)
-    }
+    setShowReportModal(true)
+    setShowMoreMenu(false)
   }
 
   // Handle comment like/dislike
@@ -1184,6 +1186,24 @@ const VideoPlayer = () => {
         videoId={videoId}
         videoTitle={video?.title}
       />
+
+      {/* Report Video Modal */}
+      <ReportModal
+        isOpen={showReportModal}
+        onClose={() => setShowReportModal(false)}
+        targetType="video"
+        targetId={videoId}
+        onSuccess={() => setReportToast("Report submitted. Thank you for helping keep our platform safe.")}
+      />
+
+      {/* Report Toast */}
+      {reportToast && (
+        <Toast
+          message={reportToast}
+          type="success"
+          onClose={() => setReportToast(null)}
+        />
+      )}
     </div>
   )
 }
