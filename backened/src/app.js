@@ -39,8 +39,7 @@ import dashboardRouter from "./routes/dashboard.route.js"
 import notificationRouter from "./routes/notification.route.js"
 import dislikeRouter from "./routes/dislike.route.js"
 import healthRouter from "./routes/health.route.js"
-import streamRouter from './routes/stream.route.js'
-
+import streamRouter from './routes/stream.route.js'import reportRouter from './routes/report.route.js'
 //routes declaration
 
 app.use("/api/v1/users",userRouter);
@@ -55,6 +54,7 @@ app.use("/api/v1/notifications",notificationRouter)
 app.use("/api/v1/dislike",dislikeRouter)
 app.use("/api/v1/health",healthRouter)
 app.use("/api/v1/streams",streamRouter)
+app.use("/api/v1/reports",reportRouter)
 
 // Global error handler - must be last middleware
 // Serializes ApiError (and any other error) as JSON
