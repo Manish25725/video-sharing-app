@@ -10,7 +10,7 @@ import {
 } from "lucide-react";
 
 /* ─── HLS Video Player ─────────────────────────────────────── */
-const HlsPlayer = ({ url }) => {
+const HlsPlayer = ({ url, isLive }) => {
   const videoRef = useRef(null);
   const hlsRef = useRef(null);
   const [playerError, setPlayerError] = useState("");
@@ -28,6 +28,9 @@ const HlsPlayer = ({ url }) => {
         enableWorker: true,
         lowLatencyMode: true,
         backBufferLength: 30,
+        manifestLoadingTimeOut: 10000,
+        manifestLoadingMaxRetry: 10,
+        manifestLoadingRetryDelay: 3000,
       });
       hlsRef.current = hls;
 
@@ -35,6 +38,7 @@ const HlsPlayer = ({ url }) => {
       hls.attachMedia(video);
 
       hls.on(Hls.Events.MANIFEST_PARSED, () => {
+        setPlayerError("");
         setBuffering(false);
         video.play().catch(() => {});
       });
@@ -43,7 +47,9 @@ const HlsPlayer = ({ url }) => {
         if (data.fatal) {
           if (data.type === Hls.ErrorTypes.NETWORK_ERROR) {
             setPlayerError("Stream is not live yet. Waiting for OBS connection…");
-            setTimeout(() => hls.startLoad(), 5000);
+            setTimeout(() => {
+              if (hlsRef.current) hlsRef.current.loadSource(url);
+            }, 5000);
           } else {
             setPlayerError("Playback error. Please refresh.");
           }
@@ -114,7 +120,7 @@ const LiveStream = () => {
     setFetchError("");
     streamService.getStreamByKey(streamKey)
       .then(({ data }) => {
-        const { stream, hlsUrl: url } = data.data;
+        const { stream, hlsUrl: url } = data;
         setStreamInfo(stream);
         setHlsUrl(url || getHlsUrl(streamKey));
         setIsLive(stream.isLive);
@@ -125,37 +131,60 @@ const LiveStream = () => {
 
     // Load last 100 messages
     streamService.getStreamMessages(streamKey)
-      .then(({ data }) => setChatMessages(data.data || []))
+      .then(({ data }) => setChatMessages(data || []))
       .catch(() => {});
   }, [streamKey]);
 
   // Join socket room and listen for events
   useEffect(() => {
     if (!streamKey) return;
+
+    const joinAndListen = (socket) => {
+      socket.emit("join-stream", {
+        streamKey,
+        userId: user?._id,
+        username: user?.fullName || user?.userName || "Viewer",
+      });
+
+      const onViewerCount = ({ count }) => setViewerCount(count);
+      const onStreamStarted = () => setIsLive(true);
+      const onStreamEnded = () => setIsLive(false);
+
+      socket.on("viewer-count", onViewerCount);
+      socket.on("stream-started", onStreamStarted);
+      socket.on("stream-ended", onStreamEnded);
+
+      return () => {
+        socket.emit("leave-stream", { streamKey });
+        socket.off("viewer-count", onViewerCount);
+        socket.off("stream-started", onStreamStarted);
+        socket.off("stream-ended", onStreamEnded);
+      };
+    };
+
     const socket = socketService.socket;
     if (!socket) return;
 
-    socket.emit("join-stream", {
-      streamKey,
-      userId: user?._id,
-      username: user?.fullName || user?.userName || "Viewer",
-    });
-
-    const onViewerCount = ({ count }) => setViewerCount(count);
-    const onStreamStarted = () => setIsLive(true);
-    const onStreamEnded = () => setIsLive(false);
-
-    socket.on("viewer-count", onViewerCount);
-    socket.on("stream-started", onStreamStarted);
-    socket.on("stream-ended", onStreamEnded);
-
-    return () => {
-      socket.emit("leave-stream", { streamKey });
-      socket.off("viewer-count", onViewerCount);
-      socket.off("stream-started", onStreamStarted);
-      socket.off("stream-ended", onStreamEnded);
-    };
+    // If already connected, join immediately; otherwise wait for connect
+    if (socketService.isConnected) {
+      return joinAndListen(socket);
+    } else {
+      let cleanup = () => {};
+      socket.once("connect", () => { cleanup = joinAndListen(socket); });
+      return () => cleanup();
+    }
   }, [streamKey, user]);
+
+  // Poll backend every 5 s while offline to detect when OBS goes live
+  useEffect(() => {
+    if (isLive) return;
+    const poll = setInterval(() => {
+      streamService.getStreamByKey(streamKey)
+        .then(({ data }) => { if (data?.stream?.isLive) setIsLive(true); })
+        .catch(() => {});
+    }, 5000);
+    return () => clearInterval(poll);
+  }, [streamKey, isLive]);
 
   if (loading) {
     return (
@@ -204,7 +233,8 @@ const LiveStream = () => {
       <div className="flex flex-col lg:flex-row h-[calc(100vh-48px)]">
         {/* Left: video + info */}
         <div className="flex-1 flex flex-col min-w-0 overflow-y-auto">
-          <HlsPlayer url={hlsUrl} />
+          {/* Video player — remount when stream goes live so hls.js retries cleanly */}
+          <HlsPlayer key={`${hlsUrl}-${isLive}`} url={hlsUrl} isLive={isLive} />
 
           {/* Stream info */}
           <div className="p-4 md:p-6 bg-gray-900 border-b border-gray-800">

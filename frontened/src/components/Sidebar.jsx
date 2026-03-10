@@ -1,4 +1,5 @@
 import {
+  Home,
   TrendingUp,
   Music,
   Film,
@@ -25,6 +26,7 @@ const Sidebar = ({ isOpen }) => {
   const { user } = useAuth();
 
   const menuItems = [
+    { icon: Home,       label: "Home",      path: "/" },
     { icon: TrendingUp, label: "Trending",  path: "/trending" },
     { icon: Music,      label: "Music",     path: "/music" },
     { icon: Film,       label: "Movies",    path: "/movies" },

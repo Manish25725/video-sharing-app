@@ -106,7 +106,7 @@ const ScheduleForm = ({ onScheduled, onClose }) => {
         description: form.description.trim(),
         scheduledAt: new Date(form.scheduledAt).toISOString(),
       });
-      onScheduled(data.data);
+      onScheduled(data);
       onClose();
     } catch (err) {
       // API client throws Error with .message (not .response), so read directly
@@ -170,7 +170,7 @@ const ScheduledStreams = () => {
 
   useEffect(() => {
     streamService.getScheduledStreams()
-      .then(({ data }) => setStreams(data.data || []))
+      .then(({ data }) => setStreams(data || []))
       .catch(() => {})
       .finally(() => setLoading(false));
   }, []);

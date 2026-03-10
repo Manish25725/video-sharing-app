@@ -10,7 +10,8 @@ import { uploadOnCloudinary } from "../utils/cloudinary.js";
 
 const RTMP_HOST = process.env.RTMP_HOST || "localhost";
 const HLS_HOST = process.env.HLS_HOST || "localhost";
-const HLS_PORT = process.env.HLS_PORT || 8001;
+// HLS is now served by the Express API server, not NMS
+const HLS_PORT = process.env.PORT || 8000;
 
 const generateStreamKey = (userId) => {
   const random = crypto.randomBytes(8).toString("hex");

@@ -1,6 +1,7 @@
 import api from "./api.js";
 
-const NMS_HTTP_URL = import.meta.env.VITE_NMS_HTTP_URL || "http://localhost:8001";
+// HLS is served by the Express API server (port 8000) which has CORS configured
+const NMS_HTTP_URL = import.meta.env.VITE_NMS_HTTP_URL || "http://localhost:8000";
 
 export const getHlsUrl = (streamKey) =>
   `${NMS_HTTP_URL}/live/${streamKey}/index.m3u8`;

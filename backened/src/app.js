@@ -1,6 +1,11 @@
 import express from 'express'
 import cors from "cors"
 import cookieParser from 'cookie-parser';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app=express();
 
@@ -13,6 +18,12 @@ app.use(express.json({limit:"16kb"}));
 app.use(express.urlencoded({extended:true,limit:"16kb"}));
 app.use(express.static("public"));
 app.use(cookieParser());
+
+// Serve HLS segments through Express so CORS headers are applied
+app.use("/live", (req, res, next) => {
+    res.setHeader("Access-Control-Allow-Origin", "*");
+    next();
+}, express.static(path.join(__dirname, "../public/media/live")));
 
 
 

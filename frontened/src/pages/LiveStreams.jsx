@@ -14,7 +14,7 @@ const LiveStreams = () => {
     else setRefreshing(true);
     try {
       const { data } = await streamService.getLiveStreams();
-      setStreams(data.data || []);
+      setStreams(data || []);
     } catch {
       setStreams([]);
     } finally {

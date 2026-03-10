@@ -67,7 +67,7 @@ const GoLive = () => {
   useEffect(() => {
     streamService.getMyStream()
       .then(({ data }) => {
-        const { stream, rtmpUrl, hlsUrl, streamKey } = data?.data || {};
+        const { stream, rtmpUrl, hlsUrl, streamKey } = data || {};
         if (stream) {
           setStreamData({ stream, rtmpUrl, hlsUrl, streamKey });
           setTitle(stream.title);
@@ -90,7 +90,7 @@ const GoLive = () => {
       if (category) formData.append("category", category);
       if (thumbnail) formData.append("thumbnail", thumbnail);
       const { data } = await streamService.goLive(formData);
-      setStreamData(data.data);
+      setStreamData(data);
       setStep("live");
     } catch (err) {
       setError(err?.message || "Failed to create stream");
