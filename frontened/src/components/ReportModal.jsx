@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import { X, Flag, AlertTriangle, ChevronDown } from "lucide-react";
 import reportService from "../services/reportService.js";
 
@@ -80,17 +81,18 @@ const ReportModal = ({ isOpen, onClose, onSuccess, targetType = "video", targetI
 
   const label = targetType === "video" ? "video" : "comment";
 
-  return (
+  const modal = (
     <div
       ref={overlayRef}
       onClick={handleOverlayClick}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
+      className="fixed inset-0 flex items-center justify-center bg-black/60 p-4"
+      style={{ zIndex: 9999 }}
       aria-modal="true"
       role="dialog"
       aria-labelledby="report-modal-title"
     >
       {/* Modal panel */}
-      <div className="w-full max-w-md bg-white rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+      <div className="w-full max-w-md bg-white rounded-2xl shadow-2xl overflow-hidden">
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
           <div className="flex items-center gap-2.5">
@@ -189,6 +191,8 @@ const ReportModal = ({ isOpen, onClose, onSuccess, targetType = "video", targetI
       </div>
     </div>
   );
+
+  return createPortal(modal, document.body);
 };
 
 export default ReportModal;

@@ -39,7 +39,8 @@ import dashboardRouter from "./routes/dashboard.route.js"
 import notificationRouter from "./routes/notification.route.js"
 import dislikeRouter from "./routes/dislike.route.js"
 import healthRouter from "./routes/health.route.js"
-import streamRouter from './routes/stream.route.js'import reportRouter from './routes/report.route.js'
+import streamRouter from './routes/stream.route.js'
+import reportRouter from './routes/report.route.js'
 //routes declaration
 
 app.use("/api/v1/users",userRouter);

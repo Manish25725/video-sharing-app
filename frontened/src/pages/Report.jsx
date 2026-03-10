@@ -162,7 +162,7 @@ const Report = ({ isDark = false }) => {
         {[
           { label: "Pending", count: pendingCount, cls: "from-amber-500 to-orange-500", icon: Clock },
           { label: "Reviewed", count: reviewedCount, cls: "from-blue-500 to-indigo-500", icon: CheckCircle },
-          { label: "Removed", count: removedCount, cls: "from-red-500 to-rose-600", icon: XCircle },
+          { label: "Resolved", count: resolvedCount, cls: "from-green-500 to-emerald-600", icon: XCircle },
         ].map(({ label, count, cls, icon: Icon }) => (
           <div key={label} className={`${cardBg} border rounded-2xl p-5 shadow-sm`}>
             <div className="flex items-center justify-between">
@@ -194,6 +194,13 @@ const Report = ({ isDark = false }) => {
           <div className="flex items-center gap-2">
             <Filter className={`w-4 h-4 ${textSecondary} flex-shrink-0`} />
             <select
+              value={filterType}
+              onChange={(e) => { setFilterType(e.target.value); setPage(1); }}
+              className={`border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 ${inputCls}`}
+            >
+              {TYPES.map((t) => <option key={t}>{t}</option>)}
+            </select>
+            <select
               value={filterReason}
               onChange={(e) => { setFilterReason(e.target.value); setPage(1); }}
               className={`border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 ${inputCls}`}
@@ -217,7 +224,7 @@ const Report = ({ isDark = false }) => {
           <table className="w-full min-w-[900px]">
             <thead>
               <tr className={`border-b ${thCls} border-gray-200`}>
-                {["Video", "Report Reason", "Reported By", "Date", "Status", "Actions"].map((h) => (
+                {["Content", "Report Reason", "Reported By", "Date", "Status", "Actions"].map((h) => (
                   <th key={h} className={`text-left px-5 py-3.5 text-xs font-semibold uppercase tracking-wider ${thCls}`}>
                     {h}
                   </th>
@@ -225,7 +232,14 @@ const Report = ({ isDark = false }) => {
               </tr>
             </thead>
             <tbody className={`divide-y ${divider}`}>
-              {paginated.length === 0 ? (
+              {loading ? (
+                <tr>
+                  <td colSpan={6} className={`px-6 py-14 text-center ${textSecondary}`}>
+                    <div className="w-8 h-8 border-2 border-indigo-500/30 border-t-indigo-500 rounded-full animate-spin mx-auto mb-3" />
+                    <p className="font-medium">Loading reports…</p>
+                  </td>
+                </tr>
+              ) : paginated.length === 0 ? (
                 <tr>
                   <td colSpan={6} className={`px-6 py-14 text-center ${textSecondary}`}>
                     <Flag className="w-10 h-10 mx-auto mb-3 opacity-30" />
@@ -236,20 +250,28 @@ const Report = ({ isDark = false }) => {
               ) : (
                 paginated.map((report) => (
                   <tr key={report.id} className={`${rowHover} transition-colors`}>
-                    {/* Video */}
+                    {/* Content (video or comment) */}
                     <td className="px-5 py-4">
                       <div className="flex items-center gap-3">
                         <div className="relative flex-shrink-0">
-                          <img
-                            src={report.thumbnail}
-                            alt={report.videoTitle}
-                            className="w-16 h-9 object-cover rounded-lg"
-                          />
-                          <div className="absolute inset-0 flex items-center justify-center bg-black/20 rounded-lg opacity-0 hover:opacity-100 transition-opacity cursor-pointer">
-                            <div className="w-5 h-5 bg-white/90 rounded-full flex items-center justify-center">
-                              <div className="w-0 h-0 border-l-[6px] border-l-gray-800 border-y-[4px] border-y-transparent ml-0.5" />
+                          {report.thumbnail ? (
+                            <>
+                              <img
+                                src={report.thumbnail}
+                                alt={report.videoTitle}
+                                className="w-16 h-9 object-cover rounded-lg"
+                              />
+                              <div className="absolute inset-0 flex items-center justify-center bg-black/20 rounded-lg opacity-0 hover:opacity-100 transition-opacity cursor-pointer">
+                                <div className="w-5 h-5 bg-white/90 rounded-full flex items-center justify-center">
+                                  <div className="w-0 h-0 border-l-[6px] border-l-gray-800 border-y-[4px] border-y-transparent ml-0.5" />
+                                </div>
+                              </div>
+                            </>
+                          ) : (
+                            <div className="w-16 h-9 bg-gray-100 rounded-lg flex items-center justify-center">
+                              <Flag className="w-4 h-4 text-gray-400" />
                             </div>
-                          </div>
+                          )}
                         </div>
                         <span className={`text-sm font-medium ${textPrimary} max-w-[180px] line-clamp-2`}>
                           {report.videoTitle}
