@@ -20,6 +20,10 @@ const streamService = {
   // Chat history
   getStreamMessages: (streamKey) => api.get(`/streams/${streamKey}/messages`),
 
+  // VOD: save a stream recording as a video + fetch chat replay with timestamps
+  saveRecording: (streamKey) => api.post(`/streams/${streamKey}/save-recording`),
+  getChatReplay: (streamKey) => api.get(`/streams/${streamKey}/chat-replay`),
+
   // Scheduling
   scheduleStream: (data) => api.post("/streams/schedule", data),
   getScheduledStreams: () => api.get("/streams/scheduled"),

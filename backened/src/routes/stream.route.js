@@ -13,6 +13,8 @@ import {
   cancelScheduledStream,
   getStreamMessages,
   getRecordedStreams,
+  saveStreamAsVideo,
+  getChatReplay,
 } from "../controllers/stream.controller.js";
 
 const router = Router();
@@ -32,5 +34,7 @@ router.route("/schedule/:id/cancel").patch(verifyJWT, cancelScheduledStream);
 router.route("/:streamKey").get(optionalAuth, getStreamByKey);
 router.route("/:streamKey/end").patch(verifyJWT, endStream);
 router.route("/:streamKey/messages").get(getStreamMessages);
+router.route("/:streamKey/save-recording").post(verifyJWT, saveStreamAsVideo);
+router.route("/:streamKey/chat-replay").get(getChatReplay);
 
 export default router;
