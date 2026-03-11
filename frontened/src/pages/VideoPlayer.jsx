@@ -22,7 +22,8 @@ import {
   Bookmark,
   Clock,
   Flag,
-  Plus
+  Plus,
+  Captions
 } from 'lucide-react';
 import { videoService } from '../services/videoService';
 import { likeService } from '../services/likeService';
@@ -152,6 +153,7 @@ const VideoPlayer = () => {
   const [currentVideoTime, setCurrentVideoTime] = useState(0)
   const [showReportModal, setShowReportModal] = useState(false)
   const [reportToast, setReportToast] = useState(null)
+  const [subtitlesOn, setSubtitlesOn] = useState(false)
   
   useEffect(() => {
     if (videoId) {
@@ -200,6 +202,29 @@ const VideoPlayer = () => {
     videoEl.addEventListener('timeupdate', onTimeUpdate);
     return () => videoEl.removeEventListener('timeupdate', onTimeUpdate);
   }, [video]);
+
+  // Imperatively enable/disable subtitles based on user's playback preference
+  useEffect(() => {
+    const videoEl = videoRef.current;
+    if (!videoEl || !video?.subtitles?.length) return;
+
+    const applySubtitlePreference = () => {
+      const shouldShow = user?.playback?.subtitles === true;
+      const tracks = Array.from(videoEl.textTracks);
+      tracks.forEach((t, i) => {
+        t.mode = shouldShow && i === 0 ? 'showing' : 'hidden';
+      });
+      setSubtitlesOn(shouldShow);
+    };
+
+    // Apply immediately if metadata already loaded, otherwise wait for it
+    if (videoEl.readyState >= 1) {
+      applySubtitlePreference();
+    } else {
+      videoEl.addEventListener('loadedmetadata', applySubtitlePreference);
+      return () => videoEl.removeEventListener('loadedmetadata', applySubtitlePreference);
+    }
+  }, [video, user]);
 
   const fetchVideoData = async () => {
     try {
@@ -352,6 +377,16 @@ const VideoPlayer = () => {
   const handleMoreOptions = () => {
     setShowMoreMenu(!showMoreMenu)
   }
+
+  const toggleSubtitles = () => {
+    const videoEl = videoRef.current;
+    if (!videoEl) return;
+    const tracks = Array.from(videoEl.textTracks);
+    if (tracks.length === 0) return;
+    const next = !subtitlesOn;
+    tracks.forEach(t => { t.mode = next ? 'showing' : 'hidden'; });
+    setSubtitlesOn(next);
+  };
 
   // Handle download video
   const handleDownloadVideo = async () => {
@@ -787,7 +822,6 @@ const VideoPlayer = () => {
                   <source src={video.videoFile} type="video/mp4" />
                   <source src={video.videoFile} type="video/webm" />
                   <source src={video.videoFile} type="video/ogg" />
-                  {/* Subtitle / caption tracks */}
                   {Array.isArray(video.subtitles) && video.subtitles.map((track, i) => (
                     <track
                       key={track.language + i}
@@ -795,8 +829,6 @@ const VideoPlayer = () => {
                       label={track.label}
                       srcLang={track.language}
                       src={track.url}
-                      // Auto-enable the first track if the user has "subtitles by default" on
-                      default={i === 0 && user?.playback?.subtitles === true}
                     />
                   ))}
                   Your browser does not support the video tag.
@@ -861,6 +893,22 @@ const VideoPlayer = () => {
                     </div>
                   </button>
                 </div>
+
+                {/* CC / Subtitles Button — always visible in action bar */}
+                {Array.isArray(video.subtitles) && video.subtitles.length > 0 && (
+                  <button
+                    onClick={toggleSubtitles}
+                    className={`flex items-center space-x-2 px-4 py-2 rounded-full transition-colors yt-button ${
+                      subtitlesOn
+                        ? 'bg-gray-900 text-white hover:bg-gray-700'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                    title={subtitlesOn ? 'Turn off subtitles' : 'Turn on subtitles'}
+                  >
+                    <Captions className="w-5 h-5" />
+                    <span className="font-medium">CC</span>
+                  </button>
+                )}
 
                 {/* Share Button */}
                 <button 

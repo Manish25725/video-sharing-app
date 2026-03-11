@@ -32,6 +32,9 @@ export async function autoGenerateSubtitle(videoUrl, language = "en") {
         );
     }
 
+    // Instantiate lazily so dotenv has already loaded the env vars
+    const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
+
     const tmpDir   = path.resolve("./public/temp");
     const tmpVideo = path.join(tmpDir, `sub_input_${Date.now()}.mp4`);
     const tmpVtt   = path.join(tmpDir, `sub_output_${Date.now()}.vtt`);
