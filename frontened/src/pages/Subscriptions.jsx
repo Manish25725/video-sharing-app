@@ -11,6 +11,7 @@ const Subscriptions = ({ onVideoSelect }) => {
   const [subscriptionVideos, setSubscriptionVideos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [togglingNotif, setTogglingNotif] = useState(null); // channelId being toggled
 
   // Fetch subscribed channels when component mounts
   useEffect(() => {
@@ -33,7 +34,7 @@ const Subscriptions = ({ onVideoSelect }) => {
             name: channel.fullName || channel.userName,
             avatar: channel.avatar,
             subscribers: channel.subscribersCount || 0,
-            isNotificationOn: true // Default to true, can be made dynamic later
+            isNotificationOn: channel.notificationsEnabled !== false, // from subscription doc
           }));
           
           setSubscribedChannels(transformedChannels);
@@ -141,13 +142,34 @@ const Subscriptions = ({ onVideoSelect }) => {
                         alt={channel.name}
                         className="w-16 h-16 rounded-full object-cover border-2 border-red-500"
                       />
-                      <button className="absolute -top-1 -right-1 bg-white rounded-full p-1 shadow-md">
-                        {channel.isNotificationOn ? (
-                          <Bell className="w-3 h-3 text-gray-600" />
-                        ) : (
-                          <BellOff className="w-3 h-3 text-gray-400" />
-                        )}
-                      </button>
+                      <button
+                          className="absolute -top-1 -right-1 bg-white rounded-full p-1 shadow-md hover:scale-110 transition-transform disabled:opacity-50"
+                          title={channel.isNotificationOn ? "Turn off notifications" : "Turn on notifications"}
+                          disabled={togglingNotif === channel.id}
+                          onClick={async () => {
+                            setTogglingNotif(channel.id);
+                            try {
+                              const res = await subscriptionService.toggleNotification(channel.id);
+                              if (res?.data?.notificationsEnabled !== undefined) {
+                                setSubscribedChannels(prev =>
+                                  prev.map(c =>
+                                    c.id === channel.id
+                                      ? { ...c, isNotificationOn: res.data.notificationsEnabled }
+                                      : c
+                                  )
+                                );
+                              }
+                            } finally {
+                              setTogglingNotif(null);
+                            }
+                          }}
+                        >
+                          {channel.isNotificationOn ? (
+                            <Bell className="w-3 h-3 text-red-500" />
+                          ) : (
+                            <BellOff className="w-3 h-3 text-gray-400" />
+                          )}
+                        </button>
                     </div>
                     <p className="text-sm font-medium text-gray-900 mt-2 text-center max-w-20 truncate">
                       {channel.name}

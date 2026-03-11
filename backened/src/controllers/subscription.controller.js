@@ -163,7 +163,7 @@ const getSubscribedChannels = asyncHandler(async (req, res) => {
                 from:"users",
                 localField:"channel",
                 foreignField:"_id",
-                as:"subscribedtoWhichChannel",
+                as:"channelInfo",
                 pipeline:[
                     {
                         $lookup:{
@@ -190,10 +190,25 @@ const getSubscribedChannels = asyncHandler(async (req, res) => {
                     }
                 ]
             }
+        },
+        {
+            $addFields:{
+                channelData: { $arrayElemAt: ["$channelInfo", 0] }
+            }
+        },
+        {
+            $replaceRoot:{
+                newRoot:{
+                    $mergeObjects:[
+                        "$channelData",
+                        { notificationsEnabled: "$notificationsEnabled" }
+                    ]
+                }
+            }
         }
     ])
 
-    const asd=channelSubs.flatMap(ele=>ele.subscribedtoWhichChannel || [])
+    const asd = channelSubs
     const m=asd.length!==0? "List of Channel  User has Subscribed": "No channel exist"
 
     return res
@@ -230,4 +245,32 @@ const checkSubscriptionStatus = asyncHandler(async (req, res) => {
 })
 
 
-export {toggleSubscription,getUserChannelSubscribers,getSubscribedChannels,checkSubscriptionStatus}
+// Toggle per-channel notification preference
+const toggleNotification = asyncHandler(async (req, res) => {
+    const { channelId } = req.params;
+
+    if (!req.user) {
+        throw new ApiError(401, "User must be logged in");
+    }
+    if (!mongoose.Types.ObjectId.isValid(channelId)) {
+        throw new ApiError(400, "Invalid channelId");
+    }
+
+    const subscription = await Subscription.findOne({
+        subscriber: req.user._id,
+        channel: channelId
+    });
+
+    if (!subscription) {
+        throw new ApiError(404, "Subscription not found");
+    }
+
+    subscription.notificationsEnabled = !subscription.notificationsEnabled;
+    await subscription.save();
+
+    return res.status(200).json(
+        new ApiResponse(200, { notificationsEnabled: subscription.notificationsEnabled }, "Notification preference updated")
+    );
+});
+
+export {toggleSubscription,getUserChannelSubscribers,getSubscribedChannels,checkSubscriptionStatus,toggleNotification}

@@ -5,7 +5,7 @@ import streamService from "../services/streamService.js";
 import {
   Radio, Copy, CheckCircle, Eye, EyeOff, Wifi, AlertTriangle,
   Play, Square, BookOpen, ChevronDown, ChevronUp, ExternalLink,
-  ImagePlus, X, Video,
+  ImagePlus, X, Video, Calendar,
 } from "lucide-react";
 
 const CopyField = ({ label, value, mono = false }) => {
@@ -67,6 +67,16 @@ const GoLive = () => {
   const [endedStreamKey, setEndedStreamKey] = useState(null);
   const [saving, setSaving] = useState(false);
   const [savedVideoId, setSavedVideoId] = useState(null);
+
+  // Schedule mode
+  const [mode, setMode] = useState("live"); // "live" | "schedule"
+  const [sched, setSched] = useState({ title: "", description: "", scheduledAt: "" });
+  const [schedThumb, setSchedThumb] = useState(null);
+  const [schedThumbPreview, setSchedThumbPreview] = useState("");
+  const schedThumbRef = useRef(null);
+  const [schedLoading, setSchedLoading] = useState(false);
+  const [schedError, setSchedError] = useState("");
+  const [schedSuccess, setSchedSuccess] = useState(null);
 
   // Re-hydrate only if OBS is actively connected (isLive: true).
   // Never auto-restore a stale stream where the key was generated but OBS never connected.
@@ -151,6 +161,50 @@ const GoLive = () => {
     }
   };
 
+  const handleSchedThumb = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (schedThumbPreview) URL.revokeObjectURL(schedThumbPreview);
+    setSchedThumb(file);
+    setSchedThumbPreview(URL.createObjectURL(file));
+  };
+
+  const clearSchedThumb = () => {
+    if (schedThumbPreview) URL.revokeObjectURL(schedThumbPreview);
+    setSchedThumb(null);
+    setSchedThumbPreview("");
+    if (schedThumbRef.current) schedThumbRef.current.value = "";
+  };
+
+  const handleSchedule = async (e) => {
+    e.preventDefault();
+    if (!sched.title.trim() || !sched.scheduledAt) {
+      setSchedError("Title and scheduled time are required");
+      return;
+    }
+    setSchedLoading(true);
+    setSchedError("");
+    try {
+      const fd = new FormData();
+      fd.append("title", sched.title.trim());
+      fd.append("description", sched.description.trim());
+      fd.append("scheduledAt", new Date(sched.scheduledAt).toISOString());
+      if (schedThumb) fd.append("thumbnail", schedThumb);
+      const { data } = await streamService.scheduleStream(fd);
+      setSchedSuccess(data);
+    } catch (err) {
+      setSchedError(err?.message || "Failed to schedule stream");
+    } finally {
+      setSchedLoading(false);
+    }
+  };
+
+  const getMinDatetime = () => {
+    const dt = new Date(Date.now() + 5 * 60_000);
+    const pad = (n) => String(n).padStart(2, "0");
+    return `${dt.getFullYear()}-${pad(dt.getMonth() + 1)}-${pad(dt.getDate())}T${pad(dt.getHours())}:${pad(dt.getMinutes())}`;
+  };
+
   const obsSteps = [
     "Open OBS Studio → Settings → Stream",
     'Set "Service" to Custom',
@@ -174,7 +228,29 @@ const GoLive = () => {
           {streamData && <div className="ml-auto"><StatusBadge isLive={streamData.stream?.isLive} /></div>}
         </div>
 
-        {error && (
+        {/* Mode tabs — only shown when not actively streaming */}
+        {step !== "live" && step !== "ended" && (
+          <div className="flex gap-2 mb-6">
+            <button
+              onClick={() => setMode("live")}
+              className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold transition-all ${
+                mode === "live" ? "bg-red-500 text-white shadow-sm" : "bg-white border border-gray-200 text-gray-500 hover:bg-gray-50"
+              }`}
+            >
+              <Radio className="w-4 h-4" /> Go Live Now
+            </button>
+            <button
+              onClick={() => setMode("schedule")}
+              className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold transition-all ${
+                mode === "schedule" ? "bg-indigo-600 text-white shadow-sm" : "bg-white border border-gray-200 text-gray-500 hover:bg-gray-50"
+              }`}
+            >
+              <Calendar className="w-4 h-4" /> Schedule
+            </button>
+          </div>
+        )}
+
+        {error && mode === "live" && (
           <div className="mb-6 p-4 rounded-xl bg-red-50 border border-red-100 flex items-start gap-2.5 text-sm text-red-700">
             <AlertTriangle className="w-4 h-4 mt-0.5 flex-shrink-0" />
             {error}
@@ -182,7 +258,7 @@ const GoLive = () => {
         )}
 
         {/* ── Step 1: Stream details ── */}
-        {step === "details" && (
+        {mode === "live" && step === "details" && (
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
             <h2 className="text-base font-semibold text-gray-900 mb-5">Stream Details</h2>
             <form onSubmit={handleCreate} className="space-y-4">
@@ -260,7 +336,7 @@ const GoLive = () => {
         )}
 
         {/* ── Step 2: Live dashboard ── */}
-        {step === "live" && streamData && (
+        {mode === "live" && step === "live" && streamData && (
           <div className="space-y-4">
             {/* Stream key card */}
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-5">
@@ -354,7 +430,7 @@ const GoLive = () => {
         )}
 
         {/* ── Step 3: Stream ended — save recording prompt ── */}
-        {step === "ended" && (
+        {mode === "live" && step === "ended" && (
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 text-center space-y-6">
             <div className="w-16 h-16 mx-auto rounded-full bg-red-100 flex items-center justify-center">
               <Square className="w-8 h-8 text-red-500" />
@@ -429,6 +505,100 @@ const GoLive = () => {
                   Skip — Don't Save
                 </button>
               </div>
+            )}
+          </div>
+        )}
+        {/* ── Schedule panel ── */}
+        {mode === "schedule" && (
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+            {schedSuccess ? (
+              <div className="space-y-4 text-center py-4">
+                <div className="w-14 h-14 mx-auto rounded-full bg-indigo-100 flex items-center justify-center">
+                  <Calendar className="w-7 h-7 text-indigo-600" />
+                </div>
+                <div>
+                  <p className="text-base font-bold text-gray-900">Stream Scheduled!</p>
+                  <p className="text-sm text-gray-500 mt-1">&ldquo;{schedSuccess.title}&rdquo;</p>
+                  <p className="text-sm font-medium text-indigo-600 mt-2">
+                    {new Date(schedSuccess.scheduledAt).toLocaleString(undefined, {
+                      weekday: "short", month: "short", day: "numeric",
+                      hour: "2-digit", minute: "2-digit",
+                    })}
+                  </p>
+                </div>
+                <p className="text-xs text-gray-400">
+                  Subscribers who have notifications on will be notified.
+                  Come back before stream time and click &ldquo;Go Live Now&rdquo; to get your OBS key.
+                </p>
+                <button
+                  onClick={() => { setSchedSuccess(null); setSched({ title: "", description: "", scheduledAt: "" }); clearSchedThumb(); }}
+                  className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-semibold transition-all">
+                  Schedule Another
+                </button>
+              </div>
+            ) : (
+              <form onSubmit={handleSchedule} className="space-y-4">
+                <h2 className="text-base font-semibold text-gray-900 mb-1">Schedule a Stream</h2>
+
+                {schedError && (
+                  <div className="p-3 rounded-xl bg-red-50 border border-red-100 flex items-center gap-2 text-sm text-red-700">
+                    <AlertTriangle className="w-4 h-4 flex-shrink-0" /> {schedError}
+                  </div>
+                )}
+
+                {/* Thumbnail */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Stream Thumbnail</label>
+                  {schedThumbPreview ? (
+                    <div className="relative w-full aspect-video rounded-xl overflow-hidden border border-gray-200 bg-gray-100">
+                      <img src={schedThumbPreview} alt="preview" className="w-full h-full object-cover" />
+                      <button type="button" onClick={clearSchedThumb}
+                        className="absolute top-2 right-2 p-1 bg-gray-900/60 hover:bg-gray-900/80 text-white rounded-full transition-colors">
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ) : (
+                    <button type="button" onClick={() => schedThumbRef.current?.click()}
+                      className="w-full flex flex-col items-center justify-center gap-2 py-8 border-2 border-dashed border-gray-200 rounded-xl text-gray-400 hover:border-indigo-400 hover:text-indigo-500 hover:bg-indigo-50/30 transition-all">
+                      <ImagePlus className="w-8 h-8" />
+                      <span className="text-sm font-medium">Click to upload thumbnail</span>
+                      <span className="text-xs">PNG, JPG, WEBP up to 5 MB</span>
+                    </button>
+                  )}
+                  <input ref={schedThumbRef} type="file" accept="image/*" onChange={handleSchedThumb} className="hidden" />
+                </div>
+
+                {/* Title */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Stream Title *</label>
+                  <input type="text" value={sched.title} onChange={(e) => setSched((s) => ({ ...s, title: e.target.value }))} required maxLength={120}
+                    placeholder="What will you stream?"
+                    className="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 transition-all" />
+                </div>
+
+                {/* Description */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Description</label>
+                  <textarea value={sched.description} onChange={(e) => setSched((s) => ({ ...s, description: e.target.value }))} rows={3} maxLength={500}
+                    placeholder="Tell viewers what your stream is about…"
+                    className="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 transition-all resize-none" />
+                </div>
+
+                {/* Date & Time */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Date &amp; Time *</label>
+                  <input type="datetime-local" value={sched.scheduledAt} min={getMinDatetime()}
+                    onChange={(e) => setSched((s) => ({ ...s, scheduledAt: e.target.value })) } required
+                    className="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 transition-all" />
+                </div>
+
+                <button type="submit" disabled={schedLoading}
+                  className="w-full py-2.5 flex items-center justify-center gap-2 bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white rounded-xl text-sm font-semibold shadow-sm transition-all disabled:opacity-60">
+                  {schedLoading
+                    ? <><span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Scheduling…</>
+                    : <><Calendar className="w-4 h-4" /> Schedule Stream</>}
+                </button>
+              </form>
             )}
           </div>
         )}

@@ -62,6 +62,17 @@ export const subscriptionService = {
       return { success: false, data: [] };
     }
   },
+
+  // Toggle per-channel notification preference
+  async toggleNotification(channelId) {
+    try {
+      const response = await apiClient.patch(`/subscription/toggle-notification/${channelId}`);
+      return response;
+    } catch (error) {
+      console.error('Error toggling notification:', error);
+      return { success: false };
+    }
+  },
 };
 
 // Transform subscription data

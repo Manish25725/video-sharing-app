@@ -5,6 +5,7 @@ import { useLanguage } from "../contexts/LanguageContext";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import NotificationBell from "./NotificationBell";
 import VoiceSearch from "./VoiceSearch";
+import { subscriptionService } from "../services/subscriptionService.js";
 
 const Header = ({ 
   onMenuClick, 
@@ -104,14 +105,22 @@ const Header = ({
     navigate(`/search?q=${encodeURIComponent(text)}`);
   };
 
-  const [subscribers] = useState([
-    { id: 1, name: "Tech Review Channel", avatar: "TR", subscribers: "1.2M" },
-    { id: 2, name: "Coding Tutorials Pro", avatar: "CT", subscribers: "856K" },
-    { id: 3, name: "Design Academy", avatar: "DA", subscribers: "423K" },
-    { id: 4, name: "Music Producer Hub", avatar: "MP", subscribers: "2.1M" },
-    { id: 5, name: "Travel Vlogs", avatar: "TV", subscribers: "634K" },
-    { id: 6, name: "Cooking Master", avatar: "CM", subscribers: "987K" },
-  ]);
+  const [subscribedChannels, setSubscribedChannels] = useState([]);
+  const [subsLoading, setSubsLoading] = useState(false);
+
+  // Fetch real subscribed channels when menu opens
+  useEffect(() => {
+    if (!showSubscriptionMenu || !user) return;
+    setSubsLoading(true);
+    subscriptionService.getSubscribedChannels(user._id)
+      .then((res) => {
+        if (res?.data) {
+          setSubscribedChannels(res.data);
+        }
+      })
+      .catch(() => {})
+      .finally(() => setSubsLoading(false));
+  }, [showSubscriptionMenu, user]);
 
   // Close menus when clicking outside
   useEffect(() => {
@@ -204,31 +213,48 @@ const Header = ({
                 ref={subscriptionMenuRef}
                 className="absolute right-0 mt-2 w-80 bg-white border border-gray-200 rounded-lg shadow-lg z-50"
               >
-                <div className="p-4 border-b border-gray-200">
+                <div className="p-4 border-b border-gray-200 flex items-center justify-between">
                   <h3 className="font-semibold text-gray-900">Subscriptions</h3>
+                  <Link to="/subscriptions" onClick={() => setShowSubscriptionMenu(false)}
+                    className="text-xs text-indigo-600 hover:text-indigo-700 font-medium">
+                    See all
+                  </Link>
                 </div>
-                <div className="max-h-64 overflow-y-auto">
-                  {subscribers.map((subscriber) => (
-                    <div 
-                      key={subscriber.id} 
-                      className="flex items-center p-3 hover:bg-gray-50 cursor-pointer group"
-                      onClick={() => {
-                        navigate('/'); // Redirect to home page
-                        setShowSubscriptionMenu(false);
-                      }}
-                    >
-                      <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold mr-3">
-                        {subscriber.avatar}
-                      </div>
-                      <div className="flex-1">
-                        <p className="font-medium text-gray-900">{subscriber.name}</p>
-                        <p className="text-sm text-gray-500">{subscriber.subscribers} subscribers</p>
-                      </div>
-                      <div className="opacity-0 group-hover:opacity-100 transition-opacity">
-                        <Bell className="w-4 h-4 text-gray-500" />
-                      </div>
+                <div className="max-h-72 overflow-y-auto">
+                  {subsLoading ? (
+                    <div className="flex items-center justify-center py-8">
+                      <span className="w-5 h-5 border-2 border-gray-200 border-t-indigo-500 rounded-full animate-spin" />
                     </div>
-                  ))}
+                  ) : !user ? (
+                    <p className="p-4 text-sm text-gray-500">Sign in to see your subscriptions.</p>
+                  ) : subscribedChannels.length === 0 ? (
+                    <p className="p-4 text-sm text-gray-500">You haven&apos;t subscribed to any channels yet.</p>
+                  ) : (
+                    subscribedChannels.map((channel) => (
+                      <div
+                        key={channel._id}
+                        className="flex items-center p-3 hover:bg-gray-50 cursor-pointer gap-3"
+                        onClick={() => {
+                          navigate(`/profile/${channel._id}`);
+                          setShowSubscriptionMenu(false);
+                        }}
+                      >
+                        <div className="w-10 h-10 rounded-full flex-shrink-0 overflow-hidden bg-gradient-to-br from-indigo-400 to-fuchsia-500">
+                          {channel.avatar ? (
+                            <img src={channel.avatar} alt={channel.fullName || channel.userName} className="w-full h-full object-cover" />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center text-white font-bold text-sm">
+                              {(channel.fullName || channel.userName || "?")[0].toUpperCase()}
+                            </div>
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-gray-900 truncate">{channel.fullName || channel.userName}</p>
+                          <p className="text-xs text-gray-500">@{channel.userName} &middot; {channel.subscribersCount ?? 0} subscribers</p>
+                        </div>
+                      </div>
+                    ))
+                  )}
                 </div>
               </div>
             )}

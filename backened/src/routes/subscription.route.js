@@ -1,12 +1,14 @@
 import {Router} from "express"
 import { verifyJWT } from "../middlewares/auth.middleware.js"
-import { getUserChannelSubscribers, toggleSubscription,getSubscribedChannels, checkSubscriptionStatus } from "../controllers/subscription.controller.js";
+import { getUserChannelSubscribers, toggleSubscription, getSubscribedChannels, checkSubscriptionStatus, toggleNotification } from "../controllers/subscription.controller.js";
 
 
 const router=Router();
 
 
 router.route("/toggle-subscribe/:channelId").post(verifyJWT,toggleSubscription)
+
+router.route("/toggle-notification/:channelId").patch(verifyJWT, toggleNotification)
 
 router.route("/check-subscription/:channelId").get(verifyJWT,checkSubscriptionStatus)
 
