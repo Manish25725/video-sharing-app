@@ -118,6 +118,20 @@ const userSchema = new Schema(
             type:String,
             enum:["en","hi"],
             default:"en"
+        },
+
+        privacy:{
+            watchHistoryEnabled:{ type:Boolean, default:true },
+            searchHistoryEnabled:{ type:Boolean, default:true },
+            subscriptionListPublic:{ type:Boolean, default:false },
+            savedPlaylistsPublic:{ type:Boolean, default:true }
+        },
+
+        playback:{
+            autoplay:{ type:Boolean, default:true },
+            quality:{ type:String, default:"1080p" },
+            volume:{ type:Number, min:0, max:100, default:75 },
+            subtitles:{ type:Boolean, default:false }
         }
 
     },{

@@ -857,6 +857,40 @@ const revokeOtherSessions = asyncHandler(async (req, res) => {
     return res.status(200).json(new ApiResponse(200, {}, "Other sessions revoked"));
 });
 
+const updatePreferences = asyncHandler(async (req, res) => {
+    const { privacy, playback } = req.body;
+    const updateFields = {};
+
+    if (privacy && typeof privacy === 'object') {
+        const allowed = ['watchHistoryEnabled', 'searchHistoryEnabled', 'subscriptionListPublic', 'savedPlaylistsPublic'];
+        allowed.forEach(key => {
+            if (typeof privacy[key] === 'boolean') updateFields[`privacy.${key}`] = privacy[key];
+        });
+    }
+
+    if (playback && typeof playback === 'object') {
+        if (typeof playback.autoplay === 'boolean') updateFields['playback.autoplay'] = playback.autoplay;
+        if (typeof playback.subtitles === 'boolean') updateFields['playback.subtitles'] = playback.subtitles;
+        if (typeof playback.volume === 'number' && playback.volume >= 0 && playback.volume <= 100)
+            updateFields['playback.volume'] = playback.volume;
+        const validQualities = ['144p','240p','360p','480p','720p','1080p','1440p','2160p'];
+        if (playback.quality && validQualities.includes(playback.quality))
+            updateFields['playback.quality'] = playback.quality;
+    }
+
+    if (Object.keys(updateFields).length === 0) {
+        throw new ApiError(400, 'No valid preference fields provided');
+    }
+
+    const user = await User.findByIdAndUpdate(
+        req.user._id,
+        { $set: updateFields },
+        { new: true }
+    ).select('-password -refreshToken -sessions');
+
+    return res.status(200).json(new ApiResponse(200, user, 'Preferences updated successfully'));
+});
+
 // ─────────────────────────────────────────────────────────────────────────────
 
 export {registerUser,
@@ -886,7 +920,8 @@ export {registerUser,
     removeAccount,
     updateLanguage,
     getActiveSessions,
-    revokeOtherSessions
+    revokeOtherSessions,
+    updatePreferences
 };
 
 
