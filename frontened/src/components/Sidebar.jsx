@@ -15,6 +15,7 @@ import {
   List,
   Settings,
   Users,
+  MessageSquare,
 } from "lucide-react"
 import { Link, useLocation } from "react-router-dom"
 import { useAuth } from "../contexts/AuthContext"
@@ -37,11 +38,12 @@ const Sidebar = ({ isOpen }) => {
   ]
 
   const libraryItems = [
-    { icon: History,   label: "History",       path: "/watch-history" },
-    { icon: Clock,     label: "Watch later",   path: "/watch-later" },
-    { icon: ThumbsUp,  label: "Liked videos",  path: "/liked-videos" },
-    { icon: List,      label: "Playlists",     path: "/playlists" },
-    { icon: Users,     label: "Subscriptions", path: "/subscriptions" },
+    { icon: History,        label: "History",       path: "/watch-history" },
+    { icon: Clock,          label: "Watch later",   path: "/watch-later" },
+    { icon: ThumbsUp,       label: "Liked videos",  path: "/liked-videos" },
+    { icon: List,           label: "Playlists",     path: "/playlists" },
+    { icon: Users,          label: "Subscriptions", path: "/subscriptions" },
+    { icon: MessageSquare,  label: "Tweets",        path: "/tweets" },
   ]
 
   const adminItems = [

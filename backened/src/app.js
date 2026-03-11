@@ -16,6 +16,7 @@ import dislikeRouter from "./routes/dislike.route.js"
 import healthRouter from "./routes/health.route.js"
 import streamRouter from './routes/stream.route.js'
 import reportRouter from './routes/report.route.js'
+import feedbackRouter from './routes/feedback.route.js'
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -55,6 +56,7 @@ app.use("/api/v1/dislike",dislikeRouter)
 app.use("/api/v1/health",healthRouter)
 app.use("/api/v1/streams",streamRouter)
 app.use("/api/v1/reports",reportRouter)
+app.use("/api/v1/feedback",feedbackRouter)
 
 // Global error handler - must be last middleware
 // Serializes ApiError (and any other error) as JSON
