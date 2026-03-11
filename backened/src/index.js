@@ -7,6 +7,7 @@ import { nms } from './liveServer.js'
 import { Stream } from './models/stream.model.js'
 import { Message } from './models/message.model.js'
 import dotenv from "dotenv"
+import "./workers/subtitleWorker.js"   // start background subtitle worker
 
 dotenv.config({
     path:"./.env"

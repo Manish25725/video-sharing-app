@@ -133,7 +133,7 @@ const Settings = () => {
     setNotifSaving(key)
     try {
       const res = await api.post(endpoint)
-      if (res?.data?.data) updateUser(res.data.data)
+      if (res?.data) updateUser(res.data)
       setNotif(prev => ({ ...prev, [key]: !prev[key] }))
     } catch {
       showToast("Failed to update notification setting.", "error")
@@ -147,7 +147,7 @@ const Settings = () => {
     setPrivacySaving(true)
     try {
       const res = await api.patch("/users/preferences", { privacy })
-      if (res?.data?.data) updateUser(res.data.data)
+      if (res?.data) updateUser(res.data)
       showToast("Privacy settings saved.")
     } catch {
       showToast("Failed to save privacy settings.", "error")
@@ -161,7 +161,7 @@ const Settings = () => {
     setPlaybackSaving(true)
     try {
       const res = await api.patch("/users/preferences", { playback })
-      if (res?.data?.data) updateUser(res.data.data)
+      if (res?.data) updateUser(res.data)
       showToast("Playback settings saved.")
     } catch {
       showToast("Failed to save playback settings.", "error")

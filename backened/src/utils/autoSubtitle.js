@@ -7,7 +7,8 @@
  *  1. Download the video file to a temp path.
  *  2. Send it to Groq Whisper (response_format: "vtt" → get VTT text directly).
  *  3. Write the VTT to a temp file and upload to Cloudinary.
- *  4. Return the Cloudinary URL.
+ *  4. Delete both temp files (always, via finally).
+ *  5. Return the Cloudinary subtitle URL.
  *
  * Free tier: 7,200 audio-seconds / day  |  File size limit: 25 MB
  * Get a free API key at: https://console.groq.com
@@ -19,6 +20,15 @@ import path from "path";
 import axios from "axios";
 import Groq from "groq-sdk";
 import { uploadSubtitleToCloudinary } from "./cloudinary.js";
+
+/** Safely delete a file if it exists — never throws. */
+function cleanupFile(filePath) {
+    try {
+        if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+    } catch {
+        // Ignore cleanup errors — they should never block the main flow
+    }
+}
 
 /**
  * @param {string} videoUrl  - Public URL of the video (e.g. from Cloudinary).
@@ -35,9 +45,10 @@ export async function autoGenerateSubtitle(videoUrl, language = "en") {
     // Instantiate lazily so dotenv has already loaded the env vars
     const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
+    const ts       = Date.now();
     const tmpDir   = path.resolve("./public/temp");
-    const tmpVideo = path.join(tmpDir, `sub_input_${Date.now()}.mp4`);
-    const tmpVtt   = path.join(tmpDir, `sub_output_${Date.now()}.vtt`);
+    const tmpVideo = path.join(tmpDir, `sub_input_${ts}.mp4`);
+    const tmpVtt   = path.join(tmpDir, `sub_output_${ts}.vtt`);
 
     try {
         // 1. Download video ─────────────────────────────────────────────────
@@ -73,18 +84,20 @@ export async function autoGenerateSubtitle(videoUrl, language = "en") {
             throw new Error("Groq returned an empty transcription. The video may have no speech.");
         }
 
-        // 4. Write VTT to temp file & upload to Cloudinary ──────────────────
+        // 4. Write VTT to temp file ──────────────────────────────────────────
         fs.writeFileSync(tmpVtt, vttText, "utf8");
+
+        // 5. Upload .vtt to Cloudinary ───────────────────────────────────────
         console.log("[subtitle] Uploading VTT to Cloudinary…");
-        const uploaded = await uploadSubtitleToCloudinary(tmpVtt);  // also cleans up tmpVtt
+        const uploaded = await uploadSubtitleToCloudinary(tmpVtt);
         if (!uploaded?.url) throw new Error("Cloudinary VTT upload failed.");
 
         console.log("[subtitle] Done –", uploaded.url);
         return { url: uploaded.url, language, label: "English" };
 
     } finally {
-        if (fs.existsSync(tmpVideo)) {
-            try { fs.unlinkSync(tmpVideo); } catch {}
-        }
+        // Always clean up both temp files, regardless of success or failure
+        cleanupFile(tmpVideo);
+        cleanupFile(tmpVtt);
     }
 }

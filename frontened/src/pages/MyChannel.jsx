@@ -1,10 +1,11 @@
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { Link } from "react-router-dom"
 import { Upload, Plus, List, BarChart3, Users, Video, Trash2, Edit, Eye, Play, MoreVertical, Settings, Bell, Heart, MessageCircle, Share2, FolderPlus, FolderEdit, Radio, Captions } from "lucide-react"
 import { videoService, transformVideosArray } from "../services/videoService"
 import { dashboardService } from "../services/dashboardService"
 import { likeService } from "../services/likeService"
 import { useAuth } from "../contexts/AuthContext"
+import socketService from "../services/socketService"
 import AddToPlaylistModal from "../components/AddToPlaylistModal"
 import CreatorPlaylistModal from "../components/CreatorPlaylistModal"
 import PlaylistEditModal from "../components/PlaylistEditModal"
@@ -40,6 +41,30 @@ const MyChannel = () => {
   const [toast, setToast] = useState({ show: false, message: '', type: 'success' })
   // Tracks which video is currently having subtitles generated
   const [subtitleGenerating, setSubtitleGenerating] = useState(null)
+  // Ref to the active polling interval so we can clear it on unmount
+  const subtitlePollRef = useRef(null)
+
+  // Clean up polling interval when component unmounts
+  useEffect(() => () => { if (subtitlePollRef.current) clearInterval(subtitlePollRef.current) }, [])
+
+  // Listen for real-time subtitle-ready event from Socket.io (faster than polling)
+  useEffect(() => {
+    const socket = socketService.getSocket ? socketService.getSocket() : socketService.socket
+    if (!socket) return
+    const onSubtitleReady = ({ videoId }) => {
+      // Cancel the polling interval — socket beat it
+      if (subtitlePollRef.current) {
+        clearInterval(subtitlePollRef.current)
+        subtitlePollRef.current = null
+      }
+      setSubtitleGenerating(null)
+      showToast("Subtitles generated successfully! 🎉", "success")
+      fetchUserVideos()
+    }
+    socket.on("subtitle-ready", onSubtitleReady)
+    return () => socket.off("subtitle-ready", onSubtitleReady)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   // Edit modal state
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
@@ -221,18 +246,45 @@ const MyChannel = () => {
   const handleGenerateSubtitles = async (videoId) => {
     setSubtitleGenerating(videoId)
     try {
+      // Enqueue the job — returns immediately with a jobId
       const response = await videoService.generateSubtitles(videoId)
-      if (response.success) {
-        showToast("Subtitles generated successfully! 🎉", "success")
-      } else {
-        showToast(response.message || "Failed to generate subtitles", "error")
-      }
+      const jobId = response?.data?.jobId
+      if (!jobId) throw new Error("No job ID returned from server")
+
+      showToast("Subtitle generation started… this may take a minute.", "success")
+
+      // Poll every 4 seconds until the job completes or fails
+      subtitlePollRef.current = setInterval(async () => {
+        try {
+          const status = await videoService.getSubtitleJobStatus(videoId, jobId)
+          const state = status?.data?.state
+
+          if (state === "completed") {
+            clearInterval(subtitlePollRef.current)
+            subtitlePollRef.current = null
+            setSubtitleGenerating(null)
+            showToast("Subtitles generated successfully! 🎉", "success")
+            fetchUserVideos()
+          } else if (state === "failed") {
+            clearInterval(subtitlePollRef.current)
+            subtitlePollRef.current = null
+            setSubtitleGenerating(null)
+            showToast(status?.data?.reason || "Failed to generate subtitles", "error")
+          }
+          // else: waiting | active | delayed — keep polling
+        } catch {
+          clearInterval(subtitlePollRef.current)
+          subtitlePollRef.current = null
+          setSubtitleGenerating(null)
+          showToast("Lost connection while checking subtitle status", "error")
+        }
+      }, 4000)
+
     } catch (err) {
       console.error("Generate subtitles error:", err)
-      const msg = err?.response?.data?.message || "Failed to generate subtitles"
-      showToast(msg, "error")
-    } finally {
       setSubtitleGenerating(null)
+      const msg = err?.message || "Failed to start subtitle generation"
+      showToast(msg, "error")
     }
   }
 

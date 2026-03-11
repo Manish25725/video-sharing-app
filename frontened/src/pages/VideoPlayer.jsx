@@ -894,21 +894,27 @@ const VideoPlayer = () => {
                   </button>
                 </div>
 
-                {/* CC / Subtitles Button — always visible in action bar */}
-                {Array.isArray(video.subtitles) && video.subtitles.length > 0 && (
-                  <button
-                    onClick={toggleSubtitles}
-                    className={`flex items-center space-x-2 px-4 py-2 rounded-full transition-colors yt-button ${
-                      subtitlesOn
-                        ? 'bg-gray-900 text-white hover:bg-gray-700'
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                    }`}
-                    title={subtitlesOn ? 'Turn off subtitles' : 'Turn on subtitles'}
-                  >
-                    <Captions className="w-5 h-5" />
-                    <span className="font-medium">CC</span>
-                  </button>
-                )}
+                {/* CC / Subtitles Button — always visible; disabled when no subtitles available */}
+                {(() => {
+                  const hasSubtitles = Array.isArray(video?.subtitles) && video.subtitles.length > 0;
+                  return (
+                    <button
+                      onClick={hasSubtitles ? toggleSubtitles : undefined}
+                      disabled={!hasSubtitles}
+                      className={`flex items-center space-x-2 px-4 py-2 rounded-full transition-colors yt-button ${
+                        !hasSubtitles
+                          ? 'bg-gray-100 text-gray-400 cursor-not-allowed opacity-50'
+                          : subtitlesOn
+                          ? 'bg-gray-900 text-white hover:bg-gray-700'
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      }`}
+                      title={!hasSubtitles ? 'No subtitles available' : subtitlesOn ? 'Turn off subtitles' : 'Turn on subtitles'}
+                    >
+                      <Captions className="w-5 h-5" />
+                      <span className="font-medium">CC</span>
+                    </button>
+                  );
+                })()}
 
                 {/* Share Button */}
                 <button 
