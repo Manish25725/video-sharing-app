@@ -74,6 +74,8 @@ router.route("/saved-accounts/:accountId").delete(verifyJWT, removeAccount);
 router.route("/sessions").get(verifyJWT, getActiveSessions);
 router.route("/sessions/revoke-others").delete(verifyJWT, revokeOtherSessions);
 
+router.route("/preferences").patch(verifyJWT, updatePreferences);
+
 
 export default router
 

@@ -3,6 +3,7 @@ import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/Apiresponse.js";
 import {Playlist} from "../models/playlist.model.js"
 import { Video } from "../models/video.model.js";
+import { User } from "../models/user.model.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 
 
@@ -47,6 +48,15 @@ const getUserPlaylists = asyncHandler(async (req, res) => {
 
     // If no userId provided, get current user's playlists
     const targetUserId = userId || req.user._id
+
+    // Respect the target user's privacy setting for saved playlists
+    const isOwner = req.user._id.toString() === targetUserId.toString();
+    if (!isOwner && userId) {
+        const targetUser = await User.findById(targetUserId).select('privacy');
+        if (targetUser?.privacy?.savedPlaylistsPublic === false) {
+            return res.status(200).json(new ApiResponse(200, [], "This user's playlists are private"));
+        }
+    }
 
     // Filter for user-type playlists only (not creator playlists)
     const re=await Playlist.find({

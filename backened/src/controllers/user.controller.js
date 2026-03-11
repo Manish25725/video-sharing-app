@@ -401,6 +401,14 @@ const addToWatchHistory = asyncHandler(async (req, res) => {
         throw new ApiError(404, "Video not found");
     }
 
+    // Respect the user's privacy setting — skip recording if watch history is disabled
+    const currentUser = await User.findById(req.user._id).select('privacy');
+    if (currentUser?.privacy?.watchHistoryEnabled === false) {
+        return res
+            .status(200)
+            .json(new ApiResponse(200, {}, "Watch history is disabled — video not recorded"));
+    }
+
     const watchEntry = {
         videoDetail: new mongoose.Types.ObjectId(videoId),
         watchedAt: new Date()

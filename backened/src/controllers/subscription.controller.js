@@ -152,6 +152,15 @@ const getSubscribedChannels = asyncHandler(async (req, res) => {
         throw new ApiError(404,"SubscriberId is invalid")
     }
 
+    // Respect the target user's privacy setting
+    const isOwnList = req.user._id.toString() === subscriberId.toString();
+    if (!isOwnList) {
+        const targetUser = await User.findById(subscriberId).select('privacy');
+        if (targetUser?.privacy?.subscriptionListPublic === false) {
+            return res.status(200).json(new ApiResponse(200, [], "This user's subscription list is private"));
+        }
+    }
+
     const channelSubs=await Subscription.aggregate([
         {
             $match:{
