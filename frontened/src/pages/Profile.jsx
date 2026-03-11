@@ -4,9 +4,11 @@ import { videoService, transformVideosArray } from "../services/videoService";
 import { subscriptionService } from "../services/subscriptionService";
 import { authService } from "../services/authService";
 import { playlistService } from "../services/playlistService";
+import { tweetService, transformTweetsArray } from "../services/tweetService";
 import { useAuth } from "../contexts/AuthContext";
 import VideoCard from "../components/VideoCard";
-import { Play, Folder } from "lucide-react";
+import TweetCard from "../components/TweetCard";
+import { Play, Folder, MessageSquare } from "lucide-react";
 
 // Component to display playlist thumbnail using first video
 const PlaylistThumbnail = ({ playlist }) => {
@@ -146,8 +148,17 @@ const Profile = ({ onVideoSelect }) => {
             break;
             
           case "tweets":
-            // Fetch tweets (placeholder for now)
-            setTweets([]);
+            try {
+              const tweetsResponse = await tweetService.getTweetsByUser(profileUser._id);
+              if (tweetsResponse.success) {
+                setTweets(transformTweetsArray(tweetsResponse.data || []));
+              } else {
+                setTweets([]);
+              }
+            } catch (err) {
+              console.error('Error fetching tweets:', err);
+              setTweets([]);
+            }
             break;
         }
       } catch (err) {
@@ -380,11 +391,30 @@ const Profile = ({ onVideoSelect }) => {
 
             {/* Tweets Tab */}
             {activeTab === "tweets" && (
-              <div className="bg-white rounded-lg shadow p-6 text-center">
-                <h3 className="text-lg font-medium text-gray-800 mb-2">Tweets feature coming soon</h3>
-                <p className="text-gray-600">
-                  We're working on bringing tweets to the platform. Stay tuned!
-                </p>
+              <div>
+                {tweets.length > 0 ? (
+                  <div className="max-w-2xl mx-auto space-y-4">
+                    {tweets.map(tweet => (
+                      <TweetCard
+                        key={tweet.id}
+                        tweet={tweet}
+                        currentUser={user}
+                        onDeleted={(id) => setTweets(prev => prev.filter(t => t.id !== id))}
+                        onUpdated={(updated) => setTweets(prev => prev.map(t => t.id === updated.id ? updated : t))}
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="bg-white rounded-lg shadow p-8 text-center">
+                    <MessageSquare className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+                    <h3 className="text-lg font-medium text-gray-800 mb-1">No tweets yet</h3>
+                    <p className="text-gray-500 text-sm">
+                      {isOwnProfile
+                        ? "Post your first tweet from the Tweets page!"
+                        : "This user hasn't posted any tweets yet."}
+                    </p>
+                  </div>
+                )}
               </div>
             )}
           </>
