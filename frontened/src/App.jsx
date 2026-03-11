@@ -27,6 +27,8 @@ import TrendingVideos from "./pages/TrendingVideos"
 import CategoryVideos from "./pages/CategoryVideos"
 import Settings from "./pages/Settings"
 import Profile from "./pages/Profile"
+import Help from "./pages/Help"
+import Feedback from "./pages/Feedback"
 import Search from "./components/Search"
 import { AuthProvider, useAuth } from "./contexts/AuthContext"
 import { LanguageProvider } from "./contexts/LanguageContext"
@@ -141,6 +143,8 @@ function AppContent() {
             <Route path="/scheduled-streams" element={<ScheduledStreams />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="/profile-settings" element={<ProfileSettings />} />
+            <Route path="/help" element={<Help />} />
+            <Route path="/feedback" element={<Feedback />} />
             <Route path="/admin" element={user ? <MyChannel /> : <Navigate to="/" />} />
             <Route path="*" element={<Navigate to="/" />} />
           </Routes>

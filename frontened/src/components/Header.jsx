@@ -371,11 +371,17 @@ const Header = ({
                 </div>
 
                 <div className="border-t border-gray-200 py-2">
-                  <div className="px-4 py-2 hover:bg-gray-50 cursor-pointer flex items-center space-x-3">
+                  <div
+                    onClick={() => navigate('/help')}
+                    className="px-4 py-2 hover:bg-gray-50 cursor-pointer flex items-center space-x-3"
+                  >
                     <HelpCircle className="w-5 h-5 text-gray-600" />
                     <span className="text-gray-900">Help</span>
                   </div>
-                  <div className="px-4 py-2 hover:bg-gray-50 cursor-pointer flex items-center space-x-3">
+                  <div
+                    onClick={() => navigate('/feedback')}
+                    className="px-4 py-2 hover:bg-gray-50 cursor-pointer flex items-center space-x-3"
+                  >
                     <MessageSquare className="w-5 h-5 text-gray-600" />
                     <span className="text-gray-900">Send feedback</span>
                   </div>
