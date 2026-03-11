@@ -1,9 +1,10 @@
-import { Search, Menu, Bell, User, Globe, HelpCircle, MessageSquare, LogOut, UserPlus, RotateCcw, X, ChevronLeft } from "lucide-react";
+import { Search, Menu, Bell, User, Globe, HelpCircle, MessageSquare, LogOut, UserPlus, RotateCcw, X, ChevronLeft, Radio } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { useAuth } from "../contexts/AuthContext";
 import { Link, useNavigate } from "react-router-dom";
 import NotificationBell from "./NotificationBell";
 import VoiceSearch from "./VoiceSearch";
+import StreamModal from "./StreamModal";
 
 const Header = ({ 
   onMenuClick, 
@@ -16,6 +17,7 @@ const Header = ({
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
   const profileMenuRef = useRef(null);
+  const [showStreamModal, setShowStreamModal] = useState(false);
 
   // Switch account panel state
   const [showSwitchPanel, setShowSwitchPanel] = useState(false);
@@ -106,6 +108,8 @@ const Header = ({
   }, [setShowProfileMenu]);
 
   return (
+    <>
+    {showStreamModal && <StreamModal onClose={() => setShowStreamModal(false)} />}
     <header className="fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-200">
       <div className="flex items-center justify-between px-4 py-2">
         {/* Left section */}
@@ -151,6 +155,17 @@ const Header = ({
         {/* Right section */}
         <div className="flex items-center space-x-2">
           <NotificationBell />
+
+          {/* Stream icon — only shown for logged-in users */}
+          {user && (
+            <button
+              onClick={() => setShowStreamModal(true)}
+              title="Go Live / Schedule Stream"
+              className="p-2 hover:bg-gray-100 rounded-full transition-colors relative group"
+            >
+              <Radio className="w-5 h-5 text-gray-700 group-hover:text-red-500 transition-colors" />
+            </button>
+          )}
           
           {/* Profile Menu */}
           <div className="relative">
@@ -371,6 +386,7 @@ const Header = ({
         </div>
       </div>
     </header>
+    </>
   );
 };
 

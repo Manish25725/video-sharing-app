@@ -13,8 +13,6 @@ import {
   ThumbsUp,
   Shield,
   List,
-  Radio,
-  Calendar,
   Settings,
 } from "lucide-react"
 import { Link, useLocation } from "react-router-dom"
@@ -42,11 +40,6 @@ const Sidebar = ({ isOpen }) => {
     { icon: Clock,     label: "Watch later",  path: "/watch-later" },
     { icon: ThumbsUp,  label: "Liked videos", path: "/liked-videos" },
     { icon: List,      label: "Playlists",    path: "/playlists" },
-  ]
-
-  const liveItems = [
-    { icon: Radio,    label: "Live Now",        path: "/live" },
-    { icon: Calendar, label: "Upcoming Streams", path: "/scheduled-streams" },
   ]
 
   const adminItems = [
@@ -122,25 +115,6 @@ const Sidebar = ({ isOpen }) => {
               </div>
               <hr className="border-gray-200 mx-4 mb-4" />
 
-              {/* Live */}
-              <div className="mb-6">
-                <h3 className="px-4 mb-2 text-sm font-semibold text-gray-500 uppercase tracking-wider flex items-center gap-1.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
-                  Live
-                </h3>
-                {liveItems.map((item, index) => (
-                  <Link
-                    key={index}
-                    to={item.path}
-                    className={`w-full flex items-center px-4 py-2 text-left hover:bg-gray-100 transition-colors ${
-                      currentPath === item.path ? "bg-gray-100" : ""
-                    }`}
-                  >
-                    <item.icon className={`w-6 h-6 ${item.icon === Radio ? "text-red-500" : "text-gray-700"}`} />
-                    <span className="ml-6 text-gray-900">{item.label}</span>
-                  </Link>
-                ))}
-              </div>
             </>
           )}
         </div>

@@ -139,4 +139,8 @@ dist
 # SvelteKit build / generate output
 .svelte-kit
 
+# ── Media / uploads (never commit binary assets to git) ──────
+public/media/
+public/temp/
+
 # End of https://www.toptal.com/developers/gitignore/api/node
