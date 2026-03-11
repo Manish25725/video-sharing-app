@@ -34,6 +34,7 @@
     "mongoose-aggregate-paginate-v2": "^1.1.4",
     "multer": "^2.0.1",
     "node-media-server": "^4.2.4",
+    "nodemailer": "^8.0.2",
     "openai": "^6.27.0",
     "socket.io": "^4.8.1"
   }

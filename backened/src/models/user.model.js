@@ -114,6 +114,11 @@ const userSchema = new Schema(
             default:false
         },
 
+        isEmailVerified:{
+            type:Boolean,
+            default:false
+        },
+
         language:{
             type:String,
             enum:["en","hi"],
