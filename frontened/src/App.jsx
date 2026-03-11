@@ -151,6 +151,8 @@ function AppContent() {
             <Route path="/settings" element={<Settings />} />
             <Route path="/profile-settings" element={<ProfileSettings />} />
             <Route path="/verify-email" element={<VerifyEmail />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/reset-password/:token" element={<ResetPassword />} />
             <Route path="/help" element={<Help />} />
             <Route path="/feedback" element={<Feedback />} />
             <Route path="/admin" element={user ? <MyChannel /> : <Navigate to="/" />} />

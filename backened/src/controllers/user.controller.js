@@ -994,7 +994,7 @@ const forgotPassword = asyncHandler(async (req, res) => {
         throw new ApiError(429, "Too many requests — please wait 10 minutes before trying again");
     }
 
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ email: { $regex: new RegExp(`^${email.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i') } });
 
     // Don't reveal whether the email exists
     if (user) {
