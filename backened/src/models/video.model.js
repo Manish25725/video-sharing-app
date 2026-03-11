@@ -68,7 +68,16 @@ const videoSchema = new Schema(
             type: String,
             default: null,
         },
-    }, 
+
+        // Subtitle / caption tracks
+        subtitles: [
+            {
+                label:    { type: String, required: true },  // e.g. "English"
+                language: { type: String, required: true },  // BCP-47, e.g. "en"
+                url:      { type: String, required: true },  // Cloudinary raw URL (.vtt)
+            }
+        ],
+    },
     {
         timestamps: true
     }

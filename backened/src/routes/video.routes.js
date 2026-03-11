@@ -4,7 +4,7 @@ import {upload} from "../middlewares/multer.middleware.js"
 import { verifyJWT } from "../middlewares/auth.middleware.js"
 import { videoFilter } from "../middlewares/viedeoFilter.middleware.js";
 import { imageFilter } from "../middlewares/imageFilter.middleware.js";
-import { getAllVideos,  publishVideo,getVideoById, updateVideo, deleteVideo, togglePublishStatus, incrementVideoViews, getVideoStats, downloadVideo, getDownloadInfo,getTrendingVideos, getRelatedVideos} from "../controllers/video.controller.js";
+import { getAllVideos,  publishVideo,getVideoById, updateVideo, deleteVideo, togglePublishStatus, incrementVideoViews, getVideoStats, downloadVideo, getDownloadInfo,getTrendingVideos, getRelatedVideos, uploadSubtitle, generateSubtitles} from "../controllers/video.controller.js";
 
 
 
@@ -34,8 +34,15 @@ router.route("/publish-video").post(verifyJWT,upload.fields([
     },{
         name:"thumbnail",
         maxCount:1
+    },{
+        name:"subtitle",
+        maxCount:1
     }
 ]),publishVideo)
+// Upload / replace a subtitle track for an existing video
+router.route("/:videoId/subtitle").post(verifyJWT, upload.single("subtitle"), uploadSubtitle)
+// Auto-generate subtitles using OpenAI Whisper (no file needed, uses the video itself)
+router.route("/:videoId/generate-subtitles").post(verifyJWT, generateSubtitles)
 // Protected routes - require authentication for video management
 router.route("/update-video-details/:videoId").patch(verifyJWT,upload.single("thumbnail"),updateVideo)
 router.route("/delete-video/:videoId").delete(verifyJWT,deleteVideo);

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react"
 import { Link } from "react-router-dom"
-import { Upload, Plus, List, BarChart3, Users, Video, Trash2, Edit, Eye, Play, MoreVertical, Settings, Bell, Heart, MessageCircle, Share2, FolderPlus, FolderEdit, Radio } from "lucide-react"
+import { Upload, Plus, List, BarChart3, Users, Video, Trash2, Edit, Eye, Play, MoreVertical, Settings, Bell, Heart, MessageCircle, Share2, FolderPlus, FolderEdit, Radio, Captions } from "lucide-react"
 import { videoService, transformVideosArray } from "../services/videoService"
 import { dashboardService } from "../services/dashboardService"
 import { likeService } from "../services/likeService"
@@ -28,7 +28,8 @@ const MyChannel = () => {
     description: "",
     thumbnail: null,
     video: null,
-    videoType: ""
+    videoType: "",
+    subtitle: null
   })
 
   // Upload progress states
@@ -37,6 +38,8 @@ const MyChannel = () => {
   
   // Toast state
   const [toast, setToast] = useState({ show: false, message: '', type: 'success' })
+  // Tracks which video is currently having subtitles generated
+  const [subtitleGenerating, setSubtitleGenerating] = useState(null)
 
   // Edit modal state
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
@@ -215,6 +218,24 @@ const MyChannel = () => {
     }
   }
 
+  const handleGenerateSubtitles = async (videoId) => {
+    setSubtitleGenerating(videoId)
+    try {
+      const response = await videoService.generateSubtitles(videoId)
+      if (response.success) {
+        showToast("Subtitles generated successfully! 🎉", "success")
+      } else {
+        showToast(response.message || "Failed to generate subtitles", "error")
+      }
+    } catch (err) {
+      console.error("Generate subtitles error:", err)
+      const msg = err?.response?.data?.message || "Failed to generate subtitles"
+      showToast(msg, "error")
+    } finally {
+      setSubtitleGenerating(null)
+    }
+  }
+
   const handleEditVideo = (video) => {
     setEditingVideo(video)
     setEditFormData({
@@ -351,7 +372,8 @@ const MyChannel = () => {
         formData.thumbnail,
         (progress) => {
           setUploadProgress(progress)
-        }
+        },
+        formData.subtitle || null
       )
       
       clearInterval(progressInterval)
@@ -364,11 +386,14 @@ const MyChannel = () => {
           description: "",
           thumbnail: null,
           video: null,
-          videoType: ""
+          videoType: "",
+          subtitle: null
         })
         // Reset file inputs
         document.querySelector('input[name="video"]').value = ''
         document.querySelector('input[name="thumbnail"]').value = ''
+        const subtitleInput = document.querySelector('input[name="subtitle"]')
+        if (subtitleInput) subtitleInput.value = ''
         
         // Refresh video list and analytics
         fetchUserVideos()
@@ -469,6 +494,31 @@ const MyChannel = () => {
                 <p className="mt-2 text-sm text-gray-600">{formData.thumbnail.name}</p>
               )}
             </div>
+          </div>
+        </div>
+
+        {/* Optional subtitle / captions */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Subtitles / Captions <span className="text-gray-400 font-normal">(optional — .vtt file)</span>
+          </label>
+          <div className="border-2 border-dashed border-gray-200 rounded-lg p-4 flex items-center gap-4">
+            <label className="cursor-pointer flex items-center gap-2 text-blue-600 hover:text-blue-500 text-sm">
+              <Upload className="w-4 h-4" />
+              <span>Choose .vtt file</span>
+              <input
+                type="file"
+                name="subtitle"
+                onChange={handleFileChange}
+                accept=".vtt"
+                className="hidden"
+              />
+            </label>
+            {formData.subtitle ? (
+              <span className="text-sm text-gray-600 flex-1 truncate">{formData.subtitle.name}</span>
+            ) : (
+              <span className="text-sm text-gray-400">No file selected — English captions will be shown automatically</span>
+            )}
           </div>
         </div>
 
@@ -654,6 +704,18 @@ const MyChannel = () => {
                       title="Edit video"
                     >
                       <Edit className="w-4 h-4" />
+                    </button>
+
+                    {/* Auto-generate subtitles */}
+                    <button
+                      onClick={() => handleGenerateSubtitles(video.id)}
+                      disabled={subtitleGenerating === video.id}
+                      className="p-2 text-gray-500 hover:text-purple-600 hover:bg-purple-50 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      title={subtitleGenerating === video.id ? "Generating subtitles…" : "Auto-generate subtitles (AI)"}
+                    >
+                      {subtitleGenerating === video.id
+                        ? <div className="w-4 h-4 border-2 border-purple-400 border-t-transparent rounded-full animate-spin" />
+                        : <Captions className="w-4 h-4" />}
                     </button>
 
                     <button

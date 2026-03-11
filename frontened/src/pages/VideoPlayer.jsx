@@ -787,6 +787,18 @@ const VideoPlayer = () => {
                   <source src={video.videoFile} type="video/mp4" />
                   <source src={video.videoFile} type="video/webm" />
                   <source src={video.videoFile} type="video/ogg" />
+                  {/* Subtitle / caption tracks */}
+                  {Array.isArray(video.subtitles) && video.subtitles.map((track, i) => (
+                    <track
+                      key={track.language + i}
+                      kind="subtitles"
+                      label={track.label}
+                      srcLang={track.language}
+                      src={track.url}
+                      // Auto-enable the first track if the user has "subtitles by default" on
+                      default={i === 0 && user?.playback?.subtitles === true}
+                    />
+                  ))}
                   Your browser does not support the video tag.
                 </video>
               ) : (

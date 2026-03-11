@@ -4,7 +4,8 @@ import { User } from "../models/user.model.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/Apiresponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
-import { uploadOnCloudinary,deleteOnCloudinary } from "../utils/cloudinary.js";
+import { uploadOnCloudinary, deleteOnCloudinary, uploadSubtitleToCloudinary } from "../utils/cloudinary.js";
+import { autoGenerateSubtitle } from "../utils/autoSubtitle.js";
 import { notifyVideoUpload } from "./notification.controller.js";
 
 //for trending ..
@@ -311,6 +312,16 @@ const publishVideo = asyncHandler(async (req, res) => {
         videoType:videoType
     })
 
+    // Optional: subtitle/caption file (.vtt)
+    const subtitlePath = req.files?.subtitle?.[0]?.path;
+    if (subtitlePath) {
+        const subtitleUpload = await uploadSubtitleToCloudinary(subtitlePath);
+        if (subtitleUpload?.url) {
+            video.subtitles = [{ label: "English", language: "en", url: subtitleUpload.url }];
+            await video.save();
+        }
+    }
+
     if(!video){
         throw new ApiError(200,"Errror will uploading a data in database");
     }
@@ -398,6 +409,8 @@ const getVideoById = asyncHandler(async (req, res) => {
                 createdAt:1,
                 updatedAt:1,
                 isPublished:1,
+                subtitles:1,
+                streamKey:1,
             }
         }
     ])
@@ -799,7 +812,65 @@ const getRelatedVideos = asyncHandler(async (req, res) => {
     );
 });
 
+// Add / replace a subtitle track on an existing video
+const uploadSubtitle = asyncHandler(async (req, res) => {
+    const { videoId } = req.params;
+    const { label = "English", language = "en" } = req.body;
+
+    if (!req.user) throw new ApiError(401, "Login required");
+    if (!isValidObjectId(videoId)) throw new ApiError(400, "Invalid video ID");
+
+    const video = await Video.findById(videoId);
+    if (!video) throw new ApiError(404, "Video not found");
+    if (video.owner.toString() !== req.user._id.toString()) throw new ApiError(403, "Not your video");
+
+    const subtitlePath = req.file?.path;
+    if (!subtitlePath) throw new ApiError(400, "Subtitle file is required (.vtt)");
+
+    const uploaded = await uploadSubtitleToCloudinary(subtitlePath);
+    if (!uploaded?.url) throw new ApiError(500, "Failed to upload subtitle file");
+
+    // Replace existing track for same language or add new one
+    const existing = video.subtitles.findIndex(s => s.language === language);
+    if (existing >= 0) {
+        video.subtitles[existing] = { label, language, url: uploaded.url };
+    } else {
+        video.subtitles.push({ label, language, url: uploaded.url });
+    }
+    await video.save();
+
+    return res.status(200).json(new ApiResponse(200, video.subtitles, "Subtitle uploaded successfully"));
+});
+
+// Auto-generate subtitles for an existing video using OpenAI Whisper
+const generateSubtitles = asyncHandler(async (req, res) => {
+    const { videoId } = req.params;
+    const { language = "en" } = req.body;
+
+    if (!req.user) throw new ApiError(401, "Login required");
+    if (!isValidObjectId(videoId)) throw new ApiError(400, "Invalid video ID");
+
+    const video = await Video.findById(videoId);
+    if (!video) throw new ApiError(404, "Video not found");
+    if (video.owner.toString() !== req.user._id.toString()) throw new ApiError(403, "Not your video");
+
+    if (!video.videoFile) throw new ApiError(400, "Video file not found");
+
+    const result = await autoGenerateSubtitle(video.videoFile, language);
+
+    // Replace existing track for same language or add new one
+    const existing = video.subtitles.findIndex(s => s.language === language);
+    if (existing >= 0) {
+        video.subtitles[existing] = result;
+    } else {
+        video.subtitles.push(result);
+    }
+    await video.save();
+
+    return res.status(200).json(new ApiResponse(200, video.subtitles, "Subtitles generated successfully"));
+});
+
 export {getAllVideos,publishVideo,getVideoById,updateVideo,deleteVideo,togglePublishStatus,incrementVideoViews,getVideoStats,downloadVideo,getDownloadInfo
-    ,getTrendingVideos,getRelatedVideos
+    ,getTrendingVideos,getRelatedVideos,uploadSubtitle,generateSubtitles
 }
 

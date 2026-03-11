@@ -53,7 +53,7 @@ export const videoService = {
   },
 
   // Publish new video with progress tracking
-  async publishVideoWithProgress(videoData, videoFile, thumbnailFile, onProgress) {
+  async publishVideoWithProgress(videoData, videoFile, thumbnailFile, onProgress, subtitleFile = null) {
     try {
       const formData = new FormData();
       formData.append('title', videoData.title);
@@ -68,6 +68,9 @@ export const videoService = {
       }
       if (thumbnailFile) {
         formData.append('thumbnail', thumbnailFile);
+      }
+      if (subtitleFile) {
+        formData.append('subtitle', subtitleFile);
       }
 
       const response = await apiClient.post('/videos/publish-video', formData, {
@@ -108,6 +111,34 @@ export const videoService = {
       return response;
     } catch (error) {
       console.error('Publish video error:', error);
+      throw error;
+    }
+  },
+
+  // Upload / replace a subtitle track for an existing video
+  async uploadSubtitle(videoId, subtitleFile, label = 'English', language = 'en') {
+    try {
+      const formData = new FormData();
+      formData.append('subtitle', subtitleFile);
+      formData.append('label', label);
+      formData.append('language', language);
+      const response = await apiClient.post(`/videos/${videoId}/subtitle`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      return response;
+    } catch (error) {
+      console.error('Upload subtitle error:', error);
+      throw error;
+    }
+  },
+
+  // Auto-generate subtitles from the video using OpenAI Whisper (backend does all the work)
+  async generateSubtitles(videoId, language = 'en') {
+    try {
+      const response = await apiClient.post(`/videos/${videoId}/generate-subtitles`, { language });
+      return response;
+    } catch (error) {
+      console.error('Generate subtitles error:', error);
       throw error;
     }
   },

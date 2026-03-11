@@ -8,7 +8,7 @@ import { tweetService, transformTweetsArray } from "../services/tweetService";
 import { useAuth } from "../contexts/AuthContext";
 import VideoCard from "../components/VideoCard";
 import TweetCard from "../components/TweetCard";
-import { Play, Folder, MessageSquare } from "lucide-react";
+import { Play, Folder, MessageSquare, ListVideo, Users, Lock, Search, X } from "lucide-react";
 
 // Component to display playlist thumbnail using first video
 const PlaylistThumbnail = ({ playlist }) => {
@@ -42,6 +42,84 @@ const PlaylistThumbnail = ({ playlist }) => {
   );
 };
 
+const SubscriptionsWithSearch = ({ subscriptions, isOwnProfile, navigate }) => {
+  const [query, setQuery] = useState("");
+
+  const filtered = subscriptions.filter(ch => {
+    const q = query.toLowerCase();
+    return (
+      (ch.fullName || "").toLowerCase().includes(q) ||
+      (ch.userName || "").toLowerCase().includes(q)
+    );
+  });
+
+  return (
+    <div>
+      {/* Search bar */}
+      <div className="mb-5 relative max-w-md">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+        <input
+          type="text"
+          value={query}
+          onChange={e => setQuery(e.target.value)}
+          placeholder="Search subscriptions..."
+          className="w-full pl-9 pr-9 py-2 rounded-lg border border-gray-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
+        />
+        {query && (
+          <button
+            onClick={() => setQuery("")}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        )}
+      </div>
+
+      {/* Results */}
+      {filtered.length > 0 ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {filtered.map(channel => (
+            <div
+              key={channel._id}
+              className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 flex items-center gap-4 hover:shadow-md transition-shadow cursor-pointer"
+              onClick={() => navigate(`/profile/${channel._id}`)}
+            >
+              <div className="w-14 h-14 rounded-full overflow-hidden flex-shrink-0 border-2 border-gray-100">
+                {channel.avatar
+                  ? <img src={channel.avatar} alt={channel.fullName} className="w-full h-full object-cover" />
+                  : <div className="w-full h-full bg-indigo-100 flex items-center justify-center text-indigo-600 text-xl font-bold">
+                      {(channel.fullName || channel.userName || "U").charAt(0)}
+                    </div>}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-semibold text-gray-900 truncate">{channel.fullName || channel.userName}</p>
+                <p className="text-sm text-gray-500">@{channel.userName}</p>
+                {channel.subscribersCount !== undefined && (
+                  <p className="text-xs text-gray-400 mt-0.5">{channel.subscribersCount.toLocaleString()} subscribers</p>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : subscriptions.length === 0 ? (
+        <div className="bg-white rounded-lg shadow p-8 text-center">
+          <Users className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+          <h3 className="text-lg font-medium text-gray-800 mb-1">No subscriptions yet</h3>
+          <p className="text-gray-500 text-sm">
+            {isOwnProfile ? "You haven't subscribed to any channels yet." : "This user hasn't subscribed to any channels."}
+          </p>
+        </div>
+      ) : (
+        <div className="bg-white rounded-lg shadow p-8 text-center">
+          <Search className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+          <h3 className="text-lg font-medium text-gray-800 mb-1">No results for "{query}"</h3>
+          <p className="text-gray-500 text-sm">Try a different name or username.</p>
+        </div>
+      )}
+    </div>
+  );
+};
+
 const Profile = ({ onVideoSelect }) => {
   const { userId } = useParams();
   const navigate = useNavigate();
@@ -51,6 +129,8 @@ const Profile = ({ onVideoSelect }) => {
   const [activeTab, setActiveTab] = useState("videos");
   const [videos, setVideos] = useState([]);
   const [creatorPlaylists, setCreatorPlaylists] = useState([]);
+  const [savedPlaylists, setSavedPlaylists] = useState([]);
+  const [subscriptions, setSubscriptions] = useState([]);
   const [tweets, setTweets] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -158,6 +238,24 @@ const Profile = ({ onVideoSelect }) => {
             } catch (err) {
               console.error('Error fetching tweets:', err);
               setTweets([]);
+            }
+            break;
+
+          case "subscriptions":
+            try {
+              const subRes = await subscriptionService.getSubscribedChannels(profileUser._id);
+              setSubscriptions(subRes.success ? (subRes.data || []) : []);
+            } catch {
+              setSubscriptions([]);
+            }
+            break;
+
+          case "savedPlaylists":
+            try {
+              const spRes = await playlistService.getUserPlaylists(profileUser._id);
+              setSavedPlaylists(spRes.success ? (spRes.data || []) : []);
+            } catch {
+              setSavedPlaylists([]);
             }
             break;
         }
@@ -282,36 +380,31 @@ const Profile = ({ onVideoSelect }) => {
         {/* Tabs */}
         <div className="border-t border-gray-200">
           <div className="flex overflow-x-auto">
-            <button
-              onClick={() => setActiveTab("videos")}
-              className={`px-6 py-3 text-sm font-medium whitespace-nowrap ${
-                activeTab === "videos"
-                  ? "border-b-2 border-red-600 text-red-600"
-                  : "text-gray-600 hover:text-gray-900"
-              }`}
-            >
-              Videos
-            </button>
-            <button
-              onClick={() => setActiveTab("playlists")}
-              className={`px-6 py-3 text-sm font-medium whitespace-nowrap ${
-                activeTab === "playlists"
-                  ? "border-b-2 border-red-600 text-red-600"
-                  : "text-gray-600 hover:text-gray-900"
-              }`}
-            >
-              Playlists
-            </button>
-            <button
-              onClick={() => setActiveTab("tweets")}
-              className={`px-6 py-3 text-sm font-medium whitespace-nowrap ${
-                activeTab === "tweets"
-                  ? "border-b-2 border-red-600 text-red-600"
-                  : "text-gray-600 hover:text-gray-900"
-              }`}
-            >
-              Tweets
-            </button>
+            {[
+              { id: "videos", label: "Videos" },
+              { id: "playlists", label: "Playlists" },
+              { id: "tweets", label: "Tweets" },
+              // Show Subscriptions tab if own profile OR subscriptionList is public
+              ...(isOwnProfile || profileUser?.privacy?.subscriptionListPublic
+                ? [{ id: "subscriptions", label: "Subscriptions" }]
+                : []),
+              // Show Saved Playlists tab if own profile OR savedPlaylists is public
+              ...(isOwnProfile || profileUser?.privacy?.savedPlaylistsPublic
+                ? [{ id: "savedPlaylists", label: "Saved Playlists" }]
+                : []),
+            ].map(tab => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`px-6 py-3 text-sm font-medium whitespace-nowrap ${
+                  activeTab === tab.id
+                    ? "border-b-2 border-red-600 text-red-600"
+                    : "text-gray-600 hover:text-gray-900"
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
           </div>
         </div>
       </div>
@@ -412,6 +505,70 @@ const Profile = ({ onVideoSelect }) => {
                       {isOwnProfile
                         ? "Post your first tweet from the Tweets page!"
                         : "This user hasn't posted any tweets yet."}
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Subscriptions Tab */}
+            {activeTab === "subscriptions" && (
+              <div>
+                {!isOwnProfile && !profileUser?.privacy?.subscriptionListPublic ? (
+                  <div className="bg-white rounded-lg shadow p-8 text-center">
+                    <Lock className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+                    <h3 className="text-lg font-medium text-gray-800 mb-1">Private</h3>
+                    <p className="text-gray-500 text-sm">This user's subscription list is private.</p>
+                  </div>
+                ) : (
+                  <SubscriptionsWithSearch
+                    subscriptions={subscriptions}
+                    isOwnProfile={isOwnProfile}
+                    navigate={navigate}
+                  />
+                )}
+              </div>
+            )}
+
+            {/* Saved Playlists Tab */}
+            {activeTab === "savedPlaylists" && (
+              <div>
+                {!isOwnProfile && !profileUser?.privacy?.savedPlaylistsPublic ? (
+                  <div className="bg-white rounded-lg shadow p-8 text-center">
+                    <Lock className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+                    <h3 className="text-lg font-medium text-gray-800 mb-1">Private</h3>
+                    <p className="text-gray-500 text-sm">This user's saved playlists are private.</p>
+                  </div>
+                ) : savedPlaylists.length > 0 ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {savedPlaylists.map(playlist => (
+                      <div
+                        key={playlist._id}
+                        className="bg-white rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+                        onClick={() => navigate(`/playlist/${playlist._id}`)}
+                      >
+                        <div className="aspect-video bg-gradient-to-br from-blue-50 to-indigo-100 rounded-t-xl flex items-center justify-center overflow-hidden">
+                          <PlaylistThumbnail playlist={playlist} />
+                        </div>
+                        <div className="p-4">
+                          <h4 className="font-semibold text-gray-900 truncate">{playlist.name}</h4>
+                          {playlist.description && (
+                            <p className="text-sm text-gray-500 mt-1 line-clamp-2">{playlist.description}</p>
+                          )}
+                          <div className="flex items-center mt-2 text-xs text-gray-400 gap-1">
+                            <ListVideo className="w-3 h-3" />
+                            {playlist.videos?.length || 0} videos
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="bg-white rounded-lg shadow p-8 text-center">
+                    <ListVideo className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+                    <h3 className="text-lg font-medium text-gray-800 mb-1">No saved playlists</h3>
+                    <p className="text-gray-500 text-sm">
+                      {isOwnProfile ? "You haven't saved any playlists yet." : "This user has no saved playlists."}
                     </p>
                   </div>
                 )}

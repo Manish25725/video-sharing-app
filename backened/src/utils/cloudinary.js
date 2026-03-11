@@ -73,4 +73,25 @@ const deleteOnCloudinary = async (url) => {
     }
 };
 
-export {uploadOnCloudinary,deleteOnCloudinary};
+const uploadSubtitleToCloudinary = async (localFilePath) => {
+    try {
+        if (!localFilePath) return null;
+        if (!fs.existsSync(localFilePath)) return null;
+
+        const response = await cloudinary.uploader.upload(localFilePath, {
+            resource_type: "raw",
+            format: "vtt",
+        });
+
+        if (fs.existsSync(localFilePath)) fs.unlinkSync(localFilePath);
+        return response;
+    } catch (error) {
+        console.log("Cloudinary subtitle upload error:", error);
+        if (localFilePath && fs.existsSync(localFilePath)) {
+            try { fs.unlinkSync(localFilePath); } catch {}
+        }
+        return null;
+    }
+};
+
+export {uploadOnCloudinary, deleteOnCloudinary, uploadSubtitleToCloudinary};
