@@ -10,24 +10,36 @@ const imageFilter=asyncHandler(async (req,_,next)=>{
         throw new ApiError(400,"User should be logged in");
     }
 
-    const file=req.file;
+    const allowedImageMimeTypes = [
+        "image/jpeg",
+        "image/png",
+        "image/gif",
+        "image/webp",
+        "image/bmp",
+        "image/svg+xml"
+    ];
 
+    // Handle array uploads (req.files)
+    if(req.files && Array.isArray(req.files) && req.files.length > 0){
+        for(const file of req.files){
+            if(!allowedImageMimeTypes.includes(file.mimetype)){
+                // Remove all uploaded files before throwing
+                req.files.forEach(f => { if(fs.existsSync(f.path)) fs.unlinkSync(f.path); });
+                throw new ApiError(400,"Only image files are allowed");
+            }
+        }
+        return next();
+    }
+
+    // Handle single upload (req.file)
+    const file = req.file;
     if(!file){
         return next();
     }
 
-    const allowedImageMimeTypes = [
-    "image/jpeg",
-    "image/png",
-    "image/gif",
-    "image/webp",
-    "image/bmp",
-    "image/svg+xml"
-    ];
-
     if(!allowedImageMimeTypes.includes(file.mimetype)){
         fs.unlinkSync(file.path);
-        throw new ApiError(400,"only image is required");
+        throw new ApiError(400,"Only image files are allowed");
     }
     next();
 })
