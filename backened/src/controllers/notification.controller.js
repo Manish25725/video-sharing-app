@@ -46,6 +46,11 @@ const sendRealTimeNotification = (recipient, notification) => {
                 tweet: notification.tweet ? {
                     _id: notification.tweet._id,
                     content: notification.tweet.content
+                } : null,
+                scheduledStream: notification.scheduledStream ? {
+                    _id: notification.scheduledStream._id,
+                    title: notification.scheduledStream.title,
+                    scheduledAt: notification.scheduledStream.scheduledAt
                 } : null
             },
             createdAt: notification.createdAt,
@@ -62,7 +67,7 @@ const sendRealTimeNotification = (recipient, notification) => {
 };
 
 // Helper function to create and send notification
-const createAndSendNotification = async ({ recipient, sender, type, message, video = null, tweet = null }) => {
+const createAndSendNotification = async ({ recipient, sender, type, message, video = null, tweet = null, scheduledStream = null }) => {
     try {
         // Don't send notification to self
         if (recipient.toString() === sender.toString()) {
@@ -77,6 +82,7 @@ const createAndSendNotification = async ({ recipient, sender, type, message, vid
             message,
             video,
             tweet,
+            scheduledStream,
             isSent: false // Will be updated if user is online
         });
 
@@ -115,7 +121,8 @@ const createAndSendNotification = async ({ recipient, sender, type, message, vid
 const generateMessage = (type, senderName, contentTitle = '') => {
     const messages = {
         'video_upload': `${senderName} uploaded a new video "${contentTitle}"`,
-        'tweet_post': `${senderName} posted a new tweet`
+        'tweet_post': `${senderName} posted a new tweet`,
+        'stream_scheduled': `${senderName} scheduled a live stream: "${contentTitle}"`
     };
 
     return messages[type] || `${senderName} performed an action`;
@@ -209,6 +216,47 @@ const notifyTweetPost = async (authorId, tweetContent, tweetId) => {
     }
 };
 
+// Send stream scheduled notification to subscribers
+const notifyStreamScheduled = async (streamerId, streamTitle, scheduledStreamId) => {
+    try {
+        const sender = await getSenderInfo(streamerId);
+        if (!sender) return null;
+
+        const subscriptions = await Subscription.find({
+            channel: streamerId,
+            notificationsEnabled: true
+        }).select('subscriber').lean();
+
+        if (!subscriptions.length) return [];
+
+        const subscriberIds = subscriptions.map(s => s.subscriber);
+
+        const eligibleUsers = await User.find({
+            _id: { $in: subscriberIds },
+            notifyOnStream: true
+        }).select('_id').lean();
+
+        const message = generateMessage('stream_scheduled', sender.fullName || sender.userName, streamTitle);
+
+        const notifications = [];
+        for (const u of eligibleUsers) {
+            const notification = await createAndSendNotification({
+                recipient: u._id,
+                sender: streamerId,
+                type: 'stream_scheduled',
+                message,
+                scheduledStream: scheduledStreamId
+            });
+            if (notification) notifications.push(notification);
+        }
+
+        return notifications;
+    } catch (error) {
+        console.error('Error sending stream scheduled notifications:', error);
+        return null;
+    }
+};
+
 // Get user notifications with pagination
 const getUserNotifications = asyncHandler(async (req, res) => {
     if (!req?.user) {
@@ -228,6 +276,7 @@ const getUserNotifications = asyncHandler(async (req, res) => {
             .populate('sender', 'userName fullName avatar')
             .populate('video', 'title thumbnail duration')
             .populate('tweet', 'content')
+            .populate('scheduledStream', 'title scheduledAt')
             .sort({ createdAt: -1 })
             .skip(skip)
             .limit(limit);
@@ -573,5 +622,6 @@ export {
     videoUploadeNotify,
     postUploadNotify,
     notifyVideoUpload,
-    notifyTweetPost
+    notifyTweetPost,
+    notifyStreamScheduled
 };

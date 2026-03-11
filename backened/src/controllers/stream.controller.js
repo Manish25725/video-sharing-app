@@ -11,6 +11,7 @@ import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/Apiresponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
+import { notifyStreamScheduled } from "./notification.controller.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -47,6 +48,12 @@ const goLive = asyncHandler(async (req, res) => {
       }, "You are already live")
     );
   }
+
+  // Clean up any stale/orphaned streams (key generated but OBS never connected)
+  await Stream.updateMany(
+    { streamerId: req.user._id, isLive: false, endedAt: { $exists: false } },
+    { $set: { endedAt: new Date() } }
+  );
 
   // Upload thumbnail if provided
   let thumbnailUrl = "";
@@ -119,7 +126,13 @@ const getStreamByKey = asyncHandler(async (req, res) => {
 
 /* ─── Get My Stream ───────────────────────────────────────── */
 const getMyStream = asyncHandler(async (req, res) => {
-  const stream = await Stream.findOne({ streamerId: req.user._id })
+  // Only return a stream where OBS is actually connected and streaming.
+  // Never rehydrate a stale/offline stream — that causes the OBS config
+  // screen to appear without the user having started anything.
+  const stream = await Stream.findOne({
+    streamerId: req.user._id,
+    isLive: true,
+  })
     .sort({ createdAt: -1 })
     .lean();
 
@@ -145,15 +158,26 @@ const scheduleStream = asyncHandler(async (req, res) => {
   // Allow 60 s of clock skew between browser and server
   if (date < new Date(Date.now() - 60_000)) throw new ApiError(400, "Scheduled time must be in the future");
 
+  // Upload thumbnail if provided
+  let thumbnailUrl = "";
+  if (req.file?.path) {
+    const uploaded = await uploadOnCloudinary(req.file.path);
+    if (uploaded?.url) thumbnailUrl = uploaded.url;
+  }
+
   const scheduled = await ScheduledStream.create({
     title: title.trim(),
     description: description?.trim() || "",
+    thumbnailUrl,
     streamerId: req.user._id,
     scheduledAt: date,
   });
 
   const populated = await ScheduledStream.findById(scheduled._id)
     .populate("streamerId", "fullName userName avatar");
+
+  // Notify all subscribers (fire-and-forget — don't block the response)
+  notifyStreamScheduled(req.user._id, scheduled.title, scheduled._id).catch(() => {});
 
   return res.status(201).json(new ApiResponse(201, populated, "Stream scheduled"));
 });

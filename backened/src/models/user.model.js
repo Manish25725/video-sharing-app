@@ -94,6 +94,11 @@ const userSchema = new Schema(
             default:true
         },
 
+        notifyOnStream:{
+            type:Boolean,
+            default:true
+        },
+
         notifyOnComment:{
             type:Boolean,
             default:false

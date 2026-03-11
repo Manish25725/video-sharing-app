@@ -302,11 +302,29 @@ const GoLivePanel = () => {
 ══════════════════════════════ */
 const SchedulePanel = ({ onClose }) => {
   const [form, setForm] = useState({ title: "", description: "", scheduledAt: "" });
+  const [thumbnail, setThumbnail] = useState(null);
+  const [thumbnailPreview, setThumbnailPreview] = useState("");
+  const thumbnailRef = useRef(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(null);
 
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
+
+  const handleThumbnail = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (thumbnailPreview) URL.revokeObjectURL(thumbnailPreview);
+    setThumbnail(file);
+    setThumbnailPreview(URL.createObjectURL(file));
+  };
+
+  const clearThumbnail = () => {
+    if (thumbnailPreview) URL.revokeObjectURL(thumbnailPreview);
+    setThumbnail(null);
+    setThumbnailPreview("");
+    if (thumbnailRef.current) thumbnailRef.current.value = "";
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -317,11 +335,13 @@ const SchedulePanel = ({ onClose }) => {
     setLoading(true);
     setError("");
     try {
-      const { data } = await streamService.scheduleStream({
-        title: form.title.trim(),
-        description: form.description.trim(),
-        scheduledAt: new Date(form.scheduledAt).toISOString(),
-      });
+      const fd = new FormData();
+      fd.append("title", form.title.trim());
+      fd.append("description", form.description.trim());
+      fd.append("scheduledAt", new Date(form.scheduledAt).toISOString());
+      if (thumbnail) fd.append("thumbnail", thumbnail);
+
+      const { data } = await streamService.scheduleStream(fd);
       setSuccess(data);
     } catch (err) {
       setError(err?.message || "Failed to schedule stream");
@@ -368,6 +388,27 @@ const SchedulePanel = ({ onClose }) => {
           <AlertTriangle className="w-4 h-4 flex-shrink-0" /> {error}
         </div>
       )}
+
+      {/* Thumbnail */}
+      <div>
+        <label className="block text-xs font-medium text-gray-600 mb-1.5">Stream Thumbnail</label>
+        {thumbnailPreview ? (
+          <div className="relative w-full aspect-video rounded-xl overflow-hidden border border-gray-200 bg-gray-100">
+            <img src={thumbnailPreview} alt="preview" className="w-full h-full object-cover" />
+            <button type="button" onClick={clearThumbnail}
+              className="absolute top-2 right-2 p-1 bg-gray-900/60 hover:bg-gray-900/80 text-white rounded-full transition-colors">
+              <X className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        ) : (
+          <button type="button" onClick={() => thumbnailRef.current?.click()}
+            className="w-full flex flex-col items-center justify-center gap-1.5 py-5 border-2 border-dashed border-gray-200 rounded-xl text-gray-400 hover:border-indigo-400 hover:text-indigo-500 hover:bg-indigo-50/30 transition-all">
+            <ImagePlus className="w-6 h-6" />
+            <span className="text-xs font-medium">Click to upload thumbnail</span>
+          </button>
+        )}
+        <input ref={thumbnailRef} type="file" accept="image/*" onChange={handleThumbnail} className="hidden" />
+      </div>
 
       <div>
         <label className="block text-xs font-medium text-gray-600 mb-1.5">Stream Title *</label>

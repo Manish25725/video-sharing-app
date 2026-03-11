@@ -20,7 +20,8 @@ const notificationSchema = new Schema({
         type: String,
         enum: [
             'video_upload',
-            'tweet_post'
+            'tweet_post',
+            'stream_scheduled'
         ],
         required: true
     },
@@ -34,6 +35,11 @@ const notificationSchema = new Schema({
     tweet: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "Tweet"
+    },
+
+    scheduledStream: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "ScheduledStream"
     },
     
     // Notification message

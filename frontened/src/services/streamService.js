@@ -25,7 +25,7 @@ const streamService = {
   getChatReplay: (streamKey) => api.get(`/streams/${streamKey}/chat-replay`),
 
   // Scheduling
-  scheduleStream: (data) => api.post("/streams/schedule", data),
+  scheduleStream: (formData) => api.uploadFile("/streams/schedule", formData),
   getScheduledStreams: () => api.get("/streams/scheduled"),
   cancelScheduledStream: (id) => api.patch(`/streams/schedule/${id}/cancel`),
 };

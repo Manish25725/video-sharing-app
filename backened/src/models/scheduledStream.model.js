@@ -13,6 +13,10 @@ const scheduledStreamSchema = new Schema(
       default: "",
       maxlength: 500,
     },
+    thumbnailUrl: {
+      type: String,
+      default: "",
+    },
     streamerId: {
       type: Schema.Types.ObjectId,
       ref: "User",

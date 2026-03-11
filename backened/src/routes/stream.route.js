@@ -27,7 +27,7 @@ router.route("/scheduled").get(getScheduledStreams);
 // ── Protected routes ───────────────────────────────────────────
 router.route("/go-live").post(verifyJWT, upload.single("thumbnail"), imageFilter, goLive);
 router.route("/my-stream").get(verifyJWT, getMyStream);
-router.route("/schedule").post(verifyJWT, scheduleStream);
+router.route("/schedule").post(verifyJWT, upload.single("thumbnail"), imageFilter, scheduleStream);
 router.route("/schedule/:id/cancel").patch(verifyJWT, cancelScheduledStream);
 
 // ── Parameterized routes (must be AFTER specific ones) ─────────

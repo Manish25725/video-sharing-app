@@ -68,12 +68,13 @@ const GoLive = () => {
   const [saving, setSaving] = useState(false);
   const [savedVideoId, setSavedVideoId] = useState(null);
 
-  // Re-hydrate if creator already has an active stream
+  // Re-hydrate only if OBS is actively connected (isLive: true).
+  // Never auto-restore a stale stream where the key was generated but OBS never connected.
   useEffect(() => {
     streamService.getMyStream()
       .then(({ data }) => {
         const { stream, rtmpUrl, hlsUrl, streamKey } = data || {};
-        if (stream) {
+        if (stream && stream.isLive === true) {
           setStreamData({ stream, rtmpUrl, hlsUrl, streamKey });
           setTitle(stream.title);
           setDescription(stream.description || "");

@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { BellIcon } from '@heroicons/react/24/outline';
 import { BellIcon as BellIconSolid, XMarkIcon, PlayIcon } from '@heroicons/react/24/solid';
+import { Radio } from 'lucide-react';
 import notificationService from '../services/notificationService';
 import socketService from '../services/socketService';
 import { useAuth } from '../contexts/AuthContext';
+import { Link } from 'react-router-dom';
 
 const NotificationBell = () => {
     const [unreadCount, setUnreadCount] = useState(0);
@@ -290,6 +292,30 @@ const NotificationBell = () => {
                                                             "{notification.content.tweet.content.substring(0, 100)}{notification.content.tweet.content.length > 100 ? '...' : ''}"
                                                         </p>
                                                     </div>
+                                                )}
+
+                                                {(notification.type === 'stream_scheduled' || notification.content?.scheduledStream) && (
+                                                    <Link to="/scheduled-streams"
+                                                        className="flex items-center gap-2 p-2 bg-indigo-50 rounded-lg mb-2 hover:bg-indigo-100 transition-colors"
+                                                        onClick={() => setShowDropdown(false)}
+                                                    >
+                                                        <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center flex-shrink-0">
+                                                            <Radio className="w-4 h-4 text-indigo-600" />
+                                                        </div>
+                                                        <div className="min-w-0">
+                                                            <p className="text-xs font-medium text-indigo-800 truncate">
+                                                                {notification.content?.scheduledStream?.title || 'Upcoming stream'}
+                                                            </p>
+                                                            {notification.content?.scheduledStream?.scheduledAt && (
+                                                                <p className="text-xs text-indigo-500">
+                                                                    {new Date(notification.content.scheduledStream.scheduledAt).toLocaleString(undefined, {
+                                                                        month: 'short', day: 'numeric',
+                                                                        hour: '2-digit', minute: '2-digit'
+                                                                    })}
+                                                                </p>
+                                                            )}
+                                                        </div>
+                                                    </Link>
                                                 )}
                                                 
                                                 {/* Timestamp */}
