@@ -1,18 +1,16 @@
-﻿//require('dotenv').config({path:"./env"});
-import { createServer } from 'http'
+﻿import { createServer } from 'http'
 import { Server } from 'socket.io'
 import { createAdapter } from "@socket.io/redis-adapter"
+import dotenv from "dotenv"
+
+// dotenv MUST be loaded before any module that reads process.env at import time
+dotenv.config({ path: "./.env" })
+
 import connectDB from './db/index.js'
 import {app} from './app.js'
 import { nms } from './liveServer.js'
 import { pub, sub } from './lib/redis.js'
 import { registerSocketHandlers } from './live/socketHandlers.js'
-import dotenv from "dotenv"
-import "./workers/emailWorker.js"      // start background email worker
-
-dotenv.config({
-    path:"./.env"
-})
 
 // Create HTTP server and Socket.io instance
 const server = createServer(app)

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useSignup } from "../contexts/SignupContext.jsx";
 import { User, Mail, Lock, AtSign, Eye, EyeOff, Play } from "lucide-react";
+import api from "../services/api.js";
 
 const StepIndicator = ({ current, total }) => (
   <div className="flex items-center gap-3 mb-8">
@@ -34,6 +35,8 @@ const Signup = () => {
   });
   const [showPw, setShowPw] = useState(false);
   const [errors, setErrors] = useState({});
+  const [loading, setLoading] = useState(false);
+  const [apiError, setApiError] = useState("");
 
   const set = (key) => (e) => setForm((f) => ({ ...f, [key]: e.target.value }));
 
@@ -47,12 +50,21 @@ const Signup = () => {
     return errs;
   };
 
-  const handleNext = (e) => {
+  const handleNext = async (e) => {
     e.preventDefault();
+    setApiError("");
     const errs = validate();
     if (Object.keys(errs).length) { setErrors(errs); return; }
     updateSignup(form);
-    navigate("/upload-avatar");
+    setLoading(true);
+    try {
+      await api.post("/users/send-signup-otp", { email: form.email });
+      navigate("/verify-signup-email");
+    } catch (err) {
+      setApiError(err?.message || "Failed to send verification code. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const inputClass = (key) =>
@@ -71,10 +83,14 @@ const Signup = () => {
         </div>
 
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
-          <StepIndicator current={1} total={3} />
+          <StepIndicator current={1} total={4} />
 
           <h2 className="text-xl font-bold text-gray-900 mb-1">Create your account</h2>
           <p className="text-sm text-gray-500 mb-6">Tell us a bit about yourself</p>
+
+          {apiError && (
+            <div className="mb-4 p-3.5 rounded-xl bg-red-50 border border-red-100 text-sm text-red-700">{apiError}</div>
+          )}
 
           <form onSubmit={handleNext} className="space-y-4">
             {/* Full Name */}
@@ -124,8 +140,14 @@ const Signup = () => {
             </div>
 
             <button type="submit"
-              className="w-full py-2.5 mt-2 bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 active:scale-[0.99] text-white rounded-xl text-sm font-semibold shadow-sm hover:shadow-md transition-all">
-              Continue →
+              disabled={loading}
+              className="w-full py-2.5 mt-2 bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 active:scale-[0.99] text-white rounded-xl text-sm font-semibold shadow-sm hover:shadow-md transition-all disabled:opacity-60 disabled:cursor-not-allowed">
+              {loading ? (
+                <span className="flex items-center justify-center gap-2">
+                  <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  Sending code…
+                </span>
+              ) : "Continue →"}
             </button>
           </form>
         </div>

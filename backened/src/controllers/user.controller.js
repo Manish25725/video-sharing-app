@@ -8,7 +8,9 @@ import jwt from "jsonwebtoken"
 import mongoose from "mongoose"
 import crypto from "crypto"
 import { pub } from "../lib/redis.js"
-import { emailQueue } from "../queues/emailQueue.js"
+import { sendEmail } from "../utils/email.js"
+import { verifyEmailTemplate } from "../emails/verifyEmailTemplate.js"
+import { resetPasswordTemplate } from "../emails/resetPasswordTemplate.js"
 import { isEmailRateLimited } from "../utils/emailRateLimit.js"
 
 
@@ -128,20 +130,24 @@ const registerUser= asyncHandler(async (req,res)=>{
         throw new ApiError(500,"Something went wrong while regestering the user");
     }
 
-    // Queue a verification email (non-blocking — never fails the registration)
+    // If the user verified their email before registration (signup OTP flow), mark as verified
     try {
-        const otp = Math.floor(100_000 + Math.random() * 900_000).toString();
-        await pub.setex(`otp:verify:${createdUser._id}`, 600, otp); // 10 min TTL
-        if (emailQueue) {
-            await emailQueue.add("send", {
-                type:     "verify",
-                to:       createdUser.email,
-                otp,
-                userName: createdUser.fullName,
-            });
+        const preVerified = await pub.get(`signup:verified:${email.toLowerCase().trim()}`);
+        if (preVerified) {
+            await User.findByIdAndUpdate(user._id, { isEmailVerified: true });
+            await pub.del(`signup:verified:${email.toLowerCase().trim()}`);
+        } else {
+            // Send post-registration verification email as fallback
+            const otp = Math.floor(100_000 + Math.random() * 900_000).toString();
+            await pub.setex(`otp:verify:${user._id}`, 600, otp);
+            sendEmail({
+                to:      createdUser.email,
+                subject: "Verify your email",
+                html:    verifyEmailTemplate({ otp, userName: createdUser.fullName }),
+            }).catch(err => console.error("[email] Failed to send verification email:", err.message));
         }
     } catch (err) {
-        console.error("[email] Failed to queue verification email:", err.message);
+        console.error("[email] Signup email flow error:", err.message);
     }
 
     const regOptions = getCookieOptions();
@@ -963,14 +969,11 @@ const resendVerificationEmail = asyncHandler(async (req, res) => {
     const otp = Math.floor(100_000 + Math.random() * 900_000).toString();
     await pub.setex(`otp:verify:${userId}`, 600, otp);
 
-    if (emailQueue) {
-        await emailQueue.add("send", {
-            type:     "verify",
-            to:       user.email,
-            otp,
-            userName: user.fullName,
-        });
-    }
+    sendEmail({
+        to:      user.email,
+        subject: "Verify your email",
+        html:    verifyEmailTemplate({ otp, userName: user.fullName }),
+    }).catch(err => console.error("[email] resend-verification failed:", err.message));
 
     return res.status(200).json(new ApiResponse(200, null, "Verification email sent"));
 });
@@ -994,18 +997,17 @@ const forgotPassword = asyncHandler(async (req, res) => {
     const user = await User.findOne({ email });
 
     // Don't reveal whether the email exists
-    if (user && emailQueue) {
+    if (user) {
         const token    = crypto.randomBytes(32).toString("hex");
         const resetUrl = `${process.env.FRONTEND_URL || "http://localhost:5173"}/reset-password/${token}`;
 
-        await pub.setex(`pwreset:${token}`, 3600, user._id.toString()); // 1 hour TTL
+        await pub.setex(`pwreset:${token}`, 3600, user._id.toString());
 
-        await emailQueue.add("send", {
-            type:     "reset",
-            to:       user.email,
-            resetUrl,
-            userName: user.fullName,
-        });
+        sendEmail({
+            to:      user.email,
+            subject: "Reset your password",
+            html:    resetPasswordTemplate({ resetUrl, userName: user.fullName }),
+        }).catch(err => console.error("[email] forgot-password email failed:", err.message));
     }
 
     return res.status(200).json(
@@ -1041,7 +1043,65 @@ const resetPassword = asyncHandler(async (req, res) => {
 
 // ─────────────────────────────────────────────────────────────────────────────
 
+/**
+ * POST /users/send-signup-otp
+ * Public — sends a 6-digit OTP to the supplied email before account creation.
+ */
+const sendSignupOtp = asyncHandler(async (req, res) => {
+    const { email } = req.body;
+    if (!email || !email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) {
+        throw new ApiError(400, "A valid email address is required");
+    }
+
+    const normalised = email.toLowerCase().trim();
+
+    // Check if email is already registered
+    const existing = await User.findOne({ email: normalised });
+    if (existing) throw new ApiError(409, "An account with this email already exists");
+
+    // Rate-limit: max 5 OTP sends per 10 min for this email
+    const rateLimitKey = `ratelimit:signup-otp:${normalised}`;
+    const attempts = await pub.incr(rateLimitKey);
+    if (attempts === 1) await pub.expire(rateLimitKey, 600);
+    if (attempts > 5) throw new ApiError(429, "Too many requests. Please wait before requesting a new code.");
+
+    const otp = Math.floor(100_000 + Math.random() * 900_000).toString();
+    await pub.setex(`otp:signup:${normalised}`, 600, otp);
+
+    sendEmail({
+        to:      normalised,
+        subject: "Verify your email",
+        html:    verifyEmailTemplate({ otp, userName: email.split("@")[0] }),
+    }).catch(err => console.error("[email] signup-otp email failed:", err.message));
+
+    return res.status(200).json(new ApiResponse(200, {}, "Verification code sent"));
+});
+
+/**
+ * POST /users/verify-signup-otp
+ * Public — verifies the pre-registration OTP and marks the email as pre-verified in Redis.
+ */
+const verifySignupOtp = asyncHandler(async (req, res) => {
+    const { email, otp } = req.body;
+    if (!email || !otp) throw new ApiError(400, "Email and OTP are required");
+
+    const normalised = email.toLowerCase().trim();
+    const stored = await pub.get(`otp:signup:${normalised}`);
+
+    if (!stored || stored !== String(otp)) {
+        throw new ApiError(400, "Invalid or expired code");
+    }
+
+    await pub.del(`otp:signup:${normalised}`);
+    // Mark email as pre-verified for 30 min (long enough to finish avatar/cover upload)
+    await pub.setex(`signup:verified:${normalised}`, 1800, "1");
+
+    return res.status(200).json(new ApiResponse(200, {}, "Email verified"));
+});
+
 export {registerUser,
+    sendSignupOtp,
+    verifySignupOtp,
     loginUser,
     logoutUser,
     refreshAccessToken,

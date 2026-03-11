@@ -36,6 +36,7 @@
     "node-media-server": "^4.2.4",
     "nodemailer": "^8.0.2",
     "openai": "^6.27.0",
+    "resend": "^6.9.3",
     "socket.io": "^4.8.1"
   }
 }

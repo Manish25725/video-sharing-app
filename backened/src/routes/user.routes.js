@@ -1,5 +1,5 @@
 import {Router} from "express"
-import { changeCurrentPassword, getCurrentUser, getUserChannelProfile, getWatchHistory, getWatchLater, getWatchLaterIds, addToWatchLater, removeFromWatchLater, loginUser, logoutUser, registerUser, updateDetails, updateUserAvatar, updateUserCoverImage,addToWatchHistory, toggleNotifyOnPost, toggleNotifyOnVideo, toggleNotifyOnComment, toggleNotifyOnMention, toggleNotifyOnEmail, addAccount, switchAccount, getSavedAccounts, removeAccount, updateLanguage, getActiveSessions, revokeOtherSessions, updatePreferences, verifyEmail, resendVerificationEmail, forgotPassword, resetPassword } from "../controllers/user.controller.js";
+import { changeCurrentPassword, getCurrentUser, getUserChannelProfile, getWatchHistory, getWatchLater, getWatchLaterIds, addToWatchLater, removeFromWatchLater, loginUser, logoutUser, registerUser, updateDetails, updateUserAvatar, updateUserCoverImage,addToWatchHistory, toggleNotifyOnPost, toggleNotifyOnVideo, toggleNotifyOnComment, toggleNotifyOnMention, toggleNotifyOnEmail, addAccount, switchAccount, getSavedAccounts, removeAccount, updateLanguage, getActiveSessions, revokeOtherSessions, updatePreferences, verifyEmail, resendVerificationEmail, forgotPassword, resetPassword, sendSignupOtp, verifySignupOtp } from "../controllers/user.controller.js";
 import {upload} from "../middlewares/multer.middleware.js"
 import { optionalAuth, verifyJWT } from "../middlewares/auth.middleware.js";
 import { refreshAccessToken } from "../controllers/user.controller.js";
@@ -79,6 +79,10 @@ router.route("/preferences").patch(verifyJWT, updatePreferences);
 // Email verification
 router.route("/verify-email").post(verifyJWT, verifyEmail);
 router.route("/resend-verification").post(verifyJWT, resendVerificationEmail);
+
+// Signup OTP (pre-registration, public)
+router.route("/send-signup-otp").post(sendSignupOtp);
+router.route("/verify-signup-otp").post(verifySignupOtp);
 
 // Forgot / reset password (public)
 router.route("/forgot-password").post(forgotPassword);

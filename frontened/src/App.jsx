@@ -9,6 +9,7 @@ import UploadCover from "./pages/UploadCover"
 import ForgotPassword from "./pages/ForgotPassword"
 import ResetPassword from "./pages/ResetPassword"
 import VerifyEmail from "./pages/VerifyEmail"
+import VerifySignupEmail from "./pages/VerifySignupEmail"
 import ProfileSettings from "./pages/ProfileSettings"
 import LiveStreams from "./pages/LiveStreams"
 import LiveStream from "./pages/LiveStream"
@@ -85,6 +86,7 @@ function AppContent() {
           <Route path="/signup" element={<Signup />} />
           <Route path="/upload-avatar" element={<UploadAvatar />} />
           <Route path="/upload-cover" element={<UploadCover />} />
+          <Route path="/verify-signup-email" element={<VerifySignupEmail />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password/:token" element={<ResetPassword />} />
           <Route path="*" element={<Login />} />

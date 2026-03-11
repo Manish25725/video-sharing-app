@@ -76,7 +76,7 @@ const UploadCover = () => {
     const loginResult = await login(signupData.email, signupData.password);
     resetSignup();
     if (loginResult.success) {
-      navigate("/verify-email");
+      navigate("/");
     } else {
       // Registration succeeded but auto-login failed — send to login page
       navigate("/login");
@@ -95,7 +95,7 @@ const UploadCover = () => {
         </div>
 
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
-          <StepIndicator current={3} total={3} />
+          <StepIndicator current={4} total={4} />
 
           <h2 className="text-xl font-bold text-gray-900 mb-1">Add a cover photo</h2>
           <p className="text-sm text-gray-500 mb-6">Personalise your channel with a banner image</p>
