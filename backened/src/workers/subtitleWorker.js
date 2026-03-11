@@ -10,10 +10,18 @@ try {
         "subtitle-generation",
         async (job) => {
             const { videoId, videoFileUrl, language, ownerId } = job.data;
-            console.log(`[subtitle worker] Starting job ${job.id} for video ${videoId}`);
+            console.log(`[subtitle worker] Starting job ${job.id} (videoId: ${videoId}, lang: ${language})`);
 
-            // 1. Run the Groq Whisper transcription (download → transcribe → upload to Cloudinary)
-            const result = await autoGenerateSubtitle(videoFileUrl, language);
+            // 1. Run the chunked transcription pipeline.
+            //    onProgress reports live step updates stored in the BullMQ job.
+            const result = await autoGenerateSubtitle(
+                videoFileUrl,
+                language,
+                async (step, message) => {
+                    await job.updateProgress({ step, message });
+                    console.log(`[subtitle worker] job ${job.id} step ${step}: ${message}`);
+                }
+            );
 
             // 2. Persist the subtitle URL in MongoDB
             const video = await Video.findById(videoId);
@@ -35,7 +43,7 @@ try {
                 });
             }
 
-            console.log(`[subtitle worker] Done job ${job.id} for video ${videoId}`);
+            console.log(`[subtitle worker] Completed job ${job.id} (videoId: ${videoId})`);
             return { subtitles: video.subtitles };
         },
         {

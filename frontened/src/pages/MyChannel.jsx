@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react"
 import { Link } from "react-router-dom"
-import { Upload, Plus, List, BarChart3, Users, Video, Trash2, Edit, Eye, Play, MoreVertical, Settings, Bell, Heart, MessageCircle, Share2, FolderPlus, FolderEdit, Radio, Captions } from "lucide-react"
+import { Upload, Plus, List, BarChart3, Users, Video, Trash2, Edit, Eye, Play, MoreVertical, Settings, Bell, Heart, MessageCircle, Share2, FolderPlus, FolderEdit, Radio } from "lucide-react"
 import { videoService, transformVideosArray } from "../services/videoService"
 import { dashboardService } from "../services/dashboardService"
 import { likeService } from "../services/likeService"
@@ -39,30 +39,6 @@ const MyChannel = () => {
   
   // Toast state
   const [toast, setToast] = useState({ show: false, message: '', type: 'success' })
-  // Tracks which video is currently having subtitles generated
-  const [subtitleGenerating, setSubtitleGenerating] = useState(null)
-  // Ref to the active polling interval so we can clear it on unmount
-  const subtitlePollRef = useRef(null)
-
-  // Clean up polling interval when component unmounts
-  useEffect(() => () => { if (subtitlePollRef.current) clearInterval(subtitlePollRef.current) }, [])
-
-  // Listen for real-time subtitle-ready event from Socket.io (faster than polling)
-  useEffect(() => {
-    const onSubtitleReady = ({ videoId }) => {
-      // Cancel the polling interval — socket beat it
-      if (subtitlePollRef.current) {
-        clearInterval(subtitlePollRef.current)
-        subtitlePollRef.current = null
-      }
-      setSubtitleGenerating(null)
-      showToast("Subtitles generated successfully! 🎉", "success")
-      fetchUserVideos()
-    }
-    socketService.on("subtitle-ready", onSubtitleReady)
-    return () => socketService.off("subtitle-ready", onSubtitleReady)
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
 
   // Edit modal state
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
@@ -243,37 +219,61 @@ const MyChannel = () => {
 
   const handleGenerateSubtitles = async (videoId) => {
     setSubtitleGenerating(videoId)
+    setSubtitleStep("Starting…")
     try {
       // Enqueue the job — returns immediately with a jobId
+      // apiClient already unwraps response.data, so the ApiResponse fields
+      // are at the top level: response.statuscode / response.data / response.message
       const response = await videoService.generateSubtitles(videoId)
-      const jobId = response?.data?.jobId
-      if (!jobId) throw new Error("No job ID returned from server")
+      const { jobId, status } = response?.data ?? {}
 
-      showToast("Subtitle generation started… this may take a minute.", "success")
+      // Server says subtitles already exist — no need to poll
+      if (status === "already_exists") {
+        setSubtitleGenerating(null)
+        setSubtitleStep("")
+        showToast("Subtitles are already generated for this video.", "success")
+        return
+      }
+
+      // Server says job is already in progress — attach to existing job
+      if (status === "waiting" || status === "active" || status === "delayed") {
+        showToast("Subtitle generation is already in progress…", "success")
+      } else {
+        showToast("Subtitle generation started… this may take a minute.", "success")
+      }
+
+      if (!jobId) throw new Error("No job ID returned from server")
 
       // Poll every 4 seconds until the job completes or fails
       subtitlePollRef.current = setInterval(async () => {
         try {
-          const status = await videoService.getSubtitleJobStatus(videoId, jobId)
-          const state = status?.data?.state
+          const statusRes = await videoService.getSubtitleJobStatus(videoId, jobId)
+          const state    = statusRes?.data?.state
+          const stepMsg  = statusRes?.data?.progress?.message
+
+          // Update the live step label whenever the worker reports a new step
+          if (stepMsg) setSubtitleStep(stepMsg)
 
           if (state === "completed") {
             clearInterval(subtitlePollRef.current)
             subtitlePollRef.current = null
             setSubtitleGenerating(null)
+            setSubtitleStep("")
             showToast("Subtitles generated successfully! 🎉", "success")
             fetchUserVideos()
           } else if (state === "failed") {
             clearInterval(subtitlePollRef.current)
             subtitlePollRef.current = null
             setSubtitleGenerating(null)
-            showToast(status?.data?.reason || "Failed to generate subtitles", "error")
+            setSubtitleStep("")
+            showToast(statusRes?.data?.reason || "Failed to generate subtitles", "error")
           }
           // else: waiting | active | delayed — keep polling
         } catch {
           clearInterval(subtitlePollRef.current)
           subtitlePollRef.current = null
           setSubtitleGenerating(null)
+          setSubtitleStep("")
           showToast("Lost connection while checking subtitle status", "error")
         }
       }, 4000)
@@ -281,6 +281,7 @@ const MyChannel = () => {
     } catch (err) {
       console.error("Generate subtitles error:", err)
       setSubtitleGenerating(null)
+      setSubtitleStep("")
       const msg = err?.message || "Failed to start subtitle generation"
       showToast(msg, "error")
     }
@@ -746,7 +747,7 @@ const MyChannel = () => {
                     </button>
                   </div>
 
-                  {/* Video Actions */}
+                    {/* Video Actions */}
                   <div className="flex items-center space-x-1 bg-gray-50 rounded-lg p-1">
                     <button
                       onClick={() => handleEditVideo(video)}
@@ -754,18 +755,6 @@ const MyChannel = () => {
                       title="Edit video"
                     >
                       <Edit className="w-4 h-4" />
-                    </button>
-
-                    {/* Auto-generate subtitles */}
-                    <button
-                      onClick={() => handleGenerateSubtitles(video.id)}
-                      disabled={subtitleGenerating === video.id}
-                      className="p-2 text-gray-500 hover:text-purple-600 hover:bg-purple-50 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                      title={subtitleGenerating === video.id ? "Generating subtitles…" : "Auto-generate subtitles (AI)"}
-                    >
-                      {subtitleGenerating === video.id
-                        ? <div className="w-4 h-4 border-2 border-purple-400 border-t-transparent rounded-full animate-spin" />
-                        : <Captions className="w-4 h-4" />}
                     </button>
 
                     <button

@@ -132,28 +132,6 @@ export const videoService = {
     }
   },
 
-  // Auto-generate subtitles from the video using Groq Whisper (enqueues a background job)
-  async generateSubtitles(videoId, language = 'en') {
-    try {
-      const response = await apiClient.post(`/videos/${videoId}/generate-subtitles`, { language });
-      return response;
-    } catch (error) {
-      console.error('Generate subtitles error:', error);
-      throw error;
-    }
-  },
-
-  // Poll the status of a subtitle generation job
-  async getSubtitleJobStatus(videoId, jobId) {
-    try {
-      const response = await apiClient.get(`/videos/${videoId}/subtitle-job/${jobId}`);
-      return response;
-    } catch (error) {
-      console.error('Subtitle job status error:', error);
-      throw error;
-    }
-  },
-
   // Update video details
   async updateVideo(videoId, updateData, thumbnailFile = null) {
     try {

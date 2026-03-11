@@ -6,7 +6,6 @@ import { ApiResponse } from "../utils/Apiresponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { uploadOnCloudinary, deleteOnCloudinary, uploadSubtitleToCloudinary } from "../utils/cloudinary.js";
 import { notifyVideoUpload } from "./notification.controller.js";
-import { subtitleQueue } from "../queues/subtitleQueue.js";
 
 //for trending ..
 const getTrendingVideos=asyncHandler(async (req,res)=>{
@@ -842,52 +841,7 @@ const uploadSubtitle = asyncHandler(async (req, res) => {
     return res.status(200).json(new ApiResponse(200, video.subtitles, "Subtitle uploaded successfully"));
 });
 
-// Enqueue auto-subtitle generation — returns immediately with a jobId (non-blocking)
-const generateSubtitles = asyncHandler(async (req, res) => {
-    const { videoId } = req.params;
-    const { language = "en" } = req.body;
-
-    if (!req.user) throw new ApiError(401, "Login required");
-    if (!isValidObjectId(videoId)) throw new ApiError(400, "Invalid video ID");
-
-    const video = await Video.findById(videoId);
-    if (!video) throw new ApiError(404, "Video not found");
-    if (video.owner.toString() !== req.user._id.toString()) throw new ApiError(403, "Not your video");
-    if (!video.videoFile) throw new ApiError(400, "Video file not found");
-
-    if (!subtitleQueue) {
-        throw new ApiError(503, "Subtitle generation is unavailable — Redis is not running. Please install Memurai (Windows Redis) and restart the server.");
-    }
-
-    const job = await subtitleQueue.add("generate", {
-        videoId:      video._id.toString(),
-        videoFileUrl: video.videoFile,
-        language,
-        ownerId:      req.user._id.toString(),
-    });
-
-    return res.status(202).json(
-        new ApiResponse(202, { jobId: job.id }, "Subtitle generation started — poll /subtitle-job/:jobId for status")
-    );
-});
-
-// Poll the status of a subtitle generation job
-const getSubtitleJobStatus = asyncHandler(async (req, res) => {
-    const { jobId } = req.params;
-
-    const job = await subtitleQueue.getJob(jobId);
-    if (!job) throw new ApiError(404, "Job not found or already expired");
-
-    const state  = await job.getState();          // waiting | active | completed | failed | delayed
-    const result = state === "completed" ? job.returnvalue  : null;
-    const reason = state === "failed"    ? job.failedReason : null;
-
-    return res.status(200).json(
-        new ApiResponse(200, { jobId, state, result, reason }, "Job status fetched")
-    );
-});
-
 export {getAllVideos,publishVideo,getVideoById,updateVideo,deleteVideo,togglePublishStatus,incrementVideoViews,getVideoStats,downloadVideo,getDownloadInfo
-    ,getTrendingVideos,getRelatedVideos,uploadSubtitle,generateSubtitles,getSubtitleJobStatus
+    ,getTrendingVideos,getRelatedVideos,uploadSubtitle
 }
 

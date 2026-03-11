@@ -8,7 +8,6 @@ import { nms } from './liveServer.js'
 import { pub, sub } from './lib/redis.js'
 import { registerSocketHandlers } from './live/socketHandlers.js'
 import dotenv from "dotenv"
-import "./workers/subtitleWorker.js"   // start background subtitle worker
 
 dotenv.config({
     path:"./.env"

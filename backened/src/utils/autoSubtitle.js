@@ -40,6 +40,56 @@ const FFMPEG        = process.env.FFMPEG_PATH  || "ffmpeg";
 const FFPROBE       = process.env.FFPROBE_PATH || "ffprobe";
 const CHUNK_SECONDS = 300; // 5 min × 128 kbps ≈ 4.8 MB — well under the 25 MB limit
 
+// ─── FFmpeg availability check ────────────────────────────────────────────────
+
+/**
+ * Run once at module load. Prints a clear actionable message if ffmpeg or
+ * ffprobe are not found so the developer doesn't have to guess.
+ *
+ * On Windows: install ffmpeg from https://ffmpeg.org/download.html, unzip it,
+ * and either add the bin/ folder to your PATH or set FFMPEG_PATH / FFPROBE_PATH
+ * in your .env file:
+ *   FFMPEG_PATH=C:/ffmpeg/bin/ffmpeg.exe
+ *   FFPROBE_PATH=C:/ffmpeg/bin/ffprobe.exe
+ */
+async function verifyFfmpeg() {
+    for (const [name, bin] of [["ffmpeg", FFMPEG], ["ffprobe", FFPROBE]]) {
+        try {
+            await execFileAsync(bin, ["-version"]);
+        } catch {
+            console.error(
+                `[subtitle] ❌ ${name} not found at "${bin}".\n` +
+                `  → Install FFmpeg: https://ffmpeg.org/download.html\n` +
+                `  → Then add to .env: ${name.toUpperCase()}_PATH=C:/ffmpeg/bin/${name}.exe`
+            );
+        }
+    }
+}
+verifyFfmpeg();
+
+// ─── Wrapper: run FFmpeg/FFprobe and always surface stderr ───────────────────
+
+/**
+ * Like execFileAsync but includes both stdout and stderr in any thrown error
+ * so you never have to guess why FFmpeg failed.
+ *
+ * @param {string}   bin   path to ffmpeg or ffprobe
+ * @param {string[]} args
+ * @returns {Promise<{stdout: string, stderr: string}>}
+ */
+async function runFfmpeg(bin, args) {
+    try {
+        return await execFileAsync(bin, args, { maxBuffer: 10 * 1024 * 1024 });
+    } catch (err) {
+        // Always print FFmpeg's stderr to the terminal for easy debugging
+        if (err.stderr) console.error(`[FFmpeg stderr]\n${err.stderr}`);
+        // Re-throw with the last 15 lines of stderr (banner is suppressed by -loglevel error,
+        // so these lines will be the real error rather than build config noise)
+        const detail = err.stderr?.trim().split("\n").slice(-15).join(" | ") || err.message;
+        throw new Error(`FFmpeg error: ${detail}`);
+    }
+}
+
 // ─── Helper: safe file deletion ───────────────────────────────────────────────
 
 /** Delete a single file; never throws so cleanup never blocks the main flow. */
@@ -84,11 +134,39 @@ async function downloadVideo(url, dest) {
         writer.on("finish", resolve);
         writer.on("error",  reject);
     });
-    const mb = (fs.statSync(dest).size / 1_048_576).toFixed(1);
+    const fileSize = fs.statSync(dest).size;
+    const mb = (fileSize / 1_048_576).toFixed(1);
+    if (fileSize < 1024) {
+        throw new Error(`Downloaded file is too small (${fileSize} bytes) — the video URL may be invalid or require authentication.`);
+    }
     console.log(`[subtitle] Download complete — ${mb} MB`);
 }
 
 // ─── Step 2: extract audio ────────────────────────────────────────────────────
+
+/**
+ * Use ffprobe to confirm the file has at least one audio stream.
+ * Throws a clear human-readable error if not, so the worker fails fast
+ * instead of letting FFmpeg produce the cryptic "does not contain any stream"
+ * / "Invalid argument" messages.
+ *
+ * @param {string} videoPath
+ */
+async function assertHasAudio(videoPath) {
+    const { stdout } = await runFfmpeg(FFPROBE, [
+        "-v",            "error",
+        "-select_streams", "a",
+        "-show_entries", "stream=codec_type",
+        "-of",           "csv=p=0",
+        videoPath,
+    ]);
+    if (!stdout.trim()) {
+        throw new Error(
+            "This video has no audio track. Subtitles cannot be auto-generated — " +
+            "please add audio to the video first."
+        );
+    }
+}
 
 /**
  * Use FFmpeg to strip the video track and write a compact MP3.
@@ -101,14 +179,18 @@ async function downloadVideo(url, dest) {
  * @param {string} audioPath  destination .mp3 path
  */
 async function extractAudio(videoPath, audioPath) {
+    // Fail fast with a clear message before invoking FFmpeg
+    await assertHasAudio(videoPath);
+
     console.log("[subtitle] Extracting audio with FFmpeg…");
-    await execFileAsync(FFMPEG, [
-        "-y",                        // overwrite output without prompting
+    await runFfmpeg(FFMPEG, [
+        "-y",
+        "-loglevel", "error",   // suppress banner; only real errors are printed
         "-i",    videoPath,
-        "-vn",                       // drop video stream entirely
-        "-ac",   "1",                // mono
-        "-ar",   "16000",            // 16 kHz
-        "-b:a",  "128k",             // 128 kbps CBR
+        "-vn",
+        "-ac",   "1",
+        "-ar",   "16000",
+        "-b:a",  "128k",
         "-f",    "mp3",
         audioPath,
     ]);
@@ -133,13 +215,14 @@ async function splitAudio(audioPath, chunksDir) {
     const pattern = path.join(chunksDir, "chunk_%03d.mp3");
 
     console.log(`[subtitle] Splitting audio into ${CHUNK_SECONDS}s segments…`);
-    await execFileAsync(FFMPEG, [
+    await runFfmpeg(FFMPEG, [
         "-y",
+        "-loglevel", "error",   // suppress banner
         "-i",              audioPath,
         "-f",              "segment",
         "-segment_time",   String(CHUNK_SECONDS),
-        "-c",              "copy",          // stream-copy: no re-encode, nearly instant
-        "-reset_timestamps", "1",           // each chunk's timestamps start at 0
+        "-c",              "copy",
+        "-reset_timestamps", "1",
         pattern,
     ]);
 
@@ -154,7 +237,7 @@ async function splitAudio(audioPath, chunksDir) {
     const chunks = await Promise.all(
         files.map(async (file) => {
             const chunkPath = path.join(chunksDir, file);
-            const { stdout } = await execFileAsync(FFPROBE, [
+            const { stdout } = await runFfmpeg(FFPROBE, [
                 "-v",              "error",
                 "-show_entries",   "format=duration",
                 "-of",             "default=noprint_wrappers=1:nokey=1",
@@ -296,11 +379,13 @@ function languageLabel(code) {
 /**
  * Generate WebVTT subtitles for a video of any size.
  *
- * @param {string} videoUrl  Public Cloudinary video URL
- * @param {string} language  BCP-47 code (default "en")
+ * @param {string} videoUrl     Public Cloudinary video URL
+ * @param {string} language     BCP-47 code (default "en")
+ * @param {Function} onProgress Optional async callback: (step: number, message: string) => void
+ *                              Step numbers: 1=download 2=audio 3=split 4=transcribe 5=upload
  * @returns {Promise<{ url: string, language: string, label: string }>}
  */
-export async function autoGenerateSubtitle(videoUrl, language = "en") {
+export async function autoGenerateSubtitle(videoUrl, language = "en", onProgress = null) {
     if (!process.env.GROQ_API_KEY) {
         throw new Error(
             "GROQ_API_KEY is not set. Get a free key at https://console.groq.com"
@@ -319,20 +404,24 @@ export async function autoGenerateSubtitle(videoUrl, language = "en") {
 
     try {
         // ── 1. Download ───────────────────────────────────────────────────
+        await onProgress?.(1, "Downloading video…");
         await downloadVideo(videoUrl, videoPath);
 
         // ── 2. Extract audio ──────────────────────────────────────────────
+        await onProgress?.(2, "Extracting audio…");
         await extractAudio(videoPath, audioPath);
         safeUnlink(videoPath);   // free disk space — no longer needed
 
         // ── 3. Split ──────────────────────────────────────────────────────
+        await onProgress?.(3, "Splitting audio into segments…");
         const chunks = await splitAudio(audioPath, chunksDir);
         safeUnlink(audioPath);   // free disk space — no longer needed
 
         // ── 4. Transcribe (sequential to respect Groq rate limits) ────────
         const vttTexts = [];
-        for (const chunk of chunks) {
-            const text = await transcribeChunk(chunk.chunkPath, language, groq);
+        for (let i = 0; i < chunks.length; i++) {
+            await onProgress?.(4, `Transcribing part ${i + 1} of ${chunks.length}…`);
+            const text = await transcribeChunk(chunks[i].chunkPath, language, groq);
             vttTexts.push(text);
         }
 
@@ -352,6 +441,7 @@ export async function autoGenerateSubtitle(videoUrl, language = "en") {
         fs.writeFileSync(vttPath, mergedVtt, "utf8");
 
         // ── 7. Upload to Cloudinary ───────────────────────────────────────
+        await onProgress?.(5, "Uploading subtitles to cloud…");
         console.log("[subtitle] Uploading merged VTT to Cloudinary…");
         const uploaded = await uploadSubtitleToCloudinary(vttPath);
         if (!uploaded?.url) throw new Error("Cloudinary VTT upload failed.");

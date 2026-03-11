@@ -2,6 +2,7 @@ import express from 'express'
 import cors from "cors"
 import cookieParser from 'cookie-parser';
 import path from 'path';
+import fs from 'fs';
 import { fileURLToPath } from 'url';
 import userRouter from './routes/user.routes.js'
 import videoRouter from "./routes/video.routes.js"
@@ -59,8 +60,25 @@ app.use("/api/v1/reports",reportRouter)
 app.use("/api/v1/feedback",feedbackRouter)
 
 // Global error handler - must be last middleware
-// Serializes ApiError (and any other error) as JSON
+// 1. Clean up any files multer wrote to disk before the error was thrown.
+//    Both req.file (single) and req.files (multi-field object or array) are handled.
+// 2. Serialize the error as JSON.
 app.use((err, req, res, next) => {
+    // Collect every multer-written file path and delete it
+    const multerFiles = req.files
+        ? Object.values(req.files).flat()   // { avatar: [..], coverImage: [..] } or [[..],[..]]
+        : req.file
+        ? [req.file]
+        : [];
+
+    for (const file of multerFiles) {
+        try {
+            if (file?.path && fs.existsSync(file.path)) {
+                fs.unlinkSync(file.path);
+            }
+        } catch { /* cleanup errors must never mask the real error */ }
+    }
+
     const statusCode = err.statusCode || err.status || 500;
     res.status(statusCode).json({
         success: false,

@@ -18,9 +18,11 @@ try {
         defaultJobOptions: {
             attempts: 2,
             backoff: { type: "exponential", delay: 5000 },
-            // Auto-remove old jobs so Redis doesn't fill up
-            removeOnComplete: { count: 200 },
-            removeOnFail:     { count: 100 },
+            // Keep completed jobs long enough so the controller can detect
+            // an already-running job before adding a duplicate.
+            // 1 hour is more than enough for any subtitle pipeline run.
+            removeOnComplete: { age: 3600, count: 200 },
+            removeOnFail:     { age: 3600, count: 100 },
         },
     });
 
