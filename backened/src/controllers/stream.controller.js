@@ -12,6 +12,7 @@ import { ApiResponse } from "../utils/Apiresponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import { notifyStreamScheduled } from "./notification.controller.js";
+import { muteUserInStream, unmuteUserInStream } from "../live/moderation.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -313,6 +314,41 @@ const getChatReplay = asyncHandler(async (req, res) => {
 
   return res.status(200).json(new ApiResponse(200, replay, "Chat replay fetched"));
 });
+/* ─── Mute / Unmute User in Stream ─────────────────────────── */
+// Only the active streamer (owner) can mute or unmute participants.
+const muteUser = asyncHandler(async (req, res) => {
+  const { streamKey, userId } = req.params;
+  if (!mongoose.isValidObjectId(userId)) throw new ApiError(400, "Invalid user ID");
+
+  const stream = await Stream.findOne({ streamKey, streamerId: req.user._id, isLive: true });
+  if (!stream) throw new ApiError(403, "Only the active streamer can mute users");
+
+  await muteUserInStream(streamKey, userId);
+
+  // Notify every socket in the room so the muted user's UI updates instantly
+  if (global.io) {
+    global.io.to(`stream:${streamKey}`).emit("user-muted", { userId, streamKey });
+  }
+
+  return res.status(200).json(new ApiResponse(200, {}, "User muted"));
+});
+
+const unmuteUser = asyncHandler(async (req, res) => {
+  const { streamKey, userId } = req.params;
+  if (!mongoose.isValidObjectId(userId)) throw new ApiError(400, "Invalid user ID");
+
+  const stream = await Stream.findOne({ streamKey, streamerId: req.user._id, isLive: true });
+  if (!stream) throw new ApiError(403, "Only the active streamer can unmute users");
+
+  await unmuteUserInStream(streamKey, userId);
+
+  if (global.io) {
+    global.io.to(`stream:${streamKey}`).emit("user-unmuted", { userId, streamKey });
+  }
+
+  return res.status(200).json(new ApiResponse(200, {}, "User unmuted"));
+});
+
 export {
   goLive,
   endStream,
@@ -326,4 +362,6 @@ export {
   getRecordedStreams,
   saveStreamAsVideo,
   getChatReplay,
+  muteUser,
+  unmuteUser,
 };

@@ -32,8 +32,18 @@ const LiveChat = ({ streamKey, initialMessages = [] }) => {
   const { user } = useAuth();
   const [messages, setMessages] = useState(initialMessages);
   const [input, setInput] = useState("");
+  const [isMuted, setIsMuted]   = useState(false);
+  const [chatError, setChatError] = useState("");   // inline error shown above input
   const bottomRef = useRef(null);
-  const inputRef = useRef(null);
+  const inputRef  = useRef(null);
+  const errorTimer = useRef(null);
+
+  // Show a temporary error banner above the input, auto-dismiss after 4 s
+  const showError = (msg) => {
+    setChatError(msg);
+    clearTimeout(errorTimer.current);
+    errorTimer.current = setTimeout(() => setChatError(""), 4000);
+  };
 
   // Auto-scroll to latest message
   useEffect(() => {
@@ -46,16 +56,58 @@ const LiveChat = ({ streamKey, initialMessages = [] }) => {
     const socket = socketService.socket;
     if (!socket) return;
 
-    const onMessage = (msg) => {
-      setMessages((prev) => [...prev.slice(-200), msg]); // keep last 200
+    // Populate history when joining (sent by server as one batch)
+    const onHistory = (history) => {
+      if (Array.isArray(history) && history.length > 0) {
+        setMessages(history.slice(-200));
+      }
     };
+
+    const onMessage = (msg) => {
+      setMessages((prev) => [...prev.slice(-200), msg]);
+    };
+
+    // Server-side guards (rate limit / mute / banned word)
+    const onError = ({ code, message }) => {
+      if (code === "MUTED") setIsMuted(true);
+      showError(message);
+    };
+
+    // Streamer muted this user
+    const onMuted = ({ userId }) => {
+      if (user?._id && String(userId) === String(user._id)) {
+        setIsMuted(true);
+        showError("The streamer has muted you.");
+      }
+    };
+
+    // Streamer un-muted this user
+    const onUnmuted = ({ userId }) => {
+      if (user?._id && String(userId) === String(user._id)) {
+        setIsMuted(false);
+        setChatError("");
+      }
+    };
+
+    socket.on("chat-history", onHistory);
     socket.on("chat-message", onMessage);
-    return () => socket.off("chat-message", onMessage);
-  }, [streamKey]);
+    socket.on("chat-error",   onError);
+    socket.on("user-muted",   onMuted);
+    socket.on("user-unmuted", onUnmuted);
+
+    return () => {
+      socket.off("chat-history", onHistory);
+      socket.off("chat-message", onMessage);
+      socket.off("chat-error",   onError);
+      socket.off("user-muted",   onMuted);
+      socket.off("user-unmuted", onUnmuted);
+      clearTimeout(errorTimer.current);
+    };
+  }, [streamKey, user?._id]);
 
   const sendMessage = () => {
     const trimmed = input.trim();
-    if (!trimmed || !streamKey) return;
+    if (!trimmed || !streamKey || isMuted) return;
 
     const socket = socketService.socket;
     if (!socket?.connected) return;
@@ -106,7 +158,22 @@ const LiveChat = ({ streamKey, initialMessages = [] }) => {
 
       {/* Input */}
       <div className="p-3 border-t border-gray-100">
-        {user ? (
+        {/* Error banner (rate limit / banned word / mute notice) */}
+        {chatError && (
+          <div className="mb-2 px-3 py-1.5 rounded-lg bg-red-50 border border-red-200 text-xs text-red-600">
+            {chatError}
+          </div>
+        )}
+
+        {!user ? (
+          <p className="text-xs text-center text-gray-400 py-2">
+            Sign in to participate in chat
+          </p>
+        ) : isMuted ? (
+          <p className="text-xs text-center text-gray-400 py-2">
+            You have been muted by the streamer.
+          </p>
+        ) : (
           <div className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 focus-within:ring-2 focus-within:ring-indigo-500/30 focus-within:border-indigo-400 transition-all">
             <input
               ref={inputRef}
@@ -126,10 +193,6 @@ const LiveChat = ({ streamKey, initialMessages = [] }) => {
               <Send className="w-3.5 h-3.5 text-white" />
             </button>
           </div>
-        ) : (
-          <p className="text-xs text-center text-gray-400 py-2">
-            Sign in to participate in chat
-          </p>
         )}
       </div>
     </div>

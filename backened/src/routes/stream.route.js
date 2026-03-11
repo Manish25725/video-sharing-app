@@ -15,6 +15,8 @@ import {
   getRecordedStreams,
   saveStreamAsVideo,
   getChatReplay,
+  muteUser,
+  unmuteUser,
 } from "../controllers/stream.controller.js";
 
 const router = Router();
@@ -36,5 +38,8 @@ router.route("/:streamKey/end").patch(verifyJWT, endStream);
 router.route("/:streamKey/messages").get(getStreamMessages);
 router.route("/:streamKey/save-recording").post(verifyJWT, saveStreamAsVideo);
 router.route("/:streamKey/chat-replay").get(getChatReplay);
+// Moderation: only the active streamer can mute/unmute
+router.route("/:streamKey/mute/:userId").post(verifyJWT, muteUser);
+router.route("/:streamKey/unmute/:userId").delete(verifyJWT, unmuteUser);
 
 export default router;
