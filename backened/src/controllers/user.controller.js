@@ -6,6 +6,10 @@ import { deleteOnCloudinary, uploadOnCloudinary } from "../utils/cloudinary.js";
 import { ApiResponse } from "../utils/Apiresponse.js";
 import jwt from "jsonwebtoken"
 import mongoose from "mongoose"
+import crypto from "crypto"
+import { pub } from "../lib/redis.js"
+import { emailQueue } from "../queues/emailQueue.js"
+import { isEmailRateLimited } from "../utils/emailRateLimit.js"
 
 
 const parseDevice = (ua = "") => {
@@ -122,6 +126,22 @@ const registerUser= asyncHandler(async (req,res)=>{
 
     if(!createdUser) {
         throw new ApiError(500,"Something went wrong while regestering the user");
+    }
+
+    // Queue a verification email (non-blocking — never fails the registration)
+    try {
+        const otp = Math.floor(100_000 + Math.random() * 900_000).toString();
+        await pub.setex(`otp:verify:${createdUser._id}`, 600, otp); // 10 min TTL
+        if (emailQueue) {
+            await emailQueue.add("send", {
+                type:     "verify",
+                to:       createdUser.email,
+                otp,
+                userName: createdUser.fullName,
+            });
+        }
+    } catch (err) {
+        console.error("[email] Failed to queue verification email:", err.message);
     }
 
     const regOptions = getCookieOptions();
@@ -901,6 +921,124 @@ const updatePreferences = asyncHandler(async (req, res) => {
     return res.status(200).json(new ApiResponse(200, user, 'Preferences updated successfully'));
 });
 
+// ─── Email verification ───────────────────────────────────────────────────────
+
+/**
+ * POST /users/verify-email
+ * Body: { otp: "123456" }
+ * Requires: verifyJWT
+ */
+const verifyEmail = asyncHandler(async (req, res) => {
+    const { otp } = req.body;
+    if (!otp) throw new ApiError(400, "OTP is required");
+
+    const userId = req.user._id.toString();
+    const stored = await pub.get(`otp:verify:${userId}`);
+
+    if (!stored || stored !== String(otp)) {
+        throw new ApiError(400, "Invalid or expired OTP");
+    }
+
+    await User.findByIdAndUpdate(userId, { isEmailVerified: true });
+    await pub.del(`otp:verify:${userId}`);
+
+    return res.status(200).json(new ApiResponse(200, null, "Email verified successfully"));
+});
+
+/**
+ * POST /users/resend-verification
+ * Requires: verifyJWT
+ */
+const resendVerificationEmail = asyncHandler(async (req, res) => {
+    const user = req.user;
+    if (user.isEmailVerified) {
+        return res.status(200).json(new ApiResponse(200, null, "Email is already verified"));
+    }
+
+    const userId = user._id.toString();
+    if (await isEmailRateLimited(userId)) {
+        throw new ApiError(429, "Too many requests — please wait 10 minutes before requesting another code");
+    }
+
+    const otp = Math.floor(100_000 + Math.random() * 900_000).toString();
+    await pub.setex(`otp:verify:${userId}`, 600, otp);
+
+    if (emailQueue) {
+        await emailQueue.add("send", {
+            type:     "verify",
+            to:       user.email,
+            otp,
+            userName: user.fullName,
+        });
+    }
+
+    return res.status(200).json(new ApiResponse(200, null, "Verification email sent"));
+});
+
+// ─── Forgot / reset password ──────────────────────────────────────────────────
+
+/**
+ * POST /users/forgot-password
+ * Body: { email: "user@example.com" }
+ * Public route — always returns 200 to prevent email enumeration.
+ */
+const forgotPassword = asyncHandler(async (req, res) => {
+    const { email } = req.body;
+    if (!email) throw new ApiError(400, "Email is required");
+
+    // Rate-limit by email address to prevent abuse
+    if (await isEmailRateLimited(email)) {
+        throw new ApiError(429, "Too many requests — please wait 10 minutes before trying again");
+    }
+
+    const user = await User.findOne({ email });
+
+    // Don't reveal whether the email exists
+    if (user && emailQueue) {
+        const token    = crypto.randomBytes(32).toString("hex");
+        const resetUrl = `${process.env.FRONTEND_URL || "http://localhost:5173"}/reset-password/${token}`;
+
+        await pub.setex(`pwreset:${token}`, 3600, user._id.toString()); // 1 hour TTL
+
+        await emailQueue.add("send", {
+            type:     "reset",
+            to:       user.email,
+            resetUrl,
+            userName: user.fullName,
+        });
+    }
+
+    return res.status(200).json(
+        new ApiResponse(200, null, "If that email is registered, a reset link has been sent")
+    );
+});
+
+/**
+ * POST /users/reset-password/:token
+ * Body: { newPassword: "..." }
+ * Public route.
+ */
+const resetPassword = asyncHandler(async (req, res) => {
+    const { token } = req.params;
+    const { newPassword } = req.body;
+
+    if (!newPassword || newPassword.length < 6) {
+        throw new ApiError(400, "Password must be at least 6 characters");
+    }
+
+    const userId = await pub.get(`pwreset:${token}`);
+    if (!userId) throw new ApiError(400, "Invalid or expired reset link");
+
+    const user = await User.findById(userId);
+    if (!user) throw new ApiError(404, "User not found");
+
+    user.password = newPassword; // pre-save hook hashes it
+    await user.save();
+    await pub.del(`pwreset:${token}`);
+
+    return res.status(200).json(new ApiResponse(200, null, "Password reset successfully"));
+});
+
 // ─────────────────────────────────────────────────────────────────────────────
 
 export {registerUser,
@@ -931,7 +1069,11 @@ export {registerUser,
     updateLanguage,
     getActiveSessions,
     revokeOtherSessions,
-    updatePreferences
+    updatePreferences,
+    verifyEmail,
+    resendVerificationEmail,
+    forgotPassword,
+    resetPassword
 };
 
 

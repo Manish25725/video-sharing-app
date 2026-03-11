@@ -76,7 +76,7 @@ const UploadCover = () => {
     const loginResult = await login(signupData.email, signupData.password);
     resetSignup();
     if (loginResult.success) {
-      navigate("/");
+      navigate("/verify-email");
     } else {
       // Registration succeeded but auto-login failed — send to login page
       navigate("/login");

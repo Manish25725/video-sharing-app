@@ -5,7 +5,7 @@ import {
   User, Camera, ImagePlus, Lock, Eye, EyeOff, Save, ArrowLeft,
   CheckCircle, AlertTriangle, X, Upload, Shield, Smartphone,
   Trash2, Mail, Calendar, ChevronRight, MonitorSmartphone,
-  Clock, LogOut, ShieldCheck, ShieldOff
+  Clock, LogOut, ShieldCheck, ShieldOff, RefreshCw
 } from "lucide-react";
 import api from "../services/api.js";
 
@@ -231,6 +231,7 @@ const ProfileTab = ({ user, updateUser }) => {
 
 /* â”€â”€â”€ Security Tab â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 const SecurityTab = () => {
+  const { user, updateUser } = useAuth();
   const [form, setForm] = useState({ oldPassword: "", newPassword: "", confirm: "" });
   const [show, setShow] = useState({ old: false, new: false, confirm: false });
   const [saving, setSaving] = useState(false);
@@ -239,6 +240,7 @@ const SecurityTab = () => {
   const [sessions, setSessions] = useState([]);
   const [sessionsLoading, setSessionsLoading] = useState(true);
   const [revokingOthers, setRevokingOthers] = useState(false);
+  const [resendingVerify, setResendingVerify] = useState(false);
 
   useEffect(() => {
     api.get("/users/sessions")
@@ -305,9 +307,48 @@ const SecurityTab = () => {
     </Field>
   );
 
+  const handleResendVerification = async () => {
+    setResendingVerify(true);
+    try {
+      await api.post("/users/resend-verification");
+      showToast("Verification email sent! Check your inbox.");
+    } catch (err) {
+      showToast(err?.message || "Too many requests. Please wait before trying again.", "error");
+    }
+    setResendingVerify(false);
+  };
+
   return (
     <div className="space-y-6">
       {toast && <Toast msg={toast.msg} type={toast.type} onClose={() => setToast(null)} />}
+
+      <Card title="Email Verification" subtitle="Verify your email address to secure your account.">
+        <div className="flex items-center justify-between p-4 border border-gray-200 rounded-xl bg-gray-50 max-w-md">
+          <div className="flex items-center gap-3">
+            <div className={`w-9 h-9 rounded-full flex items-center justify-center ${user?.isEmailVerified ? "bg-emerald-100" : "bg-amber-100"}`}>
+              {user?.isEmailVerified
+                ? <CheckCircle className="w-5 h-5 text-emerald-600" />
+                : <Mail className="w-5 h-5 text-amber-500" />}
+            </div>
+            <div>
+              <p className="text-sm font-medium text-gray-800">{user?.email}</p>
+              <p className={`text-xs mt-0.5 ${user?.isEmailVerified ? "text-emerald-600" : "text-amber-500"}`}>
+                {user?.isEmailVerified ? "Verified" : "Not verified"}
+              </p>
+            </div>
+          </div>
+          {!user?.isEmailVerified && (
+            <button
+              onClick={handleResendVerification}
+              disabled={resendingVerify}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-indigo-600 hover:bg-indigo-700 text-white transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+            >
+              {resendingVerify && <RefreshCw className="w-3 h-3 animate-spin" />}
+              {resendingVerify ? "Sending…" : "Send verification email"}
+            </button>
+          )}
+        </div>
+      </Card>
 
       <Card title="Change Password" subtitle="Use a strong, unique password for your account.">
         <form onSubmit={handlePasswordChange} className="space-y-4 max-w-md">

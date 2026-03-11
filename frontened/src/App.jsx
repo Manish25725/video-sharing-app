@@ -6,6 +6,9 @@ import Login from "./pages/Login"
 import Signup from "./pages/Signup"
 import UploadAvatar from "./pages/UploadAvatar"
 import UploadCover from "./pages/UploadCover"
+import ForgotPassword from "./pages/ForgotPassword"
+import ResetPassword from "./pages/ResetPassword"
+import VerifyEmail from "./pages/VerifyEmail"
 import ProfileSettings from "./pages/ProfileSettings"
 import LiveStreams from "./pages/LiveStreams"
 import LiveStream from "./pages/LiveStream"
@@ -82,6 +85,8 @@ function AppContent() {
           <Route path="/signup" element={<Signup />} />
           <Route path="/upload-avatar" element={<UploadAvatar />} />
           <Route path="/upload-cover" element={<UploadCover />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password/:token" element={<ResetPassword />} />
           <Route path="*" element={<Login />} />
         </Routes>
       </SignupProvider>
@@ -143,6 +148,7 @@ function AppContent() {
             <Route path="/scheduled-streams" element={<ScheduledStreams />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="/profile-settings" element={<ProfileSettings />} />
+            <Route path="/verify-email" element={<VerifyEmail />} />
             <Route path="/help" element={<Help />} />
             <Route path="/feedback" element={<Feedback />} />
             <Route path="/admin" element={user ? <MyChannel /> : <Navigate to="/" />} />

@@ -1,5 +1,5 @@
 import {Router} from "express"
-import { changeCurrentPassword, getCurrentUser, getUserChannelProfile, getWatchHistory, getWatchLater, getWatchLaterIds, addToWatchLater, removeFromWatchLater, loginUser, logoutUser, registerUser, updateDetails, updateUserAvatar, updateUserCoverImage,addToWatchHistory, toggleNotifyOnPost, toggleNotifyOnVideo, toggleNotifyOnComment, toggleNotifyOnMention, toggleNotifyOnEmail, addAccount, switchAccount, getSavedAccounts, removeAccount, updateLanguage, getActiveSessions, revokeOtherSessions, updatePreferences } from "../controllers/user.controller.js";
+import { changeCurrentPassword, getCurrentUser, getUserChannelProfile, getWatchHistory, getWatchLater, getWatchLaterIds, addToWatchLater, removeFromWatchLater, loginUser, logoutUser, registerUser, updateDetails, updateUserAvatar, updateUserCoverImage,addToWatchHistory, toggleNotifyOnPost, toggleNotifyOnVideo, toggleNotifyOnComment, toggleNotifyOnMention, toggleNotifyOnEmail, addAccount, switchAccount, getSavedAccounts, removeAccount, updateLanguage, getActiveSessions, revokeOtherSessions, updatePreferences, verifyEmail, resendVerificationEmail, forgotPassword, resetPassword } from "../controllers/user.controller.js";
 import {upload} from "../middlewares/multer.middleware.js"
 import { optionalAuth, verifyJWT } from "../middlewares/auth.middleware.js";
 import { refreshAccessToken } from "../controllers/user.controller.js";
@@ -75,6 +75,14 @@ router.route("/sessions").get(verifyJWT, getActiveSessions);
 router.route("/sessions/revoke-others").delete(verifyJWT, revokeOtherSessions);
 
 router.route("/preferences").patch(verifyJWT, updatePreferences);
+
+// Email verification
+router.route("/verify-email").post(verifyJWT, verifyEmail);
+router.route("/resend-verification").post(verifyJWT, resendVerificationEmail);
+
+// Forgot / reset password (public)
+router.route("/forgot-password").post(forgotPassword);
+router.route("/reset-password/:token").post(resetPassword);
 
 
 export default router
