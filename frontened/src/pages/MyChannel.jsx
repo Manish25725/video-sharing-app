@@ -49,8 +49,6 @@ const MyChannel = () => {
 
   // Listen for real-time subtitle-ready event from Socket.io (faster than polling)
   useEffect(() => {
-    const socket = socketService.getSocket ? socketService.getSocket() : socketService.socket
-    if (!socket) return
     const onSubtitleReady = ({ videoId }) => {
       // Cancel the polling interval — socket beat it
       if (subtitlePollRef.current) {
@@ -61,8 +59,8 @@ const MyChannel = () => {
       showToast("Subtitles generated successfully! 🎉", "success")
       fetchUserVideos()
     }
-    socket.on("subtitle-ready", onSubtitleReady)
-    return () => socket.off("subtitle-ready", onSubtitleReady)
+    socketService.on("subtitle-ready", onSubtitleReady)
+    return () => socketService.off("subtitle-ready", onSubtitleReady)
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 

@@ -4,21 +4,33 @@ import { Queue } from "bullmq";
 export const redisConnection = {
     host:     process.env.REDIS_HOST     || "127.0.0.1",
     port:     parseInt(process.env.REDIS_PORT || "6379"),
-    password: process.env.REDIS_PASSWORD || undefined,
+    password: process.env.REDIS_PASSWORD || undefined,   // empty string → undefined (no auth)
     maxRetriesPerRequest: null,   // required by BullMQ
+    enableOfflineQueue: false,    // fail fast instead of queuing commands when Redis is down
+    lazyConnect: true,            // don't connect until first command
 };
 
-export const subtitleQueue = new Queue("subtitle-generation", {
-    connection: redisConnection,
-    defaultJobOptions: {
-        attempts: 2,
-        backoff: { type: "exponential", delay: 5000 },
-        // Auto-remove old jobs so Redis doesn't fill up
-        removeOnComplete: { count: 200 },
-        removeOnFail:     { count: 100 },
-    },
-});
+let subtitleQueue = null;
 
-// Gracefully close the queue on process exit
-process.on("SIGTERM", async () => { await subtitleQueue.close(); });
-process.on("SIGINT",  async () => { await subtitleQueue.close(); });
+try {
+    subtitleQueue = new Queue("subtitle-generation", {
+        connection: redisConnection,
+        defaultJobOptions: {
+            attempts: 2,
+            backoff: { type: "exponential", delay: 5000 },
+            // Auto-remove old jobs so Redis doesn't fill up
+            removeOnComplete: { count: 200 },
+            removeOnFail:     { count: 100 },
+        },
+    });
+
+    // Gracefully close the queue on process exit
+    process.on("SIGTERM", async () => { await subtitleQueue?.close(); });
+    process.on("SIGINT",  async () => { await subtitleQueue?.close(); });
+
+    console.log(`[queue] Subtitle queue initialised (Redis: ${redisConnection.host}:${redisConnection.port})`);
+} catch (err) {
+    console.warn("[queue] Redis unavailable — subtitle queue disabled:", err.message);
+}
+
+export { subtitleQueue };

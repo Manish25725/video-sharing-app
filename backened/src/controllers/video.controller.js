@@ -855,6 +855,10 @@ const generateSubtitles = asyncHandler(async (req, res) => {
     if (video.owner.toString() !== req.user._id.toString()) throw new ApiError(403, "Not your video");
     if (!video.videoFile) throw new ApiError(400, "Video file not found");
 
+    if (!subtitleQueue) {
+        throw new ApiError(503, "Subtitle generation is unavailable — Redis is not running. Please install Memurai (Windows Redis) and restart the server.");
+    }
+
     const job = await subtitleQueue.add("generate", {
         videoId:      video._id.toString(),
         videoFileUrl: video.videoFile,
