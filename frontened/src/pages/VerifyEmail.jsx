@@ -68,10 +68,16 @@ const VerifyEmail = () => {
     setResendMsg("");
     setResending(true);
     try {
-      await api.post("/users/resend-verification");
-      setResendMsg("A new code has been sent to your email.");
-      setDigits(Array(6).fill(""));
-      inputRefs.current[0]?.focus();
+      const res = await api.post("/users/resend-verification");
+      if (res?.otp) {
+        const d = res.otp.toString().split("");
+        setDigits([...d, ...Array(6 - d.length).fill("")]);
+        setResendMsg(`Code ready. (dev: ${res.otp})`);
+      } else {
+        setResendMsg("A new code has been sent to your email.");
+        setDigits(Array(6).fill(""));
+        inputRefs.current[0]?.focus();
+      }
     } catch (err) {
       setError(err?.message || "Too many requests. Please wait before requesting a new code.");
     } finally {

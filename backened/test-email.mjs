@@ -7,7 +7,7 @@ console.log("API Key starts with:", process.env.RESEND_API_KEY?.slice(0, 10) + "
 console.log("From:", process.env.EMAIL_FROM);
 
 // Replace this with YOUR actual email to receive the test
-const TEST_TO = process.env.TEST_EMAIL || "delivered@resend.dev";
+const TEST_TO = process.env.TEST_EMAIL || "test@gmail.com";
 
 console.log("Sending to:", TEST_TO);
 

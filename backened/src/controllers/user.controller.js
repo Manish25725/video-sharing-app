@@ -969,13 +969,16 @@ const resendVerificationEmail = asyncHandler(async (req, res) => {
     const otp = Math.floor(100_000 + Math.random() * 900_000).toString();
     await pub.setex(`otp:verify:${userId}`, 600, otp);
 
+    const isDev = process.env.NODE_ENV !== "production";
+    if (isDev) console.log(`\n[DEV] Resend-verification OTP for ${user.email}: ${otp}\n`);
+
     sendEmail({
         to:      user.email,
         subject: "Verify your email",
         html:    verifyEmailTemplate({ otp, userName: user.fullName }),
     }).catch(err => console.error("[email] resend-verification failed:", err.message));
 
-    return res.status(200).json(new ApiResponse(200, null, "Verification email sent"));
+    return res.status(200).json(new ApiResponse(200, { ...(isDev && { otp }) }, "Verification email sent"));
 });
 
 // ─── Forgot / reset password ──────────────────────────────────────────────────
@@ -1002,6 +1005,9 @@ const forgotPassword = asyncHandler(async (req, res) => {
         const resetUrl = `${process.env.FRONTEND_URL || "http://localhost:5173"}/reset-password/${token}`;
 
         await pub.setex(`pwreset:${token}`, 3600, user._id.toString());
+
+        const isDev = process.env.NODE_ENV !== "production";
+        if (isDev) console.log(`\n[DEV] Password reset link for ${user.email}:\n${resetUrl}\n`);
 
         sendEmail({
             to:      user.email,
@@ -1068,13 +1074,16 @@ const sendSignupOtp = asyncHandler(async (req, res) => {
     const otp = Math.floor(100_000 + Math.random() * 900_000).toString();
     await pub.setex(`otp:signup:${normalised}`, 600, otp);
 
+    const isDev = process.env.NODE_ENV !== "production";
+    if (isDev) console.log(`\n[DEV] Signup OTP for ${normalised}: ${otp}\n`);
+
     sendEmail({
         to:      normalised,
         subject: "Verify your email",
         html:    verifyEmailTemplate({ otp, userName: email.split("@")[0] }),
     }).catch(err => console.error("[email] signup-otp email failed:", err.message));
 
-    return res.status(200).json(new ApiResponse(200, {}, "Verification code sent"));
+    return res.status(200).json(new ApiResponse(200, { ...(isDev && { otp }) }, "Verification code sent"));
 });
 
 /**

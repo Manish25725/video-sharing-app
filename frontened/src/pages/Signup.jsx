@@ -58,8 +58,8 @@ const Signup = () => {
     updateSignup(form);
     setLoading(true);
     try {
-      await api.post("/users/send-signup-otp", { email: form.email });
-      navigate("/verify-signup-email");
+      const res = await api.post("/users/send-signup-otp", { email: form.email });
+      navigate("/verify-signup-email", { state: { otp: res?.otp || null } });
     } catch (err) {
       setApiError(err?.message || "Failed to send verification code. Please try again.");
     } finally {

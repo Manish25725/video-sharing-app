@@ -1,5 +1,5 @@
-import { useState, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useRef, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { CheckCircle, Mail, Play, RefreshCw } from "lucide-react";
 import { useSignup } from "../contexts/SignupContext.jsx";
 import api from "../services/api.js";
@@ -26,11 +26,18 @@ const StepIndicator = ({ current, total }) => (
 const VerifySignupEmail = () => {
   const { signupData }        = useSignup();
   const navigate              = useNavigate();
-  const [digits, setDigits]   = useState(Array(6).fill(""));
+  const location              = useLocation();
+  const [digits, setDigits]   = useState(() => {
+    const devOtp = location.state?.otp;
+    if (devOtp) return devOtp.toString().split("").slice(0, 6);
+    return Array(6).fill("");
+  });
   const [loading, setLoading] = useState(false);
   const [resending, setResending] = useState(false);
   const [error, setError]     = useState("");
-  const [resendMsg, setResendMsg] = useState("");
+  const [resendMsg, setResendMsg] = useState(
+    location.state?.otp ? `Dev mode: OTP pre-filled (${location.state.otp})` : ""
+  );
   const inputRefs             = useRef([]);
 
   const email = signupData.email || "";
@@ -86,10 +93,16 @@ const VerifySignupEmail = () => {
     setResendMsg("");
     setResending(true);
     try {
-      await api.post("/users/send-signup-otp", { email });
+      const res = await api.post("/users/send-signup-otp", { email });
       setResendMsg("A new code has been sent to your email.");
-      setDigits(Array(6).fill(""));
-      inputRefs.current[0]?.focus();
+      if (res?.otp) {
+        const d = res.otp.toString().split("");
+        setDigits([...d, ...Array(6 - d.length).fill("")]);
+        setResendMsg(`A new code was generated. (dev: ${res.otp})`);
+      } else {
+        setDigits(Array(6).fill(""));
+        inputRefs.current[0]?.focus();
+      }
     } catch (err) {
       setError(err?.message || "Too many requests. Please wait a moment before trying again.");
     } finally {
