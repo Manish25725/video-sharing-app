@@ -83,18 +83,25 @@ const VideoCard = ({ video, onVideoSelect }) => {
   };
 
   const handleVideoClick = () => {
+    const videoId = video.id || video._id;
+    console.log('Video click navigation:', { videoId });
     if (onVideoSelect) {
-      onVideoSelect(video.id || video._id);
+      onVideoSelect(videoId);
+    } else if (videoId) {
+      navigate(`/video/${videoId}`);
     } else {
-      navigate(`/video/${video.id || video._id}`);
+      console.error('No video ID found:', video);
     }
   };
 
   const handleChannelClick = (e) => {
     e.stopPropagation();
-    const ownerId = video.owner?._id || video.ownerDetails?._id;
+    const ownerId = video.owner?._id || video.ownerDetails?._id || video.userId || video.user?._id;
+    console.log('Channel navigation:', { ownerId, videoId: video.id || video._id });
     if (ownerId) {
       navigate(`/profile/${ownerId}`);
+    } else {
+      console.error('No owner ID found for video:', video);
     }
   };
 
