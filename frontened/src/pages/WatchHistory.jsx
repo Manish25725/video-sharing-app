@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { History, Trash2, Play, Search, X } from 'lucide-react';
+import { History, Trash2, Play, Search, X, Clock } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import watchHistoryService from '../services/watchHistoryService';
 import { useAuth } from '../contexts/AuthContext';
@@ -16,14 +16,8 @@ const WatchHistory = () => {
 
   useEffect(() => {
     if (isLoggedIn && user) {
-      console.log('=== AUTH STATUS ===');
-      console.log('User is logged in:', isLoggedIn);
-      console.log('User object:', user);
       fetchWatchHistory();
     } else {
-      console.log('=== NOT AUTHENTICATED ===');
-      console.log('isLoggedIn:', isLoggedIn);
-      console.log('user:', user);
       setLoading(false);
     }
   }, [isLoggedIn, user]);
@@ -31,57 +25,36 @@ const WatchHistory = () => {
   const fetchWatchHistory = async () => {
     try {
       setLoading(true);
-      console.log('=== WATCH HISTORY DEBUG ===');
-      console.log('User logged in:', isLoggedIn);
-      console.log('User object:', user);
-      console.log('Fetching watch history...');
-      
       const response = await watchHistoryService.getWatchHistory();
-      console.log('Watch history API response:', response);
-      
-      // The service already extracts response.data.data, so we use response.data
       if (response && response.data && response.data.length > 0) {
-        console.log('Processing watch history data:', response.data);
-        
-        // The backend returns populated watchHistory with videoDetail
-        const historyVideos = response.data.map(item => {
-          console.log('Processing watch history item:', item);
-          return {
-            id: item.videoDetail._id,
-            title: item.videoDetail.title,
-            description: item.videoDetail.description,
-            thumbnail: item.videoDetail.thumbnail,
-            duration: item.videoDetail.duration,
-            views: item.videoDetail.views,
-            createdAt: item.videoDetail.createdAt,
-            owner: {
-              id: item.videoDetail.owner._id,
-              userName: item.videoDetail.owner.userName,
-              fullName: item.videoDetail.owner.fullName,
-              avatar: item.videoDetail.owner.avatar
-            },
-            watchedAt: item.watchedAt // Using correct field name from user model
-          };
-        });
-
+        const historyVideos = response.data.map(item => ({
+          id: item.videoDetail._id,
+          title: item.videoDetail.title,
+          description: item.videoDetail.description,
+          thumbnail: item.videoDetail.thumbnail,
+          duration: item.videoDetail.duration,
+          views: item.videoDetail.views,
+          createdAt: item.videoDetail.createdAt,
+          owner: {
+            id: item.videoDetail.owner._id,
+            userName: item.videoDetail.owner.userName,
+            fullName: item.videoDetail.owner.fullName,
+            avatar: item.videoDetail.owner.avatar,
+          },
+          watchedAt: item.watchedAt,
+        }));
         historyVideos.sort((a, b) => new Date(b.watchedAt) - new Date(a.watchedAt));
-        
-        console.log('Transformed and sorted watch history:', historyVideos);
         setWatchHistory(historyVideos);
         setMiniPlayer(historyVideos[0] || null);
       } else {
-        console.log('No watch history found');
         setWatchHistory([]);
       }
     } catch (error) {
-      console.error('Error fetching watch history:', error);
       showToast('Failed to load watch history', 'error');
       setWatchHistory([]);
     } finally {
       setLoading(false);
     }
-  };
-
   };
 
   const showToast = (message, type) => {

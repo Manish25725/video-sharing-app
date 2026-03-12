@@ -1,6 +1,7 @@
 ﻿import { useState, useEffect, useRef } from 'react';
 import {
-  MessageSquare, Image, BarChart2, X, Send, Plus
+  MessageSquare, Image, BarChart2, X, Send, Plus,
+  Search, Bell, MapPin, FileText, Users, TrendingUp, ThumbsUp, Edit3
 } from 'lucide-react';
 import { tweetService, transformTweetsArray } from '../services/tweetService';
 import { useAuth } from '../contexts/AuthContext';
@@ -127,52 +128,115 @@ const Tweets = () => {
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center" style={{ background: '#221610' }}>
         <div className="text-center">
-          <MessageSquare className="mx-auto h-16 w-16 text-gray-400 mb-4" />
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Sign in to view tweets</h2>
-          <p className="text-gray-600">You need to be logged in to access the tweets section.</p>
+          <div
+            className="w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6"
+            style={{ background: 'rgba(236,91,19,0.1)' }}
+          >
+            <MessageSquare className="w-10 h-10" style={{ color: '#ec5b13' }} />
+          </div>
+          <h2 className="text-2xl font-bold text-slate-100 mb-2">Sign in to view tweets</h2>
+          <p className="text-slate-400 text-sm">You need to be logged in to access the tweets section.</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-2xl mx-auto py-8 px-4">
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold text-gray-900">My Tweets</h1>
-          <p className="text-gray-500 text-sm mt-1">Share updates, polls and images with your subscribers</p>
+    <div className="min-h-screen flex flex-col" style={{ background: '#221610' }}>
+
+      {/* ── Page header ── */}
+      <header
+        className="sticky top-0 z-10 flex items-center justify-between px-8 py-4 border-b"
+        style={{
+          background: 'rgba(45,30,22,0.6)',
+          backdropFilter: 'blur(12px)',
+          WebkitBackdropFilter: 'blur(12px)',
+          borderColor: 'rgba(65,46,36,1)',
+        }}
+      >
+        <div className="flex flex-col">
+          <h1 className="text-2xl font-bold tracking-tight text-slate-100">My Tweets</h1>
+          <p className="text-xs text-slate-400 font-medium uppercase tracking-widest">Community Stream</p>
         </div>
+        <div className="flex items-center gap-4">
+          {/* Search */}
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+            <input
+              type="text"
+              placeholder="Search thoughts..."
+              className="rounded-xl pl-10 pr-4 py-2 text-sm text-slate-100 placeholder-slate-500 outline-none w-64 transition-all"
+              style={{ background: 'rgba(58,40,30,1)', border: 'none' }}
+              onFocus={e => { e.currentTarget.style.boxShadow = '0 0 0 1px #ec5b13'; }}
+              onBlur={e => { e.currentTarget.style.boxShadow = 'none'; }}
+            />
+          </div>
+          {/* Notification */}
+          <div className="relative">
+            <button
+              className="w-10 h-10 rounded-xl flex items-center justify-center text-slate-300 hover:text-white transition-colors"
+              style={{ background: 'rgba(58,40,30,1)' }}
+            >
+              <Bell className="w-5 h-5" />
+            </button>
+            <span
+              className="absolute top-2.5 right-2.5 w-2 h-2 rounded-full ring-2"
+              style={{ background: '#ec5b13', ringColor: 'rgba(45,30,22,1)' }}
+            />
+          </div>
+        </div>
+      </header>
+
+      {/* ── Content ── */}
+      <div className="max-w-4xl w-full mx-auto px-8 py-8 flex flex-col gap-8 flex-1">
 
         {/* Composer */}
-        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 mb-6">
-          <div className="flex items-start gap-3">
-            {user.avatar ? (
-              <img src={user.avatar} alt="" className="w-10 h-10 rounded-full object-cover flex-shrink-0" />
-            ) : (
-              <div className="w-10 h-10 rounded-full bg-indigo-600 flex items-center justify-center text-white font-bold flex-shrink-0">
-                {(user.fullName || user.userName || 'U').charAt(0).toUpperCase()}
-              </div>
-            )}
-            <div className="flex-1">
+        <div
+          className="rounded-2xl p-6 shadow-2xl"
+          style={{
+            background: 'rgba(45,30,22,0.4)',
+            backdropFilter: 'blur(12px)',
+            WebkitBackdropFilter: 'blur(12px)',
+            border: '1px solid rgba(236,91,19,0.1)',
+          }}
+        >
+          <div className="flex gap-4">
+            {/* Avatar */}
+            <div className="w-12 h-12 rounded-full overflow-hidden flex-shrink-0">
+              {user.avatar ? (
+                <img src={user.avatar} alt="" className="w-full h-full object-cover" />
+              ) : (
+                <div
+                  className="w-full h-full flex items-center justify-center text-white font-bold text-lg"
+                  style={{ background: '#ec5b13' }}
+                >
+                  {(user.fullName || user.userName || 'U').charAt(0).toUpperCase()}
+                </div>
+              )}
+            </div>
+
+            <div className="flex-1 flex flex-col gap-4">
               <textarea
                 value={content}
                 onChange={e => setContent(e.target.value)}
-                placeholder="What's on your mind? Share with your subscribers…"
-                className="w-full resize-none outline-none text-gray-800 placeholder-gray-400 text-sm leading-relaxed"
-                rows={3}
+                placeholder="What's happening in your world?"
+                className="w-full bg-transparent border-none text-lg text-slate-100 placeholder-slate-500 focus:ring-0 resize-none outline-none leading-relaxed"
+                style={{ minHeight: '100px' }}
                 maxLength={500}
               />
 
+              {/* Image previews */}
               {selectedImages.length > 0 && (
-                <div className="grid grid-cols-2 gap-2 mt-3">
+                <div className="grid grid-cols-2 gap-2">
                   {selectedImages.map((img, i) => (
-                    <div key={i} className="relative rounded-lg overflow-hidden">
+                    <div key={i} className="relative rounded-xl overflow-hidden">
                       <img src={img.preview} alt="" className="w-full h-32 object-cover" />
                       <button
                         onClick={() => removeImage(i)}
-                        className="absolute top-1 right-1 bg-black bg-opacity-60 rounded-full p-0.5 text-white"
+                        className="absolute top-1.5 right-1.5 w-6 h-6 rounded-full flex items-center justify-center text-white"
+                        style={{ background: 'rgba(0,0,0,0.6)' }}
                       >
                         <X className="w-3.5 h-3.5" />
                       </button>
@@ -181,11 +245,15 @@ const Tweets = () => {
                 </div>
               )}
 
+              {/* Poll builder */}
               {showPoll && (
-                <div className="mt-3 bg-gray-50 rounded-xl border border-gray-200 p-4">
+                <div
+                  className="rounded-xl p-4"
+                  style={{ background: 'rgba(58,40,30,0.6)', border: '1px solid rgba(65,46,36,1)' }}
+                >
                   <div className="flex items-center justify-between mb-3">
-                    <p className="text-sm font-semibold text-gray-700">Poll</p>
-                    <button onClick={() => setShowPoll(false)} className="text-gray-400 hover:text-gray-600">
+                    <p className="text-sm font-semibold text-slate-300">Poll</p>
+                    <button onClick={() => setShowPoll(false)} className="text-slate-400 hover:text-slate-200">
                       <X className="w-4 h-4" />
                     </button>
                   </div>
@@ -193,21 +261,27 @@ const Tweets = () => {
                     value={pollQuestion}
                     onChange={e => setPollQuestion(e.target.value)}
                     placeholder="Ask a question…"
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mb-3 outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full rounded-lg px-3 py-2 text-sm mb-3 outline-none text-slate-100 placeholder-slate-500"
+                    style={{ background: 'rgba(34,22,16,0.8)', border: '1px solid rgba(65,46,36,1)' }}
                     maxLength={200}
+                    onFocus={e => { e.currentTarget.style.borderColor = '#ec5b13'; }}
+                    onBlur={e => { e.currentTarget.style.borderColor = 'rgba(65,46,36,1)'; }}
                   />
-                  <div className="space-y-2 mb-3">
+                  <div className="flex flex-col gap-2 mb-3">
                     {pollOptions.map((opt, i) => (
                       <div key={i} className="flex items-center gap-2">
                         <input
                           value={opt}
                           onChange={e => updatePollOption(i, e.target.value)}
                           placeholder={`Option ${i + 1}`}
-                          className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                          className="flex-1 rounded-lg px-3 py-2 text-sm outline-none text-slate-100 placeholder-slate-500"
+                          style={{ background: 'rgba(34,22,16,0.8)', border: '1px solid rgba(65,46,36,1)' }}
                           maxLength={100}
+                          onFocus={e => { e.currentTarget.style.borderColor = '#ec5b13'; }}
+                          onBlur={e => { e.currentTarget.style.borderColor = 'rgba(65,46,36,1)'; }}
                         />
                         {pollOptions.length > 2 && (
-                          <button onClick={() => removePollOption(i)} className="text-gray-400 hover:text-red-500">
+                          <button onClick={() => removePollOption(i)} className="text-slate-400 hover:text-red-400">
                             <X className="w-4 h-4" />
                           </button>
                         )}
@@ -217,69 +291,94 @@ const Tweets = () => {
                   {pollOptions.length < 5 && (
                     <button
                       onClick={addPollOption}
-                      className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-700 mb-3"
+                      className="flex items-center gap-1 text-sm mb-3 font-medium transition-colors"
+                      style={{ color: '#ec5b13' }}
                     >
                       <Plus className="w-4 h-4" /> Add option
                     </button>
                   )}
                   <div className="flex items-center gap-4 flex-wrap">
-                    <label className="flex items-center gap-1.5 text-sm text-gray-600 cursor-pointer select-none">
+                    <label className="flex items-center gap-1.5 text-sm text-slate-400 cursor-pointer select-none">
                       <input
                         type="checkbox"
                         checked={pollMultiple}
                         onChange={e => setPollMultiple(e.target.checked)}
                         className="rounded"
+                        style={{ accentColor: '#ec5b13' }}
                       />
                       Multiple choice
                     </label>
                     <div className="flex items-center gap-1.5">
-                      <label className="text-sm text-gray-600">Ends at</label>
+                      <label className="text-sm text-slate-400">Ends at</label>
                       <input
                         type="datetime-local"
                         value={pollEndsAt}
                         onChange={e => setPollEndsAt(e.target.value)}
                         min={new Date().toISOString().slice(0, 16)}
-                        className="border border-gray-300 rounded px-2 py-1 text-xs outline-none focus:ring-2 focus:ring-blue-500"
+                        className="rounded px-2 py-1 text-xs outline-none text-slate-300"
+                        style={{
+                          background: 'rgba(34,22,16,0.8)',
+                          border: '1px solid rgba(65,46,36,1)',
+                          colorScheme: 'dark',
+                        }}
                       />
                     </div>
                   </div>
                 </div>
               )}
 
-              <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-100">
+              {/* Toolbar */}
+              <div
+                className="flex items-center justify-between pt-4"
+                style={{ borderTop: '1px solid rgba(65,46,36,1)' }}
+              >
                 <div className="flex items-center gap-1">
                   <button
                     onClick={() => imageInputRef.current && imageInputRef.current.click()}
                     disabled={selectedImages.length >= 4}
                     title="Add images (up to 4)"
-                    className="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-colors disabled:opacity-40"
+                    className="p-2 rounded-lg transition-colors disabled:opacity-40"
+                    style={{ color: '#94a3b8' }}
+                    onMouseEnter={e => { e.currentTarget.style.color = '#ec5b13'; e.currentTarget.style.background = 'rgba(236,91,19,0.1)'; }}
+                    onMouseLeave={e => { e.currentTarget.style.color = '#94a3b8'; e.currentTarget.style.background = 'transparent'; }}
                   >
                     <Image className="w-5 h-5" />
                   </button>
-                  <input
-                    ref={imageInputRef}
-                    type="file"
-                    accept="image/*"
-                    multiple
-                    className="hidden"
-                    onChange={handleImageSelect}
-                  />
+                  <input ref={imageInputRef} type="file" accept="image/*" multiple className="hidden" onChange={handleImageSelect} />
                   <button
                     onClick={() => setShowPoll(v => !v)}
                     title="Add a poll"
-                    className={`p-2 rounded-full transition-colors ${
-                      showPoll ? 'text-blue-600 bg-blue-50' : 'text-gray-500 hover:text-blue-600 hover:bg-blue-50'
-                    }`}
+                    className="p-2 rounded-lg transition-colors"
+                    style={{ color: showPoll ? '#ec5b13' : '#94a3b8', background: showPoll ? 'rgba(236,91,19,0.1)' : 'transparent' }}
+                    onMouseEnter={e => { if (!showPoll) { e.currentTarget.style.color = '#ec5b13'; e.currentTarget.style.background = 'rgba(236,91,19,0.1)'; } }}
+                    onMouseLeave={e => { if (!showPoll) { e.currentTarget.style.color = '#94a3b8'; e.currentTarget.style.background = 'transparent'; } }}
                   >
                     <BarChart2 className="w-5 h-5" />
                   </button>
+                  <button
+                    className="p-2 rounded-lg transition-colors"
+                    style={{ color: '#94a3b8' }}
+                    onMouseEnter={e => { e.currentTarget.style.color = '#ec5b13'; e.currentTarget.style.background = 'rgba(236,91,19,0.1)'; }}
+                    onMouseLeave={e => { e.currentTarget.style.color = '#94a3b8'; e.currentTarget.style.background = 'transparent'; }}
+                  >
+                    <FileText className="w-5 h-5" />
+                  </button>
+                  <button
+                    className="p-2 rounded-lg transition-colors"
+                    style={{ color: '#94a3b8' }}
+                    onMouseEnter={e => { e.currentTarget.style.color = '#ec5b13'; e.currentTarget.style.background = 'rgba(236,91,19,0.1)'; }}
+                    onMouseLeave={e => { e.currentTarget.style.color = '#94a3b8'; e.currentTarget.style.background = 'transparent'; }}
+                  >
+                    <MapPin className="w-5 h-5" />
+                  </button>
                 </div>
                 <div className="flex items-center gap-3">
-                  <span className="text-xs text-gray-400">{content.length}/500</span>
+                  <span className="text-xs text-slate-500">{content.length}/500</span>
                   <button
                     onClick={handleSubmit}
                     disabled={!canSubmit || submitting}
-                    className="flex items-center gap-1.5 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-full hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="flex items-center gap-2 px-8 py-2.5 text-white font-bold rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    style={{ background: '#ec5b13', boxShadow: '0 4px 15px rgba(236,91,19,0.2)' }}
                   >
                     {submitting ? (
                       <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -294,32 +393,98 @@ const Tweets = () => {
           </div>
         </div>
 
+        {/* Loading */}
         {loading && (
-          <div className="text-center py-12">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-3" />
-            <p className="text-gray-500 text-sm">Loading tweets…</p>
+          <div className="flex flex-col items-center justify-center py-16 gap-4">
+            <div
+              className="w-10 h-10 rounded-full border-2 animate-spin"
+              style={{ borderColor: 'rgba(236,91,19,0.2)', borderTopColor: '#ec5b13' }}
+            />
+            <p className="text-slate-400 text-sm">Loading tweets…</p>
           </div>
         )}
 
+        {/* Error */}
         {error && (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
-            <p className="text-red-600">{error}</p>
-            <button onClick={fetchTweets} className="mt-2 text-red-700 hover:text-red-800 font-medium text-sm">
+          <div
+            className="rounded-xl p-4"
+            style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)' }}
+          >
+            <p className="text-red-400 text-sm">{error}</p>
+            <button onClick={fetchTweets} className="mt-2 text-red-300 hover:text-red-200 font-medium text-sm">
               Try again
             </button>
           </div>
         )}
 
+        {/* Empty state */}
         {!loading && tweets.length === 0 && (
-          <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-12 text-center">
-            <MessageSquare className="mx-auto h-14 w-14 text-gray-300 mb-4" />
-            <h3 className="text-lg font-semibold text-gray-900 mb-1">No tweets yet</h3>
-            <p className="text-gray-500 text-sm">Post your first tweet using the composer above.</p>
+          <div className="flex flex-col items-center justify-center py-24 text-center">
+            <div className="relative mb-8">
+              {/* Glow */}
+              <div
+                className="absolute inset-0 rounded-full scale-150"
+                style={{ background: 'rgba(236,91,19,0.2)', filter: 'blur(48px)' }}
+              />
+              {/* Circle */}
+              <div
+                className="relative w-48 h-48 rounded-full flex items-center justify-center"
+                style={{
+                  background: 'rgba(45,30,22,0.4)',
+                  backdropFilter: 'blur(12px)',
+                  border: '2px solid rgba(236,91,19,0.2)',
+                }}
+              >
+                <MessageSquare
+                  className="w-20 h-20"
+                  style={{ color: '#ec5b13', opacity: 0.8 }}
+                  strokeWidth={1.5}
+                />
+              </div>
+              {/* Badge */}
+              <div
+                className="absolute -bottom-2 -right-2 w-12 h-12 rounded-2xl flex items-center justify-center text-white shadow-xl"
+                style={{ background: '#ec5b13', transform: 'rotate(12deg)' }}
+              >
+                <Plus className="w-5 h-5" />
+              </div>
+            </div>
+
+            <div className="max-w-md flex flex-col gap-3">
+              <h3 className="text-3xl font-black text-slate-100 tracking-tight">Your feed is waiting</h3>
+              <p className="text-slate-400 font-medium leading-relaxed">
+                Share your first thought with the PlayVibe community. Connect with other creators and start the conversation.
+              </p>
+            </div>
+
+            <button
+              onClick={() => document.querySelector('textarea')?.focus()}
+              className="mt-10 px-10 py-4 font-bold rounded-2xl flex items-center gap-3 group transition-all shadow-xl"
+              style={{
+                background: 'rgba(58,40,30,1)',
+                border: '1px solid rgba(65,46,36,1)',
+                color: '#e2e8f0',
+              }}
+              onMouseEnter={e => {
+                e.currentTarget.style.background = '#ec5b13';
+                e.currentTarget.style.borderColor = '#ec5b13';
+                e.currentTarget.style.color = '#fff';
+              }}
+              onMouseLeave={e => {
+                e.currentTarget.style.background = 'rgba(58,40,30,1)';
+                e.currentTarget.style.borderColor = 'rgba(65,46,36,1)';
+                e.currentTarget.style.color = '#e2e8f0';
+              }}
+            >
+              <Edit3 className="w-5 h-5 transition-transform group-hover:rotate-12" />
+              <span>Post your first tweet</span>
+            </button>
           </div>
         )}
 
+        {/* Tweet list */}
         {!loading && tweets.length > 0 && (
-          <div className="space-y-4">
+          <div className="flex flex-col gap-4">
             {tweets.map(tweet => (
               <TweetCard
                 key={tweet.id}
@@ -331,6 +496,39 @@ const Tweets = () => {
             ))}
           </div>
         )}
+
+        {/* Footer stats */}
+        <div
+          className="mt-auto grid grid-cols-3 gap-6 transition-all"
+          style={{ opacity: 0.4, filter: 'grayscale(1)' }}
+          onMouseEnter={e => { e.currentTarget.style.opacity = '1'; e.currentTarget.style.filter = 'none'; }}
+          onMouseLeave={e => { e.currentTarget.style.opacity = '0.4'; e.currentTarget.style.filter = 'grayscale(1)'; }}
+        >
+          {[
+            { icon: <Users className="w-5 h-5" />, label: 'Followers', value: '1.2k' },
+            { icon: <TrendingUp className="w-5 h-5" />, label: 'Impressions', value: '8.4k' },
+            { icon: <ThumbsUp className="w-5 h-5" />, label: 'Total Likes', value: '342' },
+          ].map(({ icon, label, value }) => (
+            <div
+              key={label}
+              className="p-4 rounded-xl flex items-center gap-4"
+              style={{
+                background: 'rgba(45,30,22,0.4)',
+                backdropFilter: 'blur(12px)',
+                border: '1px solid rgba(236,91,19,0.1)',
+              }}
+            >
+              <div className="w-10 h-10 rounded-lg flex items-center justify-center text-slate-400" style={{ background: 'rgba(30,20,15,0.8)' }}>
+                {icon}
+              </div>
+              <div className="flex flex-col">
+                <span className="text-xs text-slate-500 font-bold">{label}</span>
+                <span className="text-lg font-bold text-slate-300">{value}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+
       </div>
     </div>
   );
