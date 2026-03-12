@@ -313,270 +313,337 @@ const Profile = ({ onVideoSelect }) => {
   }
 
   return (
-    <div className="p-6">
-      {/* Profile Header */}
-      <div className="bg-white rounded-lg shadow-sm mb-6">
-        {/* Cover Image */}
+    <div className="min-h-screen" style={{ background: '#0f0909' }}>
+      {/* Channel Hero Banner */}
+      <section className="relative">
         <div 
-          className="h-48 w-full rounded-t-lg bg-gray-200 bg-cover bg-center"
-          style={{ 
+          className="h-64 md:h-80 w-full bg-cover bg-center relative"
+          style={{
             backgroundImage: profileUser.coverImage 
-              ? `url(${profileUser.coverImage})` 
-              : "linear-gradient(to right, #4f46e5, #7c3aed)"
+              ? `url('${profileUser.coverImage}')` 
+              : 'linear-gradient(135deg, #1a120f 0%, #2a1b15 100%)',
           }}
-        />
+        >
+          <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, rgba(15, 9, 9, 1), rgba(15, 9, 9, 0.2), transparent)' }}></div>
+        </div>
         
-        {/* Profile Info */}
-        <div className="px-6 py-4 flex flex-col md:flex-row md:items-end relative">
-          {/* Avatar */}
-          <div className="absolute md:relative -top-12 left-6 md:left-0 md:-top-16">
-            <div className="w-24 h-24 rounded-full border-4 border-white bg-gray-200 overflow-hidden">
+        <div className="max-w-7xl mx-auto px-6 -mt-16 md:-mt-20 relative z-10">
+          <div className="flex flex-col md:flex-row items-end md:items-center gap-6">
+            {/* Profile Avatar */}
+            <div 
+              className="size-32 md:size-44 rounded-full border-4 overflow-hidden shadow-2xl bg-card-dark flex-shrink-0"
+              style={{ borderColor: '#0f0909', background: '#1a120f' }}
+            >
               {profileUser.avatar ? (
                 <img 
                   src={profileUser.avatar} 
-                  alt={`${profileUser.fullName || profileUser.userName} avatar`}
-                  className="w-full h-full object-cover" 
+                  alt={profileUser?.fullName || 'Profile'}
+                  className="w-full h-full object-cover"
                 />
               ) : (
-                <div className="w-full h-full flex items-center justify-center bg-indigo-600 text-white text-2xl font-bold">
-                  {(profileUser.fullName || profileUser.userName || "U").charAt(0)}
+                <div className="w-full h-full bg-gradient-to-br from-orange-500 to-orange-900 flex items-center justify-center">
+                  <Users className="w-16 h-16 text-white" />
                 </div>
               )}
             </div>
-          </div>
-          
-          <div className="mt-12 md:mt-0 md:ml-6 flex-grow">
-            <h1 className="text-2xl font-bold">
-              {profileUser.fullName || profileUser.userName}
-            </h1>
-            <div className="text-gray-600 mb-2">@{profileUser.userName}</div>
-            <div className="flex items-center space-x-4">
-              <span className="text-sm text-gray-600">
-                <strong>{subscriberCount}</strong> subscribers
-              </span>
-              <span className="text-sm text-gray-600">
-                <strong>{videos.length}</strong> videos
-              </span>
+
+            {/* Channel Info */}
+            <div className="flex-1 pt-4 text-center md:text-left">
+              <div className="flex items-center gap-2 justify-center md:justify-start mb-2">
+                <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight text-white">
+                  {profileUser?.fullName || 'Channel'}
+                </h2>
+              </div>
+              
+              <div className="flex flex-wrap items-center justify-center md:justify-start gap-4 mt-3" style={{ color: '#94a3b8' }}>
+                <span className="font-medium text-sm">@{profileUser?.userName || 'creator'}</span>
+                <span className="size-1 rounded-full" style={{ background: '#64748b' }}></span>
+                <span className="font-medium text-sm">{subscriberCount.toLocaleString()} Subscribers</span>
+                <span className="size-1 rounded-full" style={{ background: '#64748b' }}></span>
+                <span className="font-medium text-sm">{videos.length} Videos</span>
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex gap-3 pb-2 w-full md:w-auto justify-center md:justify-start">
+              {!isOwnProfile && isLoggedIn && (
+                <button 
+                  onClick={handleSubscribe}
+                  className="px-6 py-2.5 rounded-xl font-bold border transition-all flex-1 md:flex-none"
+                  style={{ 
+                    background: isSubscribed ? '#1a120f' : '#ec5b13',
+                    color: isSubscribed ? '#f1f5f9' : '#fff',
+                    border: isSubscribed ? '1px solid rgba(236,91,19,0.2)' : 'none',
+                    boxShadow: !isSubscribed ? '0 4px 20px rgba(236,91,19,0.35)' : 'none',
+                  }}
+                >
+                  {isSubscribed ? 'Subscribed' : 'Subscribe'}
+                </button>
+              )}
             </div>
           </div>
-          
-          {/* Action buttons */}
-          {!isOwnProfile && isLoggedIn && (
-            <div className="mt-4 md:mt-0">
-              <button
-                onClick={handleSubscribe}
-                className={`px-4 py-2 rounded-lg text-sm font-medium ${
-                  isSubscribed
-                    ? "bg-gray-200 hover:bg-gray-300 text-gray-800"
-                    : "bg-red-600 hover:bg-red-700 text-white"
-                }`}
-              >
-                {isSubscribed ? "Subscribed" : "Subscribe"}
-              </button>
-            </div>
-          )}
+        </div>
+      </section>
+
+      {/* Creator Tools Tabs */}
+      <section className="max-w-7xl mx-auto px-6 mt-8 w-full">
+        <div className="flex border-b" style={{ borderColor: 'rgba(236,91,19,0.1)' }}>
+          {[
+            { id: "videos", label: "Videos" },
+            { id: "playlists", label: "Playlists" },
+            { id: "tweets", label: "Community" },
+            ...(isOwnProfile || profileUser?.privacy?.subscriptionListPublic
+              ? [{ id: "subscriptions", label: "Subscriptions" }]
+              : []),
+            ...(isOwnProfile || profileUser?.privacy?.savedPlaylistsPublic
+              ? [{ id: "savedPlaylists", label: "Saved Playlists" }]
+              : []),
+          ].map(tab => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className="pb-4 px-4 font-bold whitespace-nowrap transition-all relative"
+              style={{
+                color: activeTab === tab.id ? '#ec5b13' : '#94a3b8',
+                borderBottom: activeTab === tab.id ? '2px solid #ec5b13' : '2px solid transparent',
+              }}
+            >
+              {tab.label}
+            </button>
+          ))}
         </div>
         
-        {/* Tabs */}
-        <div className="border-t border-gray-200">
-          <div className="flex overflow-x-auto">
-            {[
-              { id: "videos", label: "Videos" },
-              { id: "playlists", label: "Playlists" },
-              { id: "tweets", label: "Tweets" },
-              // Show Subscriptions tab if own profile OR subscriptionList is public
-              ...(isOwnProfile || profileUser?.privacy?.subscriptionListPublic
-                ? [{ id: "subscriptions", label: "Subscriptions" }]
-                : []),
-              // Show Saved Playlists tab if own profile OR savedPlaylists is public
-              ...(isOwnProfile || profileUser?.privacy?.savedPlaylistsPublic
-                ? [{ id: "savedPlaylists", label: "Saved Playlists" }]
-                : []),
-            ].map(tab => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`px-6 py-3 text-sm font-medium whitespace-nowrap ${
-                  activeTab === tab.id
-                    ? "border-b-2 border-red-600 text-red-600"
-                    : "text-gray-600 hover:text-gray-900"
-                }`}
-              >
-                {tab.label}
-              </button>
-            ))}
-          </div>
-        </div>
-      </div>
+        <div className="py-6">
+          {/* Tab Content */}
+          {loading ? (
+            <div className="flex items-center justify-center min-h-[200px]">
+              <div className="text-lg" style={{ color: '#94a3b8' }}>Loading...</div>
+            </div>
+          ) : (
+            <>
+              {/* Videos Tab */}
+              {activeTab === "videos" && (
+                <>
+                  {videos.length > 0 ? (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 pb-12">
+                      <style>{`
+                        .profile-video-card {
+                          background: rgba(45, 30, 22, 0.6) !important;
+                          border-radius: 0.75rem;
+                          overflow: hidden;
+                          border: 1px solid rgba(236, 91, 19, 0.1);
+                        }
+                        .profile-video-card .bg-white {
+                          background: transparent !important;
+                        }
+                        .profile-video-card h3 {
+                          color: #f1f5f9 !important;
+                        }
+                        .profile-video-card h3:hover {
+                          color: #ec5b13 !important;
+                        }
+                        .profile-video-card p {
+                          color: #94a3b8 !important;
+                        }
+                        .profile-video-card .text-gray-500,
+                        .profile-video-card .text-gray-600 {
+                          color: #64748b !important;
+                        }
+                        .profile-video-card button:hover {
+                          background: rgba(236, 91, 19, 0.2) !important;
+                        }
+                        .profile-video-card .bg-gray-100,
+                        .profile-video-card .hover\\:bg-gray-100:hover {
+                          background: rgba(236, 91, 19, 0.1) !important;
+                        }
+                      `}</style>
+                      {videos.map((video) => (
+                        <div key={video.id} className="profile-video-card">
+                          <VideoCard video={video} onVideoSelect={onVideoSelect} />
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="rounded-lg p-6 text-center" style={{ background: 'rgba(45,30,22,0.4)' }}>
+                      <h3 className="text-lg font-medium text-white mb-2">No videos yet</h3>
+                      {!isOwnProfile && (
+                        <p style={{ color: '#94a3b8' }}>This creator hasn't uploaded any videos yet.</p>
+                      )}
+                    </div>
+                  )}
+                </>
+              )}
 
-      {/* Tab Content */}
-      <div className="mt-6">
-        {loading ? (
-          <div className="flex items-center justify-center min-h-[200px]">
-            <div className="text-lg text-gray-600">Loading...</div>
-          </div>
-        ) : (
-          <>
-            {/* Videos Tab */}
-            {activeTab === "videos" && (
-              <>
-                {videos.length > 0 ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {videos.map((video) => (
-                      <VideoCard key={video.id} video={video} onVideoSelect={onVideoSelect} />
-                    ))}
-                  </div>
-                ) : (
-                  <div className="bg-white rounded-lg shadow p-6 text-center">
-                    <h3 className="text-lg font-medium text-gray-800 mb-2">No videos yet</h3>
-                    {isOwnProfile && (
-                      <p className="text-gray-600">
-                        Upload your first video to get started!
+              {/* Playlists Tab */}
+              {activeTab === "playlists" && (
+                <div>
+                  {creatorPlaylists.length > 0 ? (
+                    <>
+                      <style>{`
+                        .profile-playlist-card {
+                          background: rgba(45, 30, 22, 0.6) !important;
+                          border-radius: 0.75rem;
+                          overflow: hidden;
+                          border: 1px solid rgba(236, 91, 19, 0.1);
+                        }
+                        .profile-playlist-card h4 {
+                          color: #f1f5f9 !important;
+                        }
+                        .profile-playlist-card p {
+                          color: #94a3b8 !important;
+                        }
+                      `}</style>
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {creatorPlaylists.map((playlist) => (
+                          <div 
+                            key={playlist._id}
+                            className="profile-playlist-card cursor-pointer hover:opacity-80 transition-opacity"
+                            onClick={() => navigate(`/playlist/${playlist._id}`)}
+                          >
+                            <div className="aspect-video bg-gradient-to-br from-purple-900 to-purple-700 flex items-center justify-center overflow-hidden">
+                              <PlaylistThumbnail playlist={playlist} />
+                            </div>
+                            <div className="p-4">
+                              <h4 className="font-semibold text-white truncate">{playlist.name}</h4>
+                              {playlist.description && (
+                                <p className="text-sm mt-1 line-clamp-2">{playlist.description}</p>
+                              )}
+                              <div className="flex items-center mt-2 text-xs" style={{ color: '#64748b' }}>
+                                <Folder className="w-3 h-3 mr-1" />
+                                Playlist • {playlist.videos?.length || 0} videos
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </>
+                  ) : (
+                    <div className="rounded-lg p-6 text-center" style={{ background: 'rgba(45,30,22,0.4)' }}>
+                      <Folder className="w-12 h-12 mx-auto mb-4" style={{ color: '#64748b' }} />
+                      <h3 className="text-lg font-medium text-white mb-2">No playlists yet</h3>
+                      <p style={{ color: '#94a3b8' }}>
+                        {isOwnProfile 
+                          ? "Create your first playlist to organize your videos!" 
+                          : "This creator hasn't created any playlists."
+                        }
                       </p>
-                    )}
-                  </div>
-                )}
-              </>
-            )}
+                    </div>
+                  )}
+                </div>
+              )}
 
-            {/* Playlists Tab */}
-            {activeTab === "playlists" && (
-              <div>
-                {/* Creator Playlists Only */}
-                {creatorPlaylists.length > 0 ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {creatorPlaylists.map((playlist) => (
-                      <div 
-                        key={playlist._id} 
-                        className="bg-white rounded-lg shadow-sm border hover:shadow-md transition-shadow cursor-pointer"
-                        onClick={() => navigate(`/playlist/${playlist._id}`)}
-                      >
-                        <div className="aspect-video bg-gradient-to-br from-purple-100 to-purple-200 rounded-t-lg flex items-center justify-center overflow-hidden">
-                          <PlaylistThumbnail playlist={playlist} />
-                        </div>
-                        <div className="p-4">
-                          <h4 className="font-semibold text-gray-900 truncate">{playlist.name}</h4>
-                          {playlist.description && (
-                            <p className="text-sm text-gray-600 mt-1 line-clamp-2">{playlist.description}</p>
-                          )}
-                          <div className="flex items-center mt-2 text-xs text-gray-500">
-                            <Folder className="w-3 h-3 mr-1" />
-                            Playlist • {playlist.videos?.length || 0} videos
+              {/* Tweets Tab */}
+              {activeTab === "tweets" && (
+                <div>
+                  {tweets.length > 0 ? (
+                    <div className="max-w-2xl mx-auto space-y-4">
+                      {tweets.map(tweet => (
+                        <TweetCard
+                          key={tweet.id}
+                          tweet={tweet}
+                          currentUser={user}
+                          onDeleted={(id) => setTweets(prev => prev.filter(t => t.id !== id))}
+                          onUpdated={(updated) => setTweets(prev => prev.map(t => t.id === updated.id ? updated : t))}
+                        />
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="rounded-lg p-8 text-center" style={{ background: 'rgba(45,30,22,0.4)' }}>
+                      <MessageSquare className="w-12 h-12 mx-auto mb-3" style={{ color: '#64748b' }} />
+                      <h3 className="text-lg font-medium text-white mb-1">No tweets yet</h3>
+                      <p style={{ color: '#94a3b8' }}>
+                        {isOwnProfile
+                          ? "Post your first tweet!"
+                          : "This creator hasn't posted any tweets yet."}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Subscriptions Tab */}
+              {activeTab === "subscriptions" && (
+                <div>
+                  {!isOwnProfile && !profileUser?.privacy?.subscriptionListPublic ? (
+                    <div className="rounded-lg p-8 text-center" style={{ background: 'rgba(45,30,22,0.4)' }}>
+                      <Lock className="w-12 h-12 mx-auto mb-3" style={{ color: '#64748b' }} />
+                      <h3 className="text-lg font-medium text-white mb-1">Private</h3>
+                      <p style={{ color: '#94a3b8' }}>This creator's subscription list is private.</p>
+                    </div>
+                  ) : (
+                    <SubscriptionsWithSearch
+                      subscriptions={subscriptions}
+                      isOwnProfile={isOwnProfile}
+                      navigate={navigate}
+                    />
+                  )}
+                </div>
+              )}
+
+              {/* Saved Playlists Tab */}
+              {activeTab === "savedPlaylists" && (
+                <div>
+                  {!isOwnProfile && !profileUser?.privacy?.savedPlaylistsPublic ? (
+                    <div className="rounded-lg p-8 text-center" style={{ background: 'rgba(45,30,22,0.4)' }}>
+                      <Lock className="w-12 h-12 mx-auto mb-3" style={{ color: '#64748b' }} />
+                      <h3 className="text-lg font-medium text-white mb-1">Private</h3>
+                      <p style={{ color: '#94a3b8' }}>This creator's saved playlists are private.</p>
+                    </div>
+                  ) : savedPlaylists.length > 0 ? (
+                    <>
+                      <style>{`
+                        .profile-saved-playlist {
+                          background: rgba(45, 30, 22, 0.6) !important;
+                          border-radius: 0.75rem;
+                          overflow: hidden;
+                          border: 1px solid rgba(236, 91, 19, 0.1);
+                        }
+                        .profile-saved-playlist h4 {
+                          color: #f1f5f9 !important;
+                        }
+                        .profile-saved-playlist p {
+                          color: #94a3b8 !important;
+                        }
+                      `}</style>
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {savedPlaylists.map(playlist => (
+                          <div
+                            key={playlist._id}
+                            className="profile-saved-playlist cursor-pointer hover:opacity-80 transition-opacity"
+                            onClick={() => navigate(`/playlist/${playlist._id}`)}
+                          >
+                            <div className="aspect-video bg-gradient-to-br from-blue-900 to-indigo-900 flex items-center justify-center overflow-hidden">
+                              <PlaylistThumbnail playlist={playlist} />
+                            </div>
+                            <div className="p-4">
+                              <h4 className="font-semibold text-white truncate">{playlist.name}</h4>
+                              {playlist.description && (
+                                <p className="text-sm mt-1 line-clamp-2">{playlist.description}</p>
+                              )}
+                              <div className="flex items-center mt-2 text-xs gap-1" style={{ color: '#64748b' }}>
+                                <ListVideo className="w-3 h-3" />
+                                {playlist.videos?.length || 0} videos
+                              </div>
+                            </div>
                           </div>
-                        </div>
+                        ))}
                       </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="bg-white rounded-lg shadow p-6 text-center">
-                    <Folder className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                    <h3 className="text-lg font-medium text-gray-800 mb-2">No playlists yet</h3>
-                    <p className="text-gray-600">
-                      {isOwnProfile 
-                        ? "Create your first playlist to organize your videos!" 
-                        : "This user hasn't created any playlists yet."
-                      }
-                    </p>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Tweets Tab */}
-            {activeTab === "tweets" && (
-              <div>
-                {tweets.length > 0 ? (
-                  <div className="max-w-2xl mx-auto space-y-4">
-                    {tweets.map(tweet => (
-                      <TweetCard
-                        key={tweet.id}
-                        tweet={tweet}
-                        currentUser={user}
-                        onDeleted={(id) => setTweets(prev => prev.filter(t => t.id !== id))}
-                        onUpdated={(updated) => setTweets(prev => prev.map(t => t.id === updated.id ? updated : t))}
-                      />
-                    ))}
-                  </div>
-                ) : (
-                  <div className="bg-white rounded-lg shadow p-8 text-center">
-                    <MessageSquare className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-                    <h3 className="text-lg font-medium text-gray-800 mb-1">No tweets yet</h3>
-                    <p className="text-gray-500 text-sm">
-                      {isOwnProfile
-                        ? "Post your first tweet from the Tweets page!"
-                        : "This user hasn't posted any tweets yet."}
-                    </p>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Subscriptions Tab */}
-            {activeTab === "subscriptions" && (
-              <div>
-                {!isOwnProfile && !profileUser?.privacy?.subscriptionListPublic ? (
-                  <div className="bg-white rounded-lg shadow p-8 text-center">
-                    <Lock className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-                    <h3 className="text-lg font-medium text-gray-800 mb-1">Private</h3>
-                    <p className="text-gray-500 text-sm">This user's subscription list is private.</p>
-                  </div>
-                ) : (
-                  <SubscriptionsWithSearch
-                    subscriptions={subscriptions}
-                    isOwnProfile={isOwnProfile}
-                    navigate={navigate}
-                  />
-                )}
-              </div>
-            )}
-
-            {/* Saved Playlists Tab */}
-            {activeTab === "savedPlaylists" && (
-              <div>
-                {!isOwnProfile && !profileUser?.privacy?.savedPlaylistsPublic ? (
-                  <div className="bg-white rounded-lg shadow p-8 text-center">
-                    <Lock className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-                    <h3 className="text-lg font-medium text-gray-800 mb-1">Private</h3>
-                    <p className="text-gray-500 text-sm">This user's saved playlists are private.</p>
-                  </div>
-                ) : savedPlaylists.length > 0 ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {savedPlaylists.map(playlist => (
-                      <div
-                        key={playlist._id}
-                        className="bg-white rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow cursor-pointer"
-                        onClick={() => navigate(`/playlist/${playlist._id}`)}
-                      >
-                        <div className="aspect-video bg-gradient-to-br from-blue-50 to-indigo-100 rounded-t-xl flex items-center justify-center overflow-hidden">
-                          <PlaylistThumbnail playlist={playlist} />
-                        </div>
-                        <div className="p-4">
-                          <h4 className="font-semibold text-gray-900 truncate">{playlist.name}</h4>
-                          {playlist.description && (
-                            <p className="text-sm text-gray-500 mt-1 line-clamp-2">{playlist.description}</p>
-                          )}
-                          <div className="flex items-center mt-2 text-xs text-gray-400 gap-1">
-                            <ListVideo className="w-3 h-3" />
-                            {playlist.videos?.length || 0} videos
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="bg-white rounded-lg shadow p-8 text-center">
-                    <ListVideo className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-                    <h3 className="text-lg font-medium text-gray-800 mb-1">No saved playlists</h3>
-                    <p className="text-gray-500 text-sm">
-                      {isOwnProfile ? "You haven't saved any playlists yet." : "This user has no saved playlists."}
-                    </p>
-                  </div>
-                )}
-              </div>
-            )}
-          </>
-        )}
-      </div>
+                    </>
+                  ) : (
+                    <div className="rounded-lg p-8 text-center" style={{ background: 'rgba(45,30,22,0.4)' }}>
+                      <ListVideo className="w-12 h-12 mx-auto mb-3" style={{ color: '#64748b' }} />
+                      <h3 className="text-lg font-medium text-white mb-1">No saved playlists</h3>
+                      <p style={{ color: '#94a3b8' }}>
+                        {isOwnProfile ? "You haven't saved any playlists yet." : "This creator hasn't saved any playlists."}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
+            </>
+          )}
+        </div>
+      </section>
     </div>
   );
 };

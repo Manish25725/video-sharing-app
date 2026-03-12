@@ -461,46 +461,6 @@ const Settings = () => {
     <div className="min-h-screen flex flex-col" style={{ background: "#141414" }}>
       {toast && <Toast msg={toast.msg} type={toast.type} onClose={() => setToast(null)} />}
 
-      {/* â”€â”€ Page header â”€â”€ */}
-      <header
-        className="sticky top-0 z-10 flex items-center justify-between px-8 h-16 border-b"
-        style={{
-          background: "rgba(15,15,15,0.2)",
-          backdropFilter: "blur(8px)",
-          WebkitBackdropFilter: "blur(8px)",
-          borderColor: "rgba(236,91,19,0.1)",
-        }}
-      >
-        <div className="relative w-96">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
-          <input
-            type="text"
-            placeholder="Search settings, videos, creators..."
-            className="w-full rounded-xl pl-10 pr-4 py-2 text-sm text-slate-200 placeholder-slate-500 outline-none transition-all"
-            style={{ background: "rgba(236,91,19,0.05)", border: "none" }}
-            onFocus={e => { e.currentTarget.style.boxShadow = "0 0 0 1px #ec5b13"; }}
-            onBlur={e => { e.currentTarget.style.boxShadow = "none"; }}
-          />
-        </div>
-        <div className="flex items-center gap-3">
-          {[Bell, BookOpen].map((Icon, i) => (
-            <button
-              key={i}
-              className="w-10 h-10 rounded-xl flex items-center justify-center text-slate-400 hover:text-primary transition-all"
-              style={{
-                background: "rgba(236,91,19,0.05)",
-                backdropFilter: "blur(12px)",
-                border: "1px solid rgba(236,91,19,0.1)",
-              }}
-              onMouseEnter={e => { e.currentTarget.style.color = "#ec5b13"; }}
-              onMouseLeave={e => { e.currentTarget.style.color = ""; }}
-            >
-              <Icon className="w-5 h-5" />
-            </button>
-          ))}
-        </div>
-      </header>
-
       {/* â”€â”€ Content â”€â”€ */}
       <div className="flex-1 overflow-y-auto p-8 max-w-5xl mx-auto w-full">
         {/* Title */}

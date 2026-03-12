@@ -97,31 +97,6 @@ const Subscriptions = ({ onVideoSelect }) => {
   return (
     <div className="min-h-screen flex flex-col" style={{ background: '#141414' }}>
 
-      {/* â”€â”€ Header â”€â”€ */}
-      <header
-        className="h-20 flex items-center justify-between px-8 sticky top-0 z-40 border-b"
-        style={{
-          background: 'rgba(15,15,15,0.8)',
-          backdropFilter: 'blur(12px)',
-          WebkitBackdropFilter: 'blur(12px)',
-          borderColor: 'rgba(236,91,19,0.05)',
-        }}
-      >
-        <div className="flex-1 max-w-2xl">
-          <div className="relative group">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-orange-400 transition-colors" />
-            <input
-              type="text"
-              placeholder="Search creators, videos, or channels..."
-              className="w-full rounded-xl py-3 pl-12 pr-4 text-sm text-slate-200 placeholder-slate-500 outline-none transition-all"
-              style={{ background: 'rgba(45,29,21,1)', border: 'none' }}
-              onFocus={e => { e.currentTarget.style.boxShadow = '0 0 0 2px rgba(236,91,19,0.5)'; }}
-              onBlur={e => { e.currentTarget.style.boxShadow = 'none'; }}
-            />
-          </div>
-        </div>
-      </header>
-
       {/* â”€â”€ Scrollable content â”€â”€ */}
       <div className="flex-1 overflow-y-auto px-8 py-6">
 
