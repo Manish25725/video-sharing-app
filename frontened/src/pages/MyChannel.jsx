@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react"
 import { Link } from "react-router-dom"
-import { Upload, Plus, List, BarChart3, Users, Video, Trash2, Edit, Eye, Play, MoreVertical, Settings, Bell, Heart, MessageCircle, Share2, FolderPlus, FolderEdit, Radio } from "lucide-react"
+import { Upload, Plus, List, BarChart3, Users, Video, Trash2, Edit, Eye, Play, MoreVertical, Settings, Bell, Heart, MessageCircle, Share2, FolderPlus, FolderEdit, Radio, Search } from "lucide-react"
 import { videoService, transformVideosArray } from "../services/videoService"
 import { dashboardService } from "../services/dashboardService"
 import { likeService } from "../services/likeService"
@@ -63,6 +63,10 @@ const MyChannel = () => {
 
   // More options dropdown state
   const [openDropdown, setOpenDropdown] = useState(null)
+
+  // Manage videos search/filter state
+  const [videoSearch, setVideoSearch] = useState('')
+  const [videoFilter, setVideoFilter] = useState('all')
 
   // Playlist modal state
   const [showPlaylistModal, setShowPlaylistModal] = useState(false)
@@ -463,521 +467,776 @@ const MyChannel = () => {
   }
 
   const renderUploadForm = () => (
-    <div className="bg-white rounded-lg shadow-md p-6">
-      <h2 className="text-2xl font-bold text-gray-900 mb-6">Upload New Video</h2>
-      <form onSubmit={handleSubmit} className="space-y-6">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Video Title
-          </label>
-          <input
-            type="text"
-            name="title"
-            value={formData.title}
-            onChange={handleInputChange}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="Enter video title"
-            required
-          />
-        </div>
+    <div>
+      {/* Header */}
+      <div className="mb-8">
+        <h1 className="text-3xl font-black tracking-tight text-white">Upload Video</h1>
+        <p className="mt-2 text-sm" style={{ color: '#94a3b8' }}>
+          Publish your latest masterpiece to the PlayVibe community.
+        </p>
+      </div>
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Description
-          </label>
-          <textarea
-            name="description"
-            value={formData.description}
-            onChange={handleInputChange}
-            rows={4}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="Enter video description"
-            required
-          />
-        </div>
+      <form onSubmit={handleSubmit}>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Left column */}
+          <div className="lg:col-span-2 flex flex-col gap-6">
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Video File
-            </label>
-            <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
-              <Upload className="mx-auto h-12 w-12 text-gray-400" />
-              <div className="mt-4">
-                <label className="cursor-pointer">
-                  <span className="text-blue-600 hover:text-blue-500">Upload a video</span>
-                  <input
-                    type="file"
-                    name="video"
-                    onChange={handleFileChange}
-                    accept="video/*"
-                    className="hidden"
-                    required
-                  />
-                </label>
-              </div>
-              {formData.video && (
-                <p className="mt-2 text-sm text-gray-600">{formData.video.name}</p>
-              )}
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Thumbnail Image
-            </label>
-            <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
-              <Upload className="mx-auto h-12 w-12 text-gray-400" />
-              <div className="mt-4">
-                <label className="cursor-pointer">
-                  <span className="text-blue-600 hover:text-blue-500">Upload thumbnail</span>
-                  <input
-                    type="file"
-                    name="thumbnail"
-                    onChange={handleFileChange}
-                    accept="image/*"
-                    className="hidden"
-                    required
-                  />
-                </label>
-              </div>
-              {formData.thumbnail && (
-                <p className="mt-2 text-sm text-gray-600">{formData.thumbnail.name}</p>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Optional subtitle / captions */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Subtitles / Captions <span className="text-gray-400 font-normal">(optional — .vtt file)</span>
-          </label>
-          <div className="border-2 border-dashed border-gray-200 rounded-lg p-4 flex items-center gap-4">
-            <label className="cursor-pointer flex items-center gap-2 text-blue-600 hover:text-blue-500 text-sm">
-              <Upload className="w-4 h-4" />
-              <span>Choose .vtt file</span>
+            {/* Video file drop zone */}
+            <label
+              className="flex flex-col items-center justify-center gap-6 rounded-2xl px-6 py-16 cursor-pointer transition-all"
+              style={{
+                border: '2px dashed rgba(236,91,19,0.35)',
+                background: formData.video ? 'rgba(236,91,19,0.08)' : 'rgba(236,91,19,0.04)',
+              }}
+              onMouseEnter={e => (e.currentTarget.style.background = 'rgba(236,91,19,0.1)')}
+              onMouseLeave={e => (e.currentTarget.style.background = formData.video ? 'rgba(236,91,19,0.08)' : 'rgba(236,91,19,0.04)')}
+            >
               <input
                 type="file"
-                name="subtitle"
+                name="video"
                 onChange={handleFileChange}
-                accept=".vtt"
+                accept="video/*"
                 className="hidden"
+                required
               />
+              <div className="flex flex-col items-center gap-4 text-center">
+                <div
+                  className="w-16 h-16 rounded-full flex items-center justify-center transition-transform"
+                  style={{ background: 'rgba(236,91,19,0.2)', color: '#ec5b13' }}
+                >
+                  <Upload className="w-8 h-8" />
+                </div>
+                <div>
+                  <p className="text-lg font-bold text-white">
+                    {formData.video ? formData.video.name : 'Drag and drop video file'}
+                  </p>
+                  <p className="text-sm mt-1" style={{ color: '#94a3b8' }}>
+                    {formData.video
+                      ? 'Click to change file'
+                      : 'MP4, MOV, or AVI up to 4GB. Your video will remain private until you publish.'}
+                  </p>
+                </div>
+              </div>
+              {!formData.video && (
+                <div
+                  className="px-6 py-2.5 rounded-xl text-sm font-bold text-white pointer-events-none"
+                  style={{ background: '#ec5b13', boxShadow: '0 4px 16px rgba(236,91,19,0.3)' }}
+                >
+                  Select File
+                </div>
+              )}
             </label>
-            {formData.subtitle ? (
-              <span className="text-sm text-gray-600 flex-1 truncate">{formData.subtitle.name}</span>
-            ) : (
-              <span className="text-sm text-gray-400">No file selected — English captions will be shown automatically</span>
-            )}
-          </div>
-        </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Video Type *
-            </label>
-            <select
-              name="videoType"
-              value={formData.videoType}
-              onChange={handleInputChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              required
+            {/* Title */}
+            <div className="flex flex-col gap-2">
+              <label className="text-sm font-bold" style={{ color: '#cbd5e1' }}>Video Title</label>
+              <input
+                type="text"
+                name="title"
+                value={formData.title}
+                onChange={handleInputChange}
+                placeholder="Give your video a catchy name"
+                required
+                className="w-full rounded-xl p-4 text-white outline-none transition-all placeholder:text-slate-600"
+                style={{
+                  background: 'rgba(236,91,19,0.05)',
+                  border: '1px solid rgba(236,91,19,0.2)',
+                }}
+                onFocus={e => { e.target.style.border = '1px solid rgba(236,91,19,0.6)'; e.target.style.boxShadow = '0 0 0 3px rgba(236,91,19,0.08)'; }}
+                onBlur={e => { e.target.style.border = '1px solid rgba(236,91,19,0.2)'; e.target.style.boxShadow = 'none'; }}
+              />
+            </div>
+
+            {/* Description */}
+            <div className="flex flex-col gap-2">
+              <label className="text-sm font-bold" style={{ color: '#cbd5e1' }}>Description</label>
+              <textarea
+                name="description"
+                value={formData.description}
+                onChange={handleInputChange}
+                rows={5}
+                placeholder="Tell viewers what your video is about..."
+                required
+                className="w-full rounded-xl p-4 text-white outline-none transition-all resize-none placeholder:text-slate-600"
+                style={{
+                  background: 'rgba(236,91,19,0.05)',
+                  border: '1px solid rgba(236,91,19,0.2)',
+                }}
+                onFocus={e => { e.target.style.border = '1px solid rgba(236,91,19,0.6)'; e.target.style.boxShadow = '0 0 0 3px rgba(236,91,19,0.08)'; }}
+                onBlur={e => { e.target.style.border = '1px solid rgba(236,91,19,0.2)'; e.target.style.boxShadow = 'none'; }}
+              />
+            </div>
+
+            {/* Subtitles */}
+            <div className="flex flex-col gap-2">
+              <label className="text-sm font-bold" style={{ color: '#cbd5e1' }}>
+                Subtitles / Captions <span style={{ color: '#64748b', fontWeight: 400 }}>(optional — .vtt)</span>
+              </label>
+              <label
+                className="flex items-center gap-3 p-4 rounded-xl cursor-pointer transition-all"
+                style={{ background: 'rgba(236,91,19,0.04)', border: '1px dashed rgba(236,91,19,0.2)' }}
+                onMouseEnter={e => (e.currentTarget.style.background = 'rgba(236,91,19,0.09)')}
+                onMouseLeave={e => (e.currentTarget.style.background = 'rgba(236,91,19,0.04)')}
+              >
+                <Upload className="w-4 h-4 flex-shrink-0" style={{ color: '#ec5b13' }} />
+                <span className="text-sm font-semibold" style={{ color: '#ec5b13' }}>Choose .vtt file</span>
+                <span className="text-sm flex-1 truncate" style={{ color: '#64748b' }}>
+                  {formData.subtitle ? formData.subtitle.name : 'No file selected — auto captions will be generated'}
+                </span>
+                <input
+                  type="file"
+                  name="subtitle"
+                  onChange={handleFileChange}
+                  accept=".vtt"
+                  className="hidden"
+                />
+              </label>
+            </div>
+          </div>
+
+          {/* Right column */}
+          <div className="flex flex-col gap-6">
+
+            {/* Thumbnail */}
+            <div className="flex flex-col gap-2">
+              <label className="text-sm font-bold" style={{ color: '#cbd5e1' }}>Thumbnail</label>
+              <label
+                className="aspect-video w-full rounded-2xl flex flex-col items-center justify-center gap-3 cursor-pointer overflow-hidden relative transition-all"
+                style={{ border: '2px dashed rgba(236,91,19,0.25)', background: 'rgba(236,91,19,0.04)' }}
+                onMouseEnter={e => (e.currentTarget.style.background = 'rgba(236,91,19,0.09)')}
+                onMouseLeave={e => (e.currentTarget.style.background = formData.thumbnail ? 'rgba(236,91,19,0.04)' : 'rgba(236,91,19,0.04)')}
+              >
+                {formData.thumbnail ? (
+                  <img
+                    src={URL.createObjectURL(formData.thumbnail)}
+                    alt="Thumbnail preview"
+                    className="absolute inset-0 w-full h-full object-cover"
+                  />
+                ) : (
+                  <>
+                    <Upload className="w-8 h-8" style={{ color: 'rgba(236,91,19,0.6)' }} />
+                    <p className="text-xs font-semibold" style={{ color: '#94a3b8' }}>Click to upload image</p>
+                  </>
+                )}
+                <input
+                  type="file"
+                  name="thumbnail"
+                  onChange={handleFileChange}
+                  accept="image/*"
+                  className="hidden"
+                  required
+                />
+              </label>
+              <p className="text-xs" style={{ color: '#64748b' }}>
+                A good thumbnail stands out and gets more clicks.
+              </p>
+            </div>
+
+            {/* Settings card */}
+            <div
+              className="p-5 rounded-2xl flex flex-col gap-4"
+              style={{ background: 'rgba(236,91,19,0.05)', border: '1px solid rgba(236,91,19,0.12)' }}
             >
-              <option value="">Select video type</option>
-              <option value="Music">Music</option>
-              <option value="Movies">Movies</option>
-              <option value="Gaming">Gaming</option>
-              <option value="News">News</option>
-              <option value="Sports">Sports</option>
-              <option value="Learning">Learning</option>
-              <option value="Fashion">Fashion</option>
-            </select>
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-bold text-white">Visibility</span>
+                <span
+                  className="text-xs font-bold px-2 py-1 rounded-lg uppercase tracking-wider"
+                  style={{ background: 'rgba(236,91,19,0.2)', color: '#ec5b13' }}
+                >
+                  Public
+                </span>
+              </div>
+              <div style={{ borderTop: '1px solid rgba(236,91,19,0.08)' }} />
+              <div className="flex items-center justify-between">
+                <label className="text-sm font-bold" style={{ color: '#94a3b8' }}>Category</label>
+                <select
+                  name="videoType"
+                  value={formData.videoType}
+                  onChange={handleInputChange}
+                  required
+                  className="text-xs font-bold bg-transparent border-none outline-none focus:ring-0 cursor-pointer text-right"
+                  style={{ color: '#ec5b13' }}
+                >
+                  <option value="" style={{ background: '#221610' }}>Select type</option>
+                  <option value="Music" style={{ background: '#221610' }}>Music</option>
+                  <option value="Movies" style={{ background: '#221610' }}>Movies</option>
+                  <option value="Gaming" style={{ background: '#221610' }}>Gaming</option>
+                  <option value="News" style={{ background: '#221610' }}>News</option>
+                  <option value="Sports" style={{ background: '#221610' }}>Sports</option>
+                  <option value="Learning" style={{ background: '#221610' }}>Learning</option>
+                  <option value="Fashion" style={{ background: '#221610' }}>Fashion</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Upload button + progress */}
+            <div className="flex flex-col gap-3">
+              <button
+                type="submit"
+                disabled={loading || isUploading}
+                className="w-full h-12 flex items-center justify-center gap-2 rounded-xl font-black text-base text-white transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+                style={{ background: '#ec5b13', boxShadow: '0 4px 20px rgba(236,91,19,0.35)' }}
+                onMouseEnter={e => !loading && !isUploading && (e.currentTarget.style.filter = 'brightness(1.1)')}
+                onMouseLeave={e => (e.currentTarget.style.filter = 'none')}
+              >
+                {isUploading ? (
+                  <>
+                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    Uploading... {Math.round(uploadProgress)}%
+                  </>
+                ) : loading ? (
+                  'Processing...'
+                ) : (
+                  <>
+                    <Upload className="w-5 h-5" />
+                    Upload Video
+                  </>
+                )}
+              </button>
+
+              {/* Progress bar */}
+              {isUploading && (
+                <div>
+                  <div className="w-full rounded-full h-1.5" style={{ background: 'rgba(236,91,19,0.15)' }}>
+                    <div
+                      className="h-1.5 rounded-full transition-all duration-300"
+                      style={{ width: `${uploadProgress}%`, background: '#ec5b13' }}
+                    />
+                  </div>
+                  <p className="text-xs text-center mt-1" style={{ color: '#94a3b8' }}>
+                    {Math.round(uploadProgress)}% uploaded
+                  </p>
+                </div>
+              )}
+            </div>
+
+            {/* Terms notice */}
+            <div
+              className="p-4 rounded-xl flex gap-3"
+              style={{ background: 'rgba(234,179,8,0.08)', border: '1px solid rgba(234,179,8,0.18)' }}
+            >
+              <Plus className="w-4 h-4 flex-shrink-0 mt-0.5" style={{ color: '#ca8a04' }} />
+              <p className="text-xs leading-relaxed" style={{ color: '#a16207' }}>
+                By uploading you agree to PlayVibe's Terms of Service and Community Guidelines.
+              </p>
+            </div>
           </div>
-
-
         </div>
-
-        <button
-          type="submit"
-          disabled={loading || isUploading}
-          className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed relative"
-        >
-          {isUploading ? (
-            <div className="flex items-center justify-center">
-              <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
-              Uploading... {Math.round(uploadProgress)}%
-            </div>
-          ) : loading ? (
-            "Processing..."
-          ) : (
-            "Upload Video"
-          )}
-        </button>
-
-        {/* Progress Bar */}
-        {isUploading && (
-          <div className="mt-3">
-            <div className="w-full bg-gray-200 rounded-full h-2">
-              <div 
-                className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-                style={{ width: `${uploadProgress}%` }}
-              ></div>
-            </div>
-            <p className="text-sm text-gray-600 mt-1 text-center">
-              Upload Progress: {Math.round(uploadProgress)}%
-            </p>
-          </div>
-        )}
       </form>
     </div>
   )
 
-  const renderVideoList = () => (
-    <div className="bg-white">
-      <div className="flex items-center justify-between mb-6">
-        <h2 className="text-xl font-semibold text-gray-900">Manage Videos</h2>
-        <div className="flex items-center space-x-3">
-          <input 
-            type="text" 
-            placeholder="Search videos..."
-            className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-          <button className="px-4 py-2 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700">
-            Filter
+  const renderVideoList = () => {
+    const filtered = videos.filter(v => {
+      const matchesSearch = !videoSearch || v.title?.toLowerCase().includes(videoSearch.toLowerCase());
+      const matchesFilter =
+        videoFilter === 'all' ||
+        (videoFilter === 'live' && v.isLive) ||
+        (videoFilter === 'shorts' && v.isShort);
+      return matchesSearch && matchesFilter;
+    });
+
+    return (
+      <div>
+        {/* Header */}
+        <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
+          <div>
+            <h1 className="text-3xl font-black tracking-tight text-white lg:text-4xl">Manage Videos</h1>
+            <p className="text-sm mt-1" style={{ color: '#94a3b8' }}>
+              You have {videos.length} uploaded video{videos.length !== 1 ? 's' : ''} in your library
+            </p>
+          </div>
+          <button
+            onClick={() => setActiveTab('upload')}
+            className="flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-white transition-all hover:scale-105"
+            style={{ background: '#ec5b13', boxShadow: '0 4px 20px rgba(236,91,19,0.3)' }}
+          >
+            <Upload className="w-5 h-5" />
+            Upload New
           </button>
         </div>
-      </div>
-      
-      {loading ? (
-        <div className="flex items-center justify-center py-12">
-          <div className="text-lg text-gray-600">Loading videos...</div>
+
+        {/* Filter + Search bar */}
+        <div
+          className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between p-4 rounded-2xl mb-6"
+          style={{ background: 'rgba(45,30,22,0.4)', border: '1px solid rgba(236,91,19,0.1)' }}
+        >
+          <div
+            className="flex gap-6 pb-3 md:pb-0 md:pr-6 w-full md:w-auto"
+            style={{ borderBottom: 'none', borderRight: 'none' }}
+          >
+            {['all', 'shorts', 'live'].map(tab => (
+              <button
+                key={tab}
+                onClick={() => setVideoFilter(tab)}
+                className="text-sm font-bold pb-1 transition-colors"
+                style={{
+                  color: videoFilter === tab ? '#ec5b13' : '#94a3b8',
+                  borderBottom: videoFilter === tab ? '2px solid #ec5b13' : '2px solid transparent',
+                }}
+              >
+                {tab === 'all' ? 'All Videos' : tab.charAt(0).toUpperCase() + tab.slice(1)}
+              </button>
+            ))}
+          </div>
+          <div className="relative w-full md:max-w-sm">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none" style={{ color: '#64748b' }} />
+            <input
+              type="text"
+              placeholder="Search your library..."
+              value={videoSearch}
+              onChange={e => setVideoSearch(e.target.value)}
+              className="w-full rounded-xl pl-11 pr-4 py-2.5 text-sm outline-none"
+              style={{
+                background: 'rgba(236,91,19,0.06)',
+                border: '1px solid rgba(236,91,19,0.12)',
+                color: '#f1f5f9',
+              }}
+            />
+          </div>
         </div>
-      ) : error ? (
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-          {error}
-        </div>
-      ) : (
-        <div className="space-y-3">
-          {videos.length === 0 ? (
-            <div className="text-center py-12">
-              <Video className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No videos uploaded yet</h3>
-              <p className="text-gray-600">Upload your first video to get started!</p>
+
+        {/* Content */}
+        {loading ? (
+          <div className="flex flex-col gap-4">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <div key={i} className="flex gap-4 p-4 rounded-2xl animate-pulse"
+                style={{ background: 'rgba(45,30,22,0.4)', border: '1px solid rgba(236,91,19,0.08)' }}>
+                <div className="w-48 shrink-0 rounded-xl" style={{ aspectRatio: '16/9', background: 'rgba(61,40,29,0.8)' }} />
+                <div className="flex-1 space-y-3 pt-2">
+                  <div className="h-5 rounded" style={{ background: 'rgba(61,40,29,0.8)' }} />
+                  <div className="h-4 w-2/3 rounded" style={{ background: 'rgba(61,40,29,0.6)' }} />
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : error ? (
+          <div className="p-4 rounded-xl text-sm font-medium"
+            style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)', color: '#fca5a5' }}>
+            {error}
+          </div>
+        ) : filtered.length === 0 ? (
+          <div className="flex flex-col items-center justify-center min-h-[300px]">
+            <div className="w-20 h-20 rounded-full flex items-center justify-center mb-4"
+              style={{ background: 'rgba(236,91,19,0.1)', boxShadow: '0 0 40px rgba(236,91,19,0.15)' }}>
+              <Video className="w-10 h-10" style={{ color: '#ec5b13' }} />
             </div>
-          ) : (
-            videos.map((video) => (
-              <div key={video.id} className="flex items-center bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
-                {/* Video Thumbnail and Info */}
-                <div className="flex items-center flex-1 space-x-4">
-                  <div className="relative cursor-pointer" onClick={() => handleViewVideo(video.id)}>
-                    <img
-                      src={video.thumbnail || "https://picsum.photos/160/90?random=" + video.id}
-                      alt={video.title}
-                      className="w-40 h-24 object-cover rounded-lg hover:opacity-80 transition-opacity"
-                    />
-                    <div className="absolute bottom-1 right-1 bg-black bg-opacity-70 text-white text-xs px-1 rounded">
-                      {formatDuration(video.duration)}
-                    </div>
-                    {/* Play button overlay */}
-                    <div className="absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity bg-black bg-opacity-30 rounded-lg">
-                      <Play className="w-8 h-8 text-white" />
+            <h3 className="text-lg font-black text-white mb-2">
+              {videoSearch ? 'No videos found' : 'No videos uploaded yet'}
+            </h3>
+            <p className="text-sm" style={{ color: '#94a3b8' }}>
+              {videoSearch ? `No videos match "${videoSearch}"` : 'Upload your first video to get started!'}
+            </p>
+          </div>
+        ) : (
+          <div className="flex flex-col gap-4">
+            {filtered.map(video => (
+              <div
+                key={video.id}
+                className="group flex flex-col md:flex-row items-start md:items-center gap-4 p-4 rounded-2xl transition-all"
+                style={{ background: 'rgba(45,30,22,0.4)', border: '1px solid rgba(236,91,19,0.08)' }}
+                onMouseEnter={e => {
+                  e.currentTarget.style.border = '1px solid rgba(236,91,19,0.35)';
+                  e.currentTarget.style.background = 'rgba(45,30,22,0.65)';
+                }}
+                onMouseLeave={e => {
+                  e.currentTarget.style.border = '1px solid rgba(236,91,19,0.08)';
+                  e.currentTarget.style.background = 'rgba(45,30,22,0.4)';
+                }}
+              >
+                {/* Thumbnail */}
+                <div
+                  className="relative flex-shrink-0 w-full md:w-48 rounded-xl overflow-hidden cursor-pointer"
+                  style={{ aspectRatio: '16/9', background: 'rgba(61,40,29,0.8)', border: '1px solid rgba(236,91,19,0.1)' }}
+                  onClick={() => handleViewVideo(video.id)}
+                >
+                  <img
+                    src={video.thumbnail || `https://picsum.photos/192/108?random=${video.id}`}
+                    alt={video.title}
+                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                  />
+                  <div
+                    className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                    style={{ background: 'rgba(0,0,0,0.4)' }}
+                  >
+                    <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ background: '#ec5b13' }}>
+                      <Play className="w-6 h-6 text-white ml-0.5" fill="white" />
                     </div>
                   </div>
-                  <div className="flex-1">
-                    <h3 
-                      className="font-medium text-gray-900 text-sm mb-2 line-clamp-2 cursor-pointer hover:text-blue-600 transition-colors"
-                      onClick={() => handleViewVideo(video.id)}
-                      title="Click to view video"
+                  <span
+                    className="absolute bottom-2 right-2 text-white text-[10px] font-bold px-1.5 py-0.5 rounded"
+                    style={{ background: 'rgba(0,0,0,0.8)' }}
+                  >
+                    {formatDuration(video.duration)}
+                  </span>
+                </div>
+
+                {/* Info */}
+                <div className="flex-1 min-w-0 flex flex-col gap-2">
+                  <h3
+                    className="font-bold text-lg truncate cursor-pointer transition-colors"
+                    style={{ color: '#f1f5f9' }}
+                    onMouseEnter={e => (e.currentTarget.style.color = '#ec5b13')}
+                    onMouseLeave={e => (e.currentTarget.style.color = '#f1f5f9')}
+                    onClick={() => handleViewVideo(video.id)}
+                  >
+                    {video.title}
+                  </h3>
+                  <div className="flex flex-wrap items-center gap-3 text-xs" style={{ color: '#94a3b8' }}>
+                    <span className="flex items-center gap-1">
+                      <Eye className="w-3.5 h-3.5" />
+                      {video.views || 0} views
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <span className="w-1 h-1 rounded-full inline-block" style={{ background: '#64748b' }} />
+                      {video.uploadTime ? new Date(video.uploadTime).toLocaleDateString() : 'Recently'}
+                    </span>
+                    <button
+                      onClick={() => handlePublishToggle(video.id, video.isPublished)}
+                      className="px-2 py-0.5 rounded text-xs font-bold transition-colors"
+                      style={video.isPublished ? {
+                        background: 'rgba(34,197,94,0.1)',
+                        color: '#4ade80',
+                        border: '1px solid rgba(34,197,94,0.2)',
+                      } : {
+                        background: 'rgba(100,116,139,0.1)',
+                        color: '#94a3b8',
+                        border: '1px solid rgba(100,116,139,0.2)',
+                      }}
                     >
-                      {video.title}
-                    </h3>
-                    <div className="flex items-center space-x-4 text-xs text-gray-500">
-                      <span className="flex items-center">
-                        <Eye className="w-3 h-3 mr-1" />
-                        {video.views || 0} views
-                      </span>
-                      <span>
-                        {video.likes || 0} likes
-                      </span>
-                      <span>
-                        {video.uploadTime ? new Date(video.uploadTime).toLocaleDateString() : 'Recently'}
-                      </span>
-                    </div>
+                      {video.isPublished ? 'Public' : 'Unpublished'}
+                    </button>
                   </div>
                 </div>
 
-                {/* Action Buttons */}
-                <div className="flex flex-col sm:flex-row items-end sm:items-center space-y-2 sm:space-y-0 sm:space-x-3 ml-4">
-                  {/* Status Badge */}
+                {/* Actions */}
+                <div className="flex items-center gap-2 w-full md:w-auto mt-2 md:mt-0 flex-wrap">
                   <button
-                    onClick={() => handlePublishToggle(video.id, video.isPublished)}
-                    className={`px-3 py-1 rounded-full text-xs font-medium transition-colors whitespace-nowrap ${
-                      video.isPublished
-                        ? "bg-green-100 text-green-800 hover:bg-green-200"
-                        : "bg-red-100 text-red-800 hover:bg-red-200"
-                    }`}
+                    onClick={() => { setSelectedVideoForPlaylist(video); setShowPlaylistModal(true); }}
+                    className="p-2 rounded-lg transition-all"
+                    title="Add to playlist"
+                    style={{ background: 'rgba(61,40,29,0.8)', border: '1px solid rgba(236,91,19,0.1)', color: '#94a3b8' }}
+                    onMouseEnter={e => { e.currentTarget.style.color = '#ec5b13'; e.currentTarget.style.border = '1px solid rgba(236,91,19,0.4)'; }}
+                    onMouseLeave={e => { e.currentTarget.style.color = '#94a3b8'; e.currentTarget.style.border = '1px solid rgba(236,91,19,0.1)'; }}
                   >
-                    {video.isPublished ? "Published" : "Unpublished"}
+                    <FolderPlus className="w-4 h-4" />
                   </button>
-
-                  {/* Playlist Actions */}
-                  <div className="flex items-center space-x-1 bg-gray-50 rounded-lg p-1">
-                    <button
-                      onClick={() => {
-                        setSelectedVideoForPlaylist(video)
-                        setShowPlaylistModal(true)
-                      }}
-                      className="p-2 text-gray-500 hover:text-purple-600 hover:bg-purple-50 rounded-md transition-colors"
-                      title="Add to playlist"
-                    >
-                      <FolderPlus className="w-4 h-4" />
-                    </button>
-
-                    <button
-                      onClick={() => {
-                        setSelectedVideoForPlaylist(video)
-                        setShowPlaylistEditModal(true)
-                      }}
-                      className="p-2 text-gray-500 hover:text-orange-600 hover:bg-orange-50 rounded-md transition-colors"
-                      title="Manage playlists"
-                    >
-                      <FolderEdit className="w-4 h-4" />
-                    </button>
-                  </div>
-
-                    {/* Video Actions */}
-                  <div className="flex items-center space-x-1 bg-gray-50 rounded-lg p-1">
-                    <button
-                      onClick={() => handleEditVideo(video)}
-                      className="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-md transition-colors"
-                      title="Edit video"
-                    >
-                      <Edit className="w-4 h-4" />
-                    </button>
-
-                    <button
-                      onClick={() => handleDeleteVideo(video.id)}
-                      className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors"
-                      title="Delete video"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
-
-                  {/* More Options */}
+                  <button
+                    onClick={() => { setSelectedVideoForPlaylist(video); setShowPlaylistEditModal(true); }}
+                    className="p-2 rounded-lg transition-all"
+                    title="Manage playlists"
+                    style={{ background: 'rgba(61,40,29,0.8)', border: '1px solid rgba(236,91,19,0.1)', color: '#94a3b8' }}
+                    onMouseEnter={e => { e.currentTarget.style.color = '#ec5b13'; e.currentTarget.style.border = '1px solid rgba(236,91,19,0.4)'; }}
+                    onMouseLeave={e => { e.currentTarget.style.color = '#94a3b8'; e.currentTarget.style.border = '1px solid rgba(236,91,19,0.1)'; }}
+                  >
+                    <FolderEdit className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => handleEditVideo(video)}
+                    className="flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all"
+                    style={{ background: 'rgba(61,40,29,0.8)', border: '1px solid rgba(236,91,19,0.1)', color: '#f1f5f9' }}
+                    onMouseEnter={e => (e.currentTarget.style.background = 'rgba(61,40,29,1)')}
+                    onMouseLeave={e => (e.currentTarget.style.background = 'rgba(61,40,29,0.8)')}
+                  >
+                    <Edit className="w-4 h-4" />
+                    <span className="hidden xl:inline">Edit</span>
+                  </button>
+                  <button
+                    onClick={() => handleViewVideo(video.id)}
+                    className="flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all"
+                    style={{ background: 'rgba(61,40,29,0.8)', border: '1px solid rgba(236,91,19,0.1)', color: '#f1f5f9' }}
+                    onMouseEnter={e => (e.currentTarget.style.background = 'rgba(61,40,29,1)')}
+                    onMouseLeave={e => (e.currentTarget.style.background = 'rgba(61,40,29,0.8)')}
+                  >
+                    <Eye className="w-4 h-4" />
+                    <span className="hidden xl:inline">View</span>
+                  </button>
+                  <button
+                    onClick={() => handleDeleteVideo(video.id)}
+                    className="p-2 rounded-lg transition-all"
+                    title="Delete video"
+                    style={{ background: 'rgba(61,40,29,0.8)', border: '1px solid rgba(239,68,68,0.15)', color: '#f87171' }}
+                    onMouseEnter={e => { e.currentTarget.style.background = 'rgba(239,68,68,0.1)'; e.currentTarget.style.border = '1px solid rgba(239,68,68,0.35)'; }}
+                    onMouseLeave={e => { e.currentTarget.style.background = 'rgba(61,40,29,0.8)'; e.currentTarget.style.border = '1px solid rgba(239,68,68,0.15)'; }}
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
                   <div className="relative">
-                    <button 
+                    <button
                       onClick={() => setOpenDropdown(openDropdown === video.id ? null : video.id)}
-                      className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-50 rounded-full transition-colors"
+                      className="p-2 rounded-lg transition-all"
                       title="More options"
+                      style={{ background: 'rgba(61,40,29,0.8)', border: '1px solid rgba(236,91,19,0.1)', color: '#94a3b8' }}
+                      onMouseEnter={e => (e.currentTarget.style.color = '#f1f5f9')}
+                      onMouseLeave={e => (e.currentTarget.style.color = '#94a3b8')}
                     >
                       <MoreVertical className="w-4 h-4" />
                     </button>
-                    
                     {openDropdown === video.id && (
-                      <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-10 border border-gray-200">
-                        <div className="py-1">
+                      <div
+                        className="absolute right-0 mt-2 w-48 rounded-xl z-20 overflow-hidden shadow-2xl"
+                        style={{ background: 'rgba(34,22,16,0.97)', border: '1px solid rgba(236,91,19,0.15)', backdropFilter: 'blur(16px)' }}
+                      >
+                        {[
+                          { label: 'Copy Link', action: () => { navigator.clipboard.writeText(`${window.location.origin}/video/${video.id}`); setOpenDropdown(null); showToast('Video link copied!', 'success'); } },
+                          { label: 'View Video', action: () => { handleViewVideo(video.id); setOpenDropdown(null); } },
+                          { label: 'Edit Details', action: () => { handleEditVideo(video); setOpenDropdown(null); } },
+                        ].map(item => (
                           <button
-                            onClick={() => {
-                              navigator.clipboard.writeText(`${window.location.origin}/video/${video.id}`)
-                              setOpenDropdown(null)
-                              showToast("Video link copied to clipboard!", "success")
-                            }}
-                            className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                            key={item.label}
+                            onClick={item.action}
+                            className="w-full text-left px-4 py-2.5 text-sm transition-colors"
+                            style={{ color: '#cbd5e1' }}
+                            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(236,91,19,0.1)'; e.currentTarget.style.color = '#ec5b13'; }}
+                            onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#cbd5e1'; }}
                           >
-                            Copy Link
+                            {item.label}
                           </button>
-                          <button
-                            onClick={() => {
-                              handleViewVideo(video.id)
-                              setOpenDropdown(null)
-                            }}
-                            className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                          >
-                            View Video
-                          </button>
-                          <button
-                            onClick={() => {
-                              handleEditVideo(video)
-                              setOpenDropdown(null)
-                            }}
-                            className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                          >
-                            Edit Details
-                          </button>
-                          <hr className="my-1" />
-                          <button
-                            onClick={() => {
-                              handleDeleteVideo(video.id)
-                              setOpenDropdown(null)
-                            }}
-                            className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50"
-                          >
-                            Delete Video
-                          </button>
-                        </div>
+                        ))}
+                        <div style={{ borderTop: '1px solid rgba(236,91,19,0.1)' }} />
+                        <button
+                          onClick={() => { handleDeleteVideo(video.id); setOpenDropdown(null); }}
+                          className="w-full text-left px-4 py-2.5 text-sm transition-colors"
+                          style={{ color: '#f87171' }}
+                          onMouseEnter={e => (e.currentTarget.style.background = 'rgba(239,68,68,0.08)')}
+                          onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+                        >
+                          Delete Video
+                        </button>
                       </div>
                     )}
                   </div>
                 </div>
               </div>
-            ))
-          )}
-        </div>
-      )}
-    </div>
-  )
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  }
 
   const renderAnalytics = () => {
-    // Format numbers with commas for better readability
     const formatNumber = (num) => {
-      if (num >= 1000000) {
-        return (num / 1000000).toFixed(1) + 'M';
-      } else if (num >= 1000) {
-        return (num / 1000).toFixed(1) + 'K';
-      }
-      return num.toLocaleString();
+      if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
+      if (num >= 1000) return (num / 1000).toFixed(1) + 'K';
+      return (num || 0).toLocaleString();
     };
 
+    const avgViews = analyticsData.totalVideos > 0
+      ? Math.round(analyticsData.totalViews / analyticsData.totalVideos) : 0;
+    const avgLikes = analyticsData.totalVideos > 0
+      ? Math.round(analyticsData.totalLikes / analyticsData.totalVideos) : 0;
+
+    const statCards = [
+      {
+        label: 'Total Views', value: formatNumber(analyticsData.totalViews),
+        icon: <Eye className="w-6 h-6" />,
+        gradient: 'linear-gradient(135deg, #2563eb, #1d4ed8)',
+        glow: 'rgba(37,99,235,0.35)',
+      },
+      {
+        label: 'Subscribers', value: formatNumber(analyticsData.totalSubscribers),
+        icon: <Users className="w-6 h-6" />,
+        gradient: 'linear-gradient(135deg, #7c3aed, #6d28d9)',
+        glow: 'rgba(124,58,237,0.35)',
+      },
+      {
+        label: 'Total Videos', value: formatNumber(analyticsData.totalVideos),
+        icon: <Video className="w-6 h-6" />,
+        gradient: 'linear-gradient(135deg, #059669, #047857)',
+        glow: 'rgba(5,150,105,0.35)',
+      },
+      {
+        label: 'Total Likes', value: formatNumber(analyticsData.totalLikes),
+        icon: <Heart className="w-6 h-6" />,
+        gradient: 'linear-gradient(135deg, #dc2626, #b91c1c)',
+        glow: 'rgba(220,38,38,0.35)',
+      },
+    ];
+
+    // bar chart heights (mock)
+    const bars = [40, 65, 50, 80, 95, 70, 60, 45, 75, 90, 85, 100];
+
     return (
-      <div className="bg-white rounded-lg shadow-md p-6">
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-bold text-gray-900">Analytics</h2>
+      <div>
+        {/* Header */}
+        <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
+          <div>
+            <h1 className="text-3xl font-black tracking-tight text-white lg:text-4xl">Channel Analytics</h1>
+            <p className="text-sm mt-1" style={{ color: '#94a3b8' }}>Detailed performance breakdown for the last 30 days</p>
+          </div>
           <button
             onClick={fetchAnalyticsData}
             disabled={analyticsLoading}
-            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+            className="flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm transition-all disabled:opacity-50"
+            style={{ background: 'rgba(236,91,19,0.15)', border: '1px solid rgba(236,91,19,0.3)', color: '#ec5b13' }}
+            onMouseEnter={e => !analyticsLoading && (e.currentTarget.style.background = 'rgba(236,91,19,0.25)')}
+            onMouseLeave={e => (e.currentTarget.style.background = 'rgba(236,91,19,0.15)')}
           >
-            {analyticsLoading ? "Refreshing..." : "Refresh"}
+            <BarChart3 className="w-4 h-4" />
+            {analyticsLoading ? 'Refreshing...' : 'Refresh'}
           </button>
         </div>
 
         {analyticsLoading ? (
-          <div className="flex items-center justify-center py-12">
-            <div className="text-lg text-gray-600">Loading analytics...</div>
+          <div className="flex flex-col gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="h-36 rounded-2xl animate-pulse"
+                  style={{ background: 'rgba(45,30,22,0.5)' }} />
+              ))}
+            </div>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            <div className="bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg p-6 text-white">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-blue-100">Total Views</p>
-                  <p className="text-3xl font-bold">{formatNumber(analyticsData.totalViews)}</p>
+          <>
+            {/* Summary stat cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
+              {statCards.map(card => (
+                <div key={card.label} className="relative overflow-hidden rounded-2xl p-6 text-white shadow-xl"
+                  style={{ background: card.gradient, boxShadow: `0 8px 32px ${card.glow}` }}>
+                  <div className="flex justify-between items-start mb-4">
+                    <div className="p-2 rounded-xl" style={{ background: 'rgba(255,255,255,0.2)' }}>
+                      {card.icon}
+                    </div>
+                  </div>
+                  <p className="text-sm font-medium" style={{ color: 'rgba(255,255,255,0.8)' }}>{card.label}</p>
+                  <h3 className="text-3xl font-black mt-1">{card.value}</h3>
+                  <div className="absolute -right-4 -bottom-4 opacity-10">
+                    <div className="text-9xl">{card.icon}</div>
+                  </div>
                 </div>
-                <Eye className="w-12 h-12 text-blue-200" />
+              ))}
+            </div>
+
+            {/* Charts + Quick Stats row */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-10">
+              {/* Bar chart */}
+              <div className="lg:col-span-2 p-6 rounded-2xl"
+                style={{ background: 'rgba(45,30,22,0.4)', border: '1px solid rgba(236,91,19,0.1)' }}>
+                <div className="flex items-center justify-between mb-8">
+                  <div>
+                    <h3 className="text-xl font-bold text-white">Views Trend</h3>
+                    <p className="text-sm" style={{ color: '#64748b' }}>Daily views across last 30 days</p>
+                  </div>
+                  <div className="flex gap-2">
+                    <span className="px-3 py-1 rounded-lg text-xs font-bold text-white"
+                      style={{ background: '#ec5b13' }}>Daily</span>
+                    <span className="px-3 py-1 rounded-lg text-xs font-bold"
+                      style={{ background: 'rgba(45,30,22,0.8)', color: '#94a3b8' }}>Weekly</span>
+                  </div>
+                </div>
+                <div className="h-52 flex items-end justify-between gap-1">
+                  {bars.map((h, i) => (
+                    <div key={i} className="w-full rounded-t-lg transition-all cursor-pointer group"
+                      style={{ height: `${h}%`, background: 'rgba(236,91,19,0.25)' }}
+                      onMouseEnter={e => (e.currentTarget.style.background = '#ec5b13')}
+                      onMouseLeave={e => (e.currentTarget.style.background = 'rgba(236,91,19,0.25)')}
+                    />
+                  ))}
+                </div>
+                <div className="flex justify-between mt-4" style={{ color: '#64748b', fontSize: '10px', fontWeight: 700, letterSpacing: '0.05em' }}>
+                  <span>1 Mar</span><span>10 Mar</span><span>20 Mar</span><span>30 Mar</span>
+                </div>
+              </div>
+
+              {/* Quick stats */}
+              <div className="p-6 rounded-2xl"
+                style={{ background: 'rgba(45,30,22,0.4)', border: '1px solid rgba(236,91,19,0.1)' }}>
+                <h3 className="text-xl font-bold text-white mb-6">Quick Stats</h3>
+                <div className="space-y-6">
+                  {[
+                    { label: 'Avg. Views / video', value: formatNumber(avgViews), iconBg: 'rgba(37,99,235,0.15)', iconColor: '#60a5fa', icon: <BarChart3 className="w-5 h-5" /> },
+                    { label: 'Avg. Likes / video',  value: formatNumber(avgLikes), iconBg: 'rgba(220,38,38,0.15)', iconColor: '#f87171', icon: <Heart className="w-5 h-5" /> },
+                    { label: 'Avg. Watch Time',     value: '—',                   iconBg: 'rgba(124,58,237,0.15)', iconColor: '#a78bfa', icon: <Play className="w-5 h-5" /> },
+                  ].map(item => (
+                    <div key={item.label} className="flex items-center gap-4">
+                      <div className="p-3 rounded-xl flex-shrink-0" style={{ background: item.iconBg, color: item.iconColor }}>
+                        {item.icon}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-bold uppercase tracking-wider" style={{ color: '#64748b' }}>{item.label}</p>
+                        <p className="text-lg font-black text-white">{item.value}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <button
+                  className="w-full mt-8 py-3 rounded-xl text-sm font-bold transition-all"
+                  style={{ background: 'rgba(236,91,19,0.08)', border: '1px solid rgba(236,91,19,0.15)', color: '#94a3b8' }}
+                  onMouseEnter={e => { e.currentTarget.style.background = '#ec5b13'; e.currentTarget.style.color = '#fff'; }}
+                  onMouseLeave={e => { e.currentTarget.style.background = 'rgba(236,91,19,0.08)'; e.currentTarget.style.color = '#94a3b8'; }}
+                >
+                  Download Full Report
+                </button>
               </div>
             </div>
-            <div className="bg-gradient-to-r from-green-500 to-green-600 rounded-lg p-6 text-white">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-green-100">Total Subscribers</p>
-                  <p className="text-3xl font-bold">{formatNumber(analyticsData.totalSubscribers)}</p>
-                </div>
-                <Users className="w-12 h-12 text-green-200" />
+
+            {/* AI Insights banner */}
+            <div className="flex flex-col md:flex-row items-center gap-6 p-8 rounded-2xl"
+              style={{ background: 'linear-gradient(135deg, rgba(236,91,19,0.12), rgba(236,91,19,0.04))', border: '1px solid rgba(236,91,19,0.2)' }}>
+              <div className="w-16 h-16 rounded-2xl flex items-center justify-center flex-shrink-0 shadow-lg"
+                style={{ background: '#ec5b13', boxShadow: '0 8px 24px rgba(236,91,19,0.35)' }}>
+                <BarChart3 className="w-8 h-8 text-white" />
               </div>
-            </div>
-            <div className="bg-gradient-to-r from-purple-500 to-purple-600 rounded-lg p-6 text-white">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-purple-100">Total Videos</p>
-                  <p className="text-3xl font-bold">{formatNumber(analyticsData.totalVideos)}</p>
-                </div>
-                <Video className="w-12 h-12 text-purple-200" />
+              <div className="flex-1 text-center md:text-left">
+                <h4 className="text-xl font-bold text-white mb-1">PlayVibe AI Insights</h4>
+                <p style={{ color: '#94a3b8' }}>
+                  Your channel is growing. Upload consistently to boost your reach — channels posting 3+ videos/week see <strong className="text-white">2x subscriber growth</strong> on average.
+                </p>
               </div>
+              <button
+                className="px-6 py-3 rounded-xl font-bold text-white whitespace-nowrap transition-all hover:scale-105"
+                style={{ background: '#ec5b13', boxShadow: '0 4px 20px rgba(236,91,19,0.35)' }}
+              >
+                Apply Strategy
+              </button>
             </div>
-            <div className="bg-gradient-to-r from-red-500 to-red-600 rounded-lg p-6 text-white">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-red-100">Total Likes</p>
-                  <p className="text-3xl font-bold">{formatNumber(analyticsData.totalLikes)}</p>
-                </div>
-                <Heart className="w-12 h-12 text-red-200" />
-              </div>
-            </div>
-          </div>
+          </>
         )}
-        
-        {/* Additional Analytics Section */}
-        <div className="border-t pt-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Stats</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="bg-gray-50 rounded-lg p-4">
-              <div className="text-sm text-gray-600">Average views per video</div>
-              <div className="text-2xl font-bold text-gray-900">
-                {analyticsData.totalVideos > 0 
-                  ? formatNumber(Math.round(analyticsData.totalViews / analyticsData.totalVideos))
-                  : '0'
-                }
-              </div>
-            </div>
-            <div className="bg-gray-50 rounded-lg p-4">
-              <div className="text-sm text-gray-600">Average likes per video</div>
-              <div className="text-2xl font-bold text-gray-900">
-                {analyticsData.totalVideos > 0 
-                  ? formatNumber(Math.round(analyticsData.totalLikes / analyticsData.totalVideos))
-                  : '0'
-                }
-              </div>
-            </div>
-          </div>
-        </div>
       </div>
-    )
+    );
   }
 
   return (
-    <div className="p-6">
+    <div className="min-h-screen p-6" style={{ background: '#221610' }}>
+      {/* Page header */}
       <div className="flex items-center justify-between mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">My Channel</h1>
+        <h1 className="text-3xl font-black text-white">My Channel</h1>
         <Link
           to="/go-live"
-          className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium text-sm"
+          className="flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-white transition-all hover:scale-105"
+          style={{ background: '#ec5b13', boxShadow: '0 4px 20px rgba(236,91,19,0.35)' }}
         >
           <Radio className="w-4 h-4" />
           Go Live
         </Link>
       </div>
-      
+
       {/* Tab Navigation */}
       <div className="mb-8">
-        <div className="border-b border-gray-200">
-          <nav className="flex space-x-8">
+        <div className="flex gap-1 p-1 rounded-xl w-fit" style={{ background: 'rgba(45,30,22,0.6)', border: '1px solid rgba(236,91,19,0.1)' }}>
+          {[
+            { id: 'upload',    icon: <Upload className="w-4 h-4" />,   label: 'Upload Video' },
+            { id: 'manage',    icon: <List className="w-4 h-4" />,     label: 'Manage Videos' },
+            { id: 'analytics', icon: <BarChart3 className="w-4 h-4" />, label: 'Analytics' },
+          ].map(tab => (
             <button
-              onClick={() => setActiveTab("upload")}
-              className={`py-2 px-1 border-b-2 font-medium text-sm ${
-                activeTab === "upload"
-                  ? "border-blue-500 text-blue-600"
-                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-              }`}
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className="flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-bold transition-all"
+              style={activeTab === tab.id ? {
+                background: '#ec5b13',
+                color: '#fff',
+                boxShadow: '0 2px 12px rgba(236,91,19,0.35)',
+              } : {
+                color: '#94a3b8',
+                background: 'transparent',
+              }}
             >
-              <Upload className="w-4 h-4 inline mr-2" />
-              Upload Video
+              {tab.icon}
+              {tab.label}
             </button>
-            <button
-              onClick={() => setActiveTab("manage")}
-              className={`py-2 px-1 border-b-2 font-medium text-sm ${
-                activeTab === "manage"
-                  ? "border-blue-500 text-blue-600"
-                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-              }`}
-            >
-              <List className="w-4 h-4 inline mr-2" />
-              Manage Videos
-            </button>
-            <button
-              onClick={() => setActiveTab("analytics")}
-              className={`py-2 px-1 border-b-2 font-medium text-sm ${
-                activeTab === "analytics"
-                  ? "border-blue-500 text-blue-600"
-                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-              }`}
-            >
-              <BarChart3 className="w-4 h-4 inline mr-2" />
-              Analytics
-            </button>
-          </nav>
+          ))}
         </div>
       </div>
 

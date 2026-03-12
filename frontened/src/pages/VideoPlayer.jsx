@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+﻿import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { 
   Play, 
@@ -64,12 +64,14 @@ const ChatReplayPanel = ({ messages, allMessages, loading }) => {
   }, [messages.length]);
 
   return (
-    <div className="bg-white border border-gray-200 rounded-xl overflow-hidden sticky top-20">
-      <div className="px-4 py-3 border-b border-gray-100 bg-gray-50 flex items-center gap-2">
-        <MessageCircle className="w-4 h-4 text-red-500" />
-        <span className="font-semibold text-sm text-gray-900">Live Chat Replay</span>
+    <div className="rounded-xl overflow-hidden sticky top-20"
+      style={{ background: 'rgba(34,22,16,0.85)', border: '1px solid rgba(236,91,19,0.15)', backdropFilter: 'blur(12px)' }}>
+      <div className="px-4 py-3 flex items-center gap-2"
+        style={{ borderBottom: '1px solid rgba(236,91,19,0.1)', background: 'rgba(236,91,19,0.05)' }}>
+        <MessageCircle className="w-4 h-4" style={{ color: '#ec5b13' }} />
+        <span className="font-semibold text-sm" style={{ color: '#f1f5f9' }}>Live Chat Replay</span>
         {allMessages.length > 0 && (
-          <span className="ml-auto text-xs text-gray-400">
+          <span className="ml-auto text-xs" style={{ color: '#64748b' }}>
             {messages.length} / {allMessages.length} messages
           </span>
         )}
@@ -77,15 +79,16 @@ const ChatReplayPanel = ({ messages, allMessages, loading }) => {
       <div className="h-[520px] overflow-y-auto p-3">
         {loading ? (
           <div className="flex items-center justify-center h-full">
-            <div className="w-6 h-6 border-2 border-indigo-200 border-t-indigo-600 rounded-full animate-spin" />
+            <div className="w-6 h-6 rounded-full animate-spin"
+              style={{ border: '2px solid rgba(236,91,19,0.15)', borderTopColor: '#ec5b13' }} />
           </div>
         ) : allMessages.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full gap-2 text-gray-400 text-center">
+          <div className="flex flex-col items-center justify-center h-full gap-2 text-center" style={{ color: '#64748b' }}>
             <MessageCircle className="w-10 h-10 opacity-20" />
             <p className="text-sm">No chat was recorded for this stream.</p>
           </div>
         ) : messages.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full gap-2 text-gray-400 text-center">
+          <div className="flex flex-col items-center justify-center h-full gap-2 text-center" style={{ color: '#64748b' }}>
             <MessageCircle className="w-10 h-10 opacity-20" />
             <p className="text-sm">Play the video to see chat messages appear here.</p>
           </div>
@@ -93,12 +96,12 @@ const ChatReplayPanel = ({ messages, allMessages, loading }) => {
           <div className="space-y-2">
             {messages.map((msg, i) => (
               <div key={msg._id || i} className="flex gap-2">
-                <span className="text-[11px] text-gray-400 tabular-nums pt-0.5 flex-shrink-0 w-9">
+                <span className="text-[11px] tabular-nums pt-0.5 flex-shrink-0 w-9" style={{ color: '#64748b' }}>
                   {formatOffset(msg.offsetSeconds)}
                 </span>
                 <div className="flex-1 min-w-0">
-                  <span className="text-xs font-semibold text-indigo-600 mr-1.5">{msg.username}</span>
-                  <span className="text-sm text-gray-800 break-words">{msg.message}</span>
+                  <span className="text-xs font-semibold mr-1.5" style={{ color: '#ec5b13' }}>{msg.username}</span>
+                  <span className="text-sm break-words" style={{ color: '#e2e8f0' }}>{msg.message}</span>
                 </div>
               </div>
             ))}
@@ -775,21 +778,26 @@ const VideoPlayer = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-lg">Loading video...</div>
+      <div className="flex items-center justify-center min-h-screen" style={{ background: '#221610' }}>
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-10 h-10 rounded-full animate-spin"
+            style={{ border: '3px solid rgba(236,91,19,0.15)', borderTopColor: '#ec5b13' }} />
+          <span className="text-sm" style={{ color: '#94a3b8' }}>Loading video...</span>
+        </div>
       </div>
     )
   }
 
   if (error || !video) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
+      <div className="flex items-center justify-center min-h-screen" style={{ background: '#221610' }}>
         <div className="text-center">
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Video Not Found</h2>
-          <p className="text-gray-600">{error || "The video you're looking for doesn't exist."}</p>
-          <button 
+          <h2 className="text-2xl font-bold mb-2" style={{ color: '#f1f5f9' }}>Video Not Found</h2>
+          <p className="mb-4" style={{ color: '#94a3b8' }}>{error || "The video you're looking for doesn't exist."}</p>
+          <button
             onClick={() => window.location.href = '/'}
-            className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+            className="mt-4 px-6 py-2 rounded-full font-semibold text-white text-sm transition-colors"
+            style={{ background: '#ec5b13' }}
           >
             Go Back Home
           </button>
@@ -801,187 +809,243 @@ const VideoPlayer = () => {
   console.log('Rendering video player with:', { video, user, videoId });
 
   return (
-    <div className="min-h-screen bg-white">
-      <div className="max-w-7xl mx-auto p-4">
-        <div className="flex flex-col lg:flex-row gap-6">
-          {/* Main Content */}
-          <div className="flex-1">
-            {/* Video Player */}
-            <div className="aspect-video bg-black rounded-lg overflow-hidden mb-4 relative youtube-video-container">
-              {video.videoFile ? (
-                <video
-                  ref={videoRef}
-                  controls
-                  className="w-full h-full object-contain youtube-video-player"
-                  poster={video.thumbnail}
-                  onPlay={incrementViewCount}
-                  controlsList="nodownload"
-                  preload="metadata"
-                  onError={(e) => console.error('Video playback error:', e)}
-                >
-                  <source src={video.videoFile} type="video/mp4" />
-                  <source src={video.videoFile} type="video/webm" />
-                  <source src={video.videoFile} type="video/ogg" />
-                  {Array.isArray(video.subtitles) && video.subtitles.map((track, i) => (
-                    <track
-                      key={track.language + i}
-                      kind="subtitles"
-                      label={track.label}
-                      srcLang={track.language}
-                      src={track.url}
-                    />
-                  ))}
-                  Your browser does not support the video tag.
-                </video>
-              ) : (
-                <div className="relative w-full h-full youtube-thumbnail-container">
-                  <img
-                    src={video.thumbnail || "/placeholder.svg?height=480&width=854&text=Video"}
-                    alt={video.title}
-                    className="w-full h-full object-cover"
-                  />
-                  <div className="absolute inset-0 youtube-play-overlay group cursor-pointer">
-                    <div className="absolute inset-0 bg-black opacity-0 group-hover:opacity-20 transition-opacity duration-200"></div>
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <div className="w-16 h-16 bg-red-600 rounded-full flex items-center justify-center group-hover:bg-red-700 transition-all duration-200 shadow-lg group-hover:scale-110">
-                        <Play className="w-8 h-8 text-white ml-0.5" />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
+    <div className="min-h-screen" style={{ background: '#221610' }}>
+      <div className="max-w-[1440px] mx-auto px-4 md:px-10 py-6 grid grid-cols-1 lg:grid-cols-12 gap-8">
 
-            {/* Video Title */}
-            <h1 className="text-xl font-bold text-gray-900 mb-3 leading-tight">
+        {/* ── Video Player Column ── */}
+        <div className="lg:col-span-8 flex flex-col gap-6">
+
+          {/* Cinematic Player */}
+          <div className="relative w-full aspect-video rounded-2xl overflow-hidden bg-black shadow-2xl">
+            {video.videoFile ? (
+              <video
+                ref={videoRef}
+                controls
+                className="w-full h-full object-contain"
+                poster={video.thumbnail}
+                onPlay={incrementViewCount}
+                controlsList="nodownload"
+                preload="metadata"
+                onError={(e) => console.error('Video playback error:', e)}
+              >
+                <source src={video.videoFile} type="video/mp4" />
+                <source src={video.videoFile} type="video/webm" />
+                <source src={video.videoFile} type="video/ogg" />
+                {Array.isArray(video.subtitles) && video.subtitles.map((track, i) => (
+                  <track
+                    key={track.language + i}
+                    kind="subtitles"
+                    label={track.label}
+                    srcLang={track.language}
+                    src={track.url}
+                  />
+                ))}
+                Your browser does not support the video tag.
+              </video>
+            ) : (
+              <div className="relative w-full h-full">
+                <img
+                  src={video.thumbnail || "/placeholder.svg?height=480&width=854&text=Video"}
+                  alt={video.title}
+                  className="w-full h-full object-cover opacity-80"
+                />
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <button
+                    className="w-20 h-20 rounded-full flex items-center justify-center shadow-lg hover:scale-110 transition-transform"
+                    style={{ background: 'rgba(236,91,19,0.9)' }}
+                  >
+                    <Play className="w-10 h-10 text-white fill-current" />
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Video Info */}
+          <div className="flex flex-col gap-4">
+            <h1 className="text-2xl md:text-3xl font-bold tracking-tight" style={{ color: '#f1f5f9' }}>
               {video.title}
             </h1>
 
-            {/* Video Stats and Actions */}
-            <div className="flex items-center justify-between mb-4 pb-4 border-b border-gray-200">
-              <div className="flex items-center space-x-2 text-sm text-gray-600">
-                <Eye className="w-4 h-4" />
-                <span>{(videoStats.views || 0).toLocaleString()} views</span>
-                <span>•</span>
-                <span>{formatTimeAgo(video.createdAt)}</span>
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+
+              {/* Channel Info */}
+              <div className="flex items-center gap-4">
+                <img
+                  src={video.owner?.avatar || "/placeholder.svg?height=48&width=48&text=U"}
+                  alt={video.owner?.fullName || 'Channel'}
+                  className="w-12 h-12 rounded-full object-cover cursor-pointer"
+                  onClick={() => video.owner?.userName && navigate(`/channel/${video.owner.userName}`)}
+                />
+                <div>
+                  <h3
+                    className="font-bold cursor-pointer hover:underline"
+                    style={{ color: '#f1f5f9' }}
+                    onClick={() => video.owner?.userName && navigate(`/channel/${video.owner.userName}`)}
+                  >
+                    {video.owner?.fullName || video.owner?.userName || 'Unknown Channel'}
+                  </h3>
+                  <p className="text-xs font-medium" style={{ color: '#94a3b8' }}>
+                    {(video.owner?.subscribersCount || 0).toLocaleString()} subscribers
+                  </p>
+                </div>
+                {user && user._id !== video.owner?._id && (
+                  <button
+                    onClick={handleSubscribe}
+                    className="ml-2 px-6 py-2 font-bold rounded-full transition-colors text-sm"
+                    style={isSubscribed
+                      ? { background: 'rgba(236,91,19,0.12)', color: '#ec5b13', border: '1px solid rgba(236,91,19,0.3)' }
+                      : { background: '#ec5b13', color: '#fff' }}
+                  >
+                    {isSubscribed
+                      ? <span className="flex items-center gap-2"><Bell className="w-4 h-4" /> Subscribed</span>
+                      : 'Subscribe'}
+                  </button>
+                )}
+                {user && user._id === video.owner?._id && (
+                  <span
+                    className="ml-2 px-4 py-1.5 rounded-full text-xs font-semibold"
+                    style={{ background: 'rgba(236,91,19,0.12)', color: '#ec5b13', border: '1px solid rgba(236,91,19,0.2)' }}
+                  >
+                    Your Video
+                  </span>
+                )}
               </div>
 
-              <div className="flex items-center space-x-1">
-                {/* Like Button */}
-                <div className="flex items-center bg-gray-100 rounded-full overflow-hidden">
-                  <button 
+              {/* Action Buttons */}
+              <div className="flex items-center gap-2 overflow-x-auto pb-1 md:pb-0">
+
+                {/* Like / Dislike */}
+                <div
+                  className="flex items-center rounded-full p-1"
+                  style={{ background: 'rgba(236,91,19,0.08)', border: '1px solid rgba(236,91,19,0.15)' }}
+                >
+                  <button
                     onClick={handleToggleLike}
-                    className={`flex items-center space-x-2 px-4 py-2 hover:bg-gray-200 transition-colors ${
-                      videoStats.isLikedByUser ? 'text-blue-600' : 'text-gray-700'
-                    }`}
-                    title={videoStats.isLikedByUser ? 'Remove like' : 'Like this video'}
+                    className="flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-semibold transition-colors"
+                    style={{
+                      color: videoStats.isLikedByUser ? '#ec5b13' : '#cbd5e1',
+                      borderRight: '1px solid rgba(236,91,19,0.2)'
+                    }}
                   >
-                    <ThumbsUp className={`w-5 h-5 ${videoStats.isLikedByUser ? 'fill-current' : ''}`} />
-                    <span className="font-medium">{(videoStats.likesCount || 0).toLocaleString()}</span>
+                    <ThumbsUp className={`w-4 h-4 ${videoStats.isLikedByUser ? 'fill-current' : ''}`} />
+                    {(videoStats.likesCount || 0).toLocaleString()}
                   </button>
-                  <div className="w-px h-6 bg-gray-300"></div>
-                  <button 
+                  <button
                     onClick={handleDislike}
-                    className={`px-4 py-2 hover:bg-gray-200 transition-colors ${
-                      videoStats.isDislikedByUser ? 'text-red-600' : 'text-gray-700'
-                    }`}
-                    title={videoStats.isDislikedByUser ? 'Remove dislike' : 'Dislike this video'}
+                    className="px-4 py-1.5 rounded-full transition-colors"
+                    style={{ color: videoStats.isDislikedByUser ? '#ec5b13' : '#cbd5e1' }}
                   >
-                    <div className="flex items-center space-x-2">
-                      <ThumbsDown className={`w-5 h-5 ${videoStats.isDislikedByUser ? 'fill-current' : ''}`} />
-                      <span className="font-medium">{(videoStats.dislikesCount || 0).toLocaleString()}</span>
-                    </div>
+                    <ThumbsDown className={`w-4 h-4 ${videoStats.isDislikedByUser ? 'fill-current' : ''}`} />
                   </button>
                 </div>
 
-                {/* CC / Subtitles Button — always visible; disabled when no subtitles available */}
+                {/* CC / Subtitles */}
                 {(() => {
                   const hasSubtitles = Array.isArray(video?.subtitles) && video.subtitles.length > 0;
                   return (
                     <button
                       onClick={hasSubtitles ? toggleSubtitles : undefined}
                       disabled={!hasSubtitles}
-                      className={`flex items-center space-x-2 px-4 py-2 rounded-full transition-colors yt-button ${
-                        !hasSubtitles
-                          ? 'bg-gray-100 text-gray-400 cursor-not-allowed opacity-50'
-                          : subtitlesOn
-                          ? 'bg-gray-900 text-white hover:bg-gray-700'
-                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                      }`}
+                      className="flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold transition-colors"
+                      style={!hasSubtitles
+                        ? { background: 'rgba(236,91,19,0.05)', color: '#475569', cursor: 'not-allowed', opacity: 0.5, border: '1px solid rgba(236,91,19,0.1)' }
+                        : subtitlesOn
+                          ? { background: '#ec5b13', color: '#fff', border: '1px solid #ec5b13' }
+                          : { background: 'rgba(236,91,19,0.08)', color: '#cbd5e1', border: '1px solid rgba(236,91,19,0.15)' }}
                       title={!hasSubtitles ? 'No subtitles available' : subtitlesOn ? 'Turn off subtitles' : 'Turn on subtitles'}
                     >
-                      <Captions className="w-5 h-5" />
-                      <span className="font-medium">CC</span>
+                      <Captions className="w-4 h-4" /> CC
                     </button>
                   );
                 })()}
 
-                {/* Share Button */}
-                <button 
+                {/* Share */}
+                <button
                   onClick={handleShare}
-                  className="flex items-center space-x-2 px-4 py-2 bg-gray-100 rounded-full hover:bg-gray-200 transition-colors text-gray-700 yt-button"
-                  title="Share video"
+                  className="flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold transition-colors"
+                  style={{ background: 'rgba(236,91,19,0.08)', color: '#cbd5e1', border: '1px solid rgba(236,91,19,0.15)' }}
                 >
-                  <Share className="w-5 h-5" />
-                  <span className="font-medium">Share</span>
+                  <Share className="w-4 h-4" /> Share
                 </button>
 
-                {/* More Options */}
+                {/* Save to Watch Later */}
+                <button
+                  onClick={handleSaveVideo}
+                  disabled={watchLaterLoading}
+                  className="flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold transition-colors"
+                  style={isInWatchLater
+                    ? { background: 'rgba(236,91,19,0.18)', color: '#ec5b13', border: '1px solid rgba(236,91,19,0.3)' }
+                    : { background: 'rgba(236,91,19,0.08)', color: '#cbd5e1', border: '1px solid rgba(236,91,19,0.15)' }}
+                >
+                  <Bookmark className={`w-4 h-4 ${isInWatchLater ? 'fill-current' : ''}`} />
+                  {isInWatchLater ? 'Saved' : 'Save'}
+                </button>
+
+                {/* More options */}
                 <div className="relative more-options-container">
-                  <button 
+                  <button
                     onClick={handleMoreOptions}
-                    className="p-2 bg-gray-100 rounded-full hover:bg-gray-200 transition-colors text-gray-700 yt-button"
-                    title="More options"
+                    className="p-2.5 rounded-full transition-colors"
+                    style={{ background: 'rgba(236,91,19,0.08)', color: '#cbd5e1', border: '1px solid rgba(236,91,19,0.15)' }}
                   >
                     <MoreHorizontal className="w-5 h-5" />
                   </button>
-
-                  {/* Dropdown Menu */}
                   {showMoreMenu && (
-                    <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-50">
-                      <div className="py-2">
+                    <div
+                      className="absolute right-0 mt-2 w-52 rounded-xl z-50 overflow-hidden"
+                      style={{ background: 'rgba(26,16,10,0.97)', border: '1px solid rgba(236,91,19,0.2)', boxShadow: '0 8px 32px rgba(0,0,0,0.6)' }}
+                    >
+                      <div className="py-1.5">
                         <button
                           onClick={handleDownloadVideo}
                           disabled={isDownloading}
-                          className="w-full flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                          className="w-full flex items-center px-4 py-2.5 text-sm transition-colors disabled:opacity-50"
+                          style={{ color: '#cbd5e1' }}
+                          onMouseEnter={e => e.currentTarget.style.background = 'rgba(236,91,19,0.1)'}
+                          onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
                         >
-                          <Download className="w-4 h-4 mr-3" />
+                          <Download className="w-4 h-4 mr-3" style={{ color: '#ec5b13' }} />
                           {isDownloading ? `Downloading ${downloadProgress}%` : 'Download'}
                         </button>
                         <button
                           onClick={handleCreateClip}
-                          className="w-full flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
+                          className="w-full flex items-center px-4 py-2.5 text-sm transition-colors"
+                          style={{ color: '#cbd5e1' }}
+                          onMouseEnter={e => e.currentTarget.style.background = 'rgba(236,91,19,0.1)'}
+                          onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
                         >
-                          <Scissors className="w-4 h-4 mr-3" />
+                          <Scissors className="w-4 h-4 mr-3" style={{ color: '#ec5b13' }} />
                           Clip
                         </button>
                         <button
                           onClick={handleSaveVideo}
                           disabled={watchLaterLoading}
-                          className="w-full flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                          className="w-full flex items-center px-4 py-2.5 text-sm transition-colors disabled:opacity-50"
+                          style={{ color: '#cbd5e1' }}
+                          onMouseEnter={e => e.currentTarget.style.background = 'rgba(236,91,19,0.1)'}
+                          onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
                         >
-                          <Clock className="w-4 h-4 mr-3" />
-                          {watchLaterLoading 
-                            ? 'Updating...' 
-                            : isInWatchLater 
-                              ? 'Remove from Watch Later' 
-                              : 'Save to Watch Later'
-                          }
+                          <Clock className="w-4 h-4 mr-3" style={{ color: '#ec5b13' }} />
+                          {watchLaterLoading ? 'Updating...' : isInWatchLater ? 'Remove from Watch Later' : 'Save to Watch Later'}
                         </button>
                         <button
-                          onClick={() => {
-                            setShowPlaylistModal(true);
-                            setShowMoreMenu(false);
-                          }}
-                          className="w-full flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
+                          onClick={() => { setShowPlaylistModal(true); setShowMoreMenu(false); }}
+                          className="w-full flex items-center px-4 py-2.5 text-sm transition-colors"
+                          style={{ color: '#cbd5e1' }}
+                          onMouseEnter={e => e.currentTarget.style.background = 'rgba(236,91,19,0.1)'}
+                          onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
                         >
-                          <Plus className="w-4 h-4 mr-3" />
+                          <Plus className="w-4 h-4 mr-3" style={{ color: '#ec5b13' }} />
                           Add to Playlist
                         </button>
-                        <hr className="my-1" />
+                        <div style={{ height: 1, background: 'rgba(236,91,19,0.15)', margin: '4px 0' }} />
                         <button
                           onClick={handleReportVideo}
-                          className="w-full flex items-center px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                          className="w-full flex items-center px-4 py-2.5 text-sm transition-colors"
+                          style={{ color: '#f87171' }}
+                          onMouseEnter={e => e.currentTarget.style.background = 'rgba(239,68,68,0.08)'}
+                          onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
                         >
                           <Flag className="w-4 h-4 mr-3" />
                           Report
@@ -992,196 +1056,189 @@ const VideoPlayer = () => {
                 </div>
               </div>
             </div>
-
-            {/* Channel Info */}
-            <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center space-x-3">
-                <img
-                  src={video.owner?.avatar || "/placeholder.svg?height=40&width=40&text=User"}
-                  alt={video.owner?.fullName || 'Channel'}
-                  className="w-10 h-10 rounded-full object-cover"
-                />
-                <div>
-                  <h3 className="font-semibold text-gray-900 text-sm">
-                    {video.owner?.fullName || video.owner?.userName || 'Unknown Channel'}
-                  </h3>
-                  <p className="text-xs text-gray-600">
-                    {(video.owner?.subscribersCount || 0).toLocaleString()} subscribers
-                  </p>
-                </div>
-              </div>
-              
-              {/* Action buttons container */}
-              <div className="flex items-center space-x-3">
-                {/* Subscribe Button */}
-                {user && user._id !== video.owner?._id ? (
-                  <button 
-                    onClick={handleSubscribe}
-                    className={`px-6 py-2 rounded-full font-medium text-sm transition-colors subscribe-button ${
-                      isSubscribed 
-                        ? 'bg-gray-200 text-gray-700 hover:bg-gray-300' 
-                        : 'bg-red-600 text-white hover:bg-red-700'
-                    }`}
-                    title={isSubscribed ? 'Unsubscribe' : 'Subscribe to this channel'}
-                  >
-                    {isSubscribed ? (
-                      <div className="flex items-center space-x-2">
-                        <Bell className="w-4 h-4" />
-                        <span>Subscribed</span>
-                      </div>
-                    ) : (
-                      'Subscribe'
-                    )}
-                  </button>
-                ) : user && user._id === video.owner?._id ? (
-                  <div className="flex items-center">
-                    <span className="px-4 py-2 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">
-                      Your Video
-                    </span>
-                  </div>
-                ) : null}
-              </div>
-            </div>
-
-            {/* Description */}
-            <div className="bg-gray-50 rounded-lg p-4 mb-6">
-              <p className="text-gray-700 text-sm leading-relaxed whitespace-pre-wrap">
-                {video.description}
-              </p>
-            </div>
-
-            {/* Comments Section */}
-            <div className="space-y-4">
-              <div className="flex items-center space-x-4">
-                <h3 className="text-lg font-semibold text-gray-900">
-                  {comments.length} Comments
-                </h3>
-                <button className="flex items-center space-x-2 text-sm text-gray-600 hover:text-gray-800">
-                  <span>Sort by</span>
-                </button>
-              </div>
-
-              {/* Add Comment Form */}
-              {user ? (
-                <div className="flex space-x-3">
-                  <img
-                    src={user.avatar || "/placeholder.svg?height=32&width=32&text=You"}
-                    alt="Your avatar"
-                    className="w-8 h-8 rounded-full object-cover flex-shrink-0"
-                  />
-                  <div className="flex-1">
-                    <form onSubmit={handleCommentSubmit} className="space-y-3">
-                      <textarea
-                        value={newComment}
-                        onChange={(e) => setNewComment(e.target.value)}
-                        placeholder="Add a comment..."
-                        className="w-full border-0 border-b border-gray-300 focus:border-gray-500 bg-transparent resize-none text-sm py-2 px-0 focus:outline-none"
-                        rows={1}
-                        onFocus={(e) => e.target.rows = 3}
-                        onBlur={(e) => !newComment && (e.target.rows = 1)}
-                      />
-                      {newComment && (
-                        <div className="flex justify-end space-x-2">
-                          <button
-                            type="button"
-                            onClick={() => setNewComment("")}
-                            className="px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-full transition-colors"
-                          >
-                            Cancel
-                          </button>
-                          <button
-                            type="submit"
-                            disabled={!newComment.trim()}
-                            className="px-4 py-2 text-sm bg-blue-600 text-white rounded-full hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                          >
-                            Comment
-                          </button>
-                        </div>
-                      )}
-                    </form>
-                  </div>
-                </div>
-              ) : (
-                <div className="flex items-center space-x-3 text-sm text-gray-600">
-                  <MessageCircle className="w-5 h-5" />
-                  <span>Sign in to leave a comment</span>
-                </div>
-              )}
-
-              {/* Comments List */}
-              <div className="space-y-4 mt-6">
-                {commentsLoading ? (
-                  <div className="text-center py-8 text-gray-500">Loading comments...</div>
-                ) : comments.length > 0 ? (
-                  comments.map((comment) => (
-                    <CommentComponent
-                      key={comment.id}
-                      comment={comment}
-                      onLike={handleCommentLike}
-                      onDislike={handleCommentDislike}
-                      onReply={handleCommentReply}
-                      isLoading={commentActionsLoading.has(comment.id)}
-                      user={user}
-                      depth={0}
-                    />
-                  ))
-                ) : (
-                  <div className="text-center py-8 text-gray-500">
-                    No comments yet. Be the first to share what you think!
-                  </div>
-                )}
-              </div>
-            </div>
           </div>
 
-          {/* Sidebar - Chat Replay (live recordings) + Related Videos */}
-          <div className="lg:w-96 lg:shrink-0">
-            {/* Chat replay panel — only shown for videos saved from live streams */}
-            {video.streamKey && (
-              <div className="mb-5">
-                <ChatReplayPanel
-                  messages={chatReplay.filter(
-                    (m) => m.offsetSeconds === null || m.offsetSeconds <= currentVideoTime
-                  )}
-                  allMessages={chatReplay}
-                  loading={chatReplayLoading}
+          {/* Description */}
+          <div
+            className="rounded-xl p-4"
+            style={{ background: 'rgba(236,91,19,0.05)', border: '1px solid rgba(236,91,19,0.1)' }}
+          >
+            <div className="flex flex-wrap gap-3 text-sm font-bold mb-2" style={{ color: '#f1f5f9' }}>
+              <span>{(videoStats.views || 0).toLocaleString()} views</span>
+              <span>{formatTimeAgo(video.createdAt)}</span>
+              {Array.isArray(video.tags) && video.tags.slice(0, 3).map(tag => (
+                <span key={tag} style={{ color: '#ec5b13' }}>#{tag}</span>
+              ))}
+            </div>
+            <p className="text-sm leading-relaxed whitespace-pre-wrap" style={{ color: '#cbd5e1' }}>
+              {video.description}
+            </p>
+          </div>
+
+          {/* Comments Section */}
+          <div className="flex flex-col gap-6">
+            <h2 className="text-xl font-bold flex items-center gap-2" style={{ color: '#f1f5f9' }}>
+              {comments.length} Comments
+              <button className="flex items-center gap-2 text-sm font-normal" style={{ color: '#94a3b8' }}>
+                <MessageCircle className="w-4 h-4" /> Sort by
+              </button>
+            </h2>
+
+            {/* Comment Input */}
+            {user ? (
+              <div className="flex gap-4">
+                <img
+                  src={user.avatar || "/placeholder.svg?height=40&width=40&text=You"}
+                  alt="Your avatar"
+                  className="w-10 h-10 rounded-full object-cover flex-shrink-0"
                 />
+                <div className="flex-1 flex flex-col gap-2">
+                  <form onSubmit={handleCommentSubmit} className="flex flex-col gap-2">
+                    <input
+                      value={newComment}
+                      onChange={(e) => setNewComment(e.target.value)}
+                      placeholder="Add a comment..."
+                      className="bg-transparent w-full py-2 text-sm focus:outline-none placeholder-slate-500"
+                      style={{ borderBottom: '1px solid rgba(236,91,19,0.2)', color: '#f1f5f9' }}
+                      onFocus={e => e.currentTarget.style.borderBottomColor = '#ec5b13'}
+                      onBlur={e => e.currentTarget.style.borderBottomColor = 'rgba(236,91,19,0.2)'}
+                    />
+                    {newComment && (
+                      <div className="flex justify-end gap-3 mt-1">
+                        <button
+                          type="button"
+                          onClick={() => setNewComment("")}
+                          className="px-4 py-2 text-sm font-bold rounded-full transition-colors"
+                          style={{ color: '#94a3b8' }}
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          type="submit"
+                          disabled={!newComment.trim()}
+                          className="px-4 py-2 text-sm font-bold rounded-full transition-colors disabled:opacity-50"
+                          style={{ background: 'rgba(236,91,19,0.15)', color: '#ec5b13', border: '1px solid rgba(236,91,19,0.25)' }}
+                        >
+                          Comment
+                        </button>
+                      </div>
+                    )}
+                  </form>
+                </div>
+              </div>
+            ) : (
+              <div className="flex items-center gap-3 text-sm" style={{ color: '#94a3b8' }}>
+                <MessageCircle className="w-5 h-5" />
+                <span>Sign in to leave a comment</span>
               </div>
             )}
-            <div className="space-y-3">
-              <RelatedVideos videoId={videoId} />
+
+            {/* Comments List */}
+            <div className="flex flex-col gap-6 mt-2">
+              {commentsLoading ? (
+                <div className="text-center py-8" style={{ color: '#94a3b8' }}>Loading comments...</div>
+              ) : comments.length > 0 ? (
+                comments.map((comment) => (
+                  <CommentComponent
+                    key={comment.id}
+                    comment={comment}
+                    onLike={handleCommentLike}
+                    onDislike={handleCommentDislike}
+                    onReply={handleCommentReply}
+                    isLoading={commentActionsLoading.has(comment.id)}
+                    user={user}
+                    depth={0}
+                  />
+                ))
+              ) : (
+                <div className="text-center py-8" style={{ color: '#94a3b8' }}>
+                  No comments yet. Be the first to share what you think!
+                </div>
+              )}
             </div>
           </div>
         </div>
+
+        {/* ── Sidebar ── */}
+        <aside className="lg:col-span-4 flex flex-col gap-4">
+
+          {/* Chat Replay (live recordings only) */}
+          {video.streamKey && (
+            <div className="mb-2">
+              <ChatReplayPanel
+                messages={chatReplay.filter(
+                  (m) => m.offsetSeconds === null || m.offsetSeconds <= currentVideoTime
+                )}
+                allMessages={chatReplay}
+                loading={chatReplayLoading}
+              />
+            </div>
+          )}
+
+          {/* Up Next */}
+          <div className="flex items-center justify-between mb-1">
+            <h2 className="font-bold text-lg" style={{ color: '#f1f5f9' }}>Up Next</h2>
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-bold" style={{ color: '#94a3b8' }}>Autoplay</span>
+              <div className="w-8 h-4 rounded-full relative" style={{ background: '#ec5b13' }}>
+                <div className="absolute right-0.5 top-0.5 w-3 h-3 bg-white rounded-full" />
+              </div>
+            </div>
+          </div>
+
+          {/* Related Videos */}
+          <div className="space-y-3">
+            <RelatedVideos videoId={videoId} />
+          </div>
+
+          {/* Premium promo */}
+          <div
+            className="mt-4 rounded-2xl p-6 flex flex-col items-center text-center gap-4"
+            style={{ background: 'rgba(236,91,19,0.05)', backdropFilter: 'blur(8px)', border: '1px solid rgba(236,91,19,0.1)' }}
+          >
+            <span className="text-[10px] uppercase font-bold tracking-widest" style={{ color: '#ec5b13' }}>
+              Premium Vibe
+            </span>
+            <h3 className="font-bold text-lg" style={{ color: '#f1f5f9' }}>Watch without limits</h3>
+            <p className="text-xs" style={{ color: '#94a3b8' }}>
+              Try PlayVibe Premium and enjoy ad-free videos and offline play.
+            </p>
+            <button
+              className="w-full py-2 font-bold rounded-xl text-sm text-white hover:scale-105 transition-transform"
+              style={{ background: '#ec5b13' }}
+            >
+              Start Free Trial
+            </button>
+          </div>
+        </aside>
       </div>
-      
+
       {/* Download Progress Overlay */}
       {isDownloading && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-sm w-full mx-4">
+        <div className="fixed inset-0 flex items-center justify-center z-50" style={{ background: 'rgba(0,0,0,0.75)' }}>
+          <div
+            className="rounded-2xl p-6 max-w-sm w-full mx-4"
+            style={{ background: 'rgba(26,16,10,0.98)', border: '1px solid rgba(236,91,19,0.2)' }}
+          >
             <div className="text-center">
-              <Download className="w-12 h-12 text-blue-500 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Downloading Video</h3>
-              <p className="text-gray-600 mb-4">Please wait while we download your video...</p>
-              
-              {/* Progress Bar */}
-              <div className="w-full bg-gray-200 rounded-full h-2 mb-2">
-                <div 
-                  className="bg-blue-500 h-2 rounded-full transition-all duration-300 ease-out"
-                  style={{ width: `${downloadProgress}%` }}
-                ></div>
+              <Download className="w-12 h-12 mx-auto mb-4" style={{ color: '#ec5b13' }} />
+              <h3 className="text-lg font-semibold mb-2" style={{ color: '#f1f5f9' }}>Downloading Video</h3>
+              <p className="text-sm mb-4" style={{ color: '#94a3b8' }}>Please wait while we download your video...</p>
+              <div className="w-full h-2 rounded-full mb-2" style={{ background: 'rgba(236,91,19,0.1)' }}>
+                <div
+                  className="h-2 rounded-full transition-all duration-300 ease-out"
+                  style={{ width: `${downloadProgress}%`, background: '#ec5b13' }}
+                />
               </div>
-              <p className="text-sm text-gray-500">{downloadProgress}% Complete</p>
-              
+              <p className="text-sm" style={{ color: '#94a3b8' }}>{downloadProgress}% Complete</p>
               {downloadProgress === 100 && (
-                <p className="text-green-600 text-sm mt-2 font-medium">✅ Download Complete!</p>
+                <p className="text-sm mt-2 font-medium" style={{ color: '#4ade80' }}>Download Complete!</p>
               )}
             </div>
           </div>
         </div>
       )}
 
-      {/* Add to Playlist Modal */}
       <AddToPlaylistModal
         isOpen={showPlaylistModal}
         onClose={() => setShowPlaylistModal(false)}
@@ -1189,7 +1246,6 @@ const VideoPlayer = () => {
         videoTitle={video?.title}
       />
 
-      {/* Report Video Modal */}
       <ReportModal
         isOpen={showReportModal}
         onClose={() => setShowReportModal(false)}
@@ -1198,7 +1254,6 @@ const VideoPlayer = () => {
         onSuccess={() => setReportToast("Report submitted. Thank you for helping keep our platform safe.")}
       />
 
-      {/* Report Toast */}
       {reportToast && (
         <Toast
           message={reportToast}
