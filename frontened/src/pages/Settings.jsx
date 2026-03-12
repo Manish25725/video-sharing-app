@@ -543,8 +543,6 @@ const Settings = () => {
 
 export default Settings
 
-
-/* ─── shared UI helpers ──────────────────────────────────── */
 const Toast = ({ msg, type, onClose }) => (
   <div className={`fixed bottom-5 right-5 z-50 flex items-center gap-3 px-4 py-3 rounded-xl shadow-xl border text-sm font-medium
     ${type === "success" ? "bg-emerald-50 border-emerald-200 text-emerald-800" : "bg-red-50 border-red-200 text-red-800"}`}>
