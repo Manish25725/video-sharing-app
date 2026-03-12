@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
+import { Play } from "lucide-react";
 
 const STEPS = [
-  "Initializing engine…",
-  "Loading your profile…",
-  "Curating your interface…",
-  "Almost there…",
+  "Synchronizing your library...",
+  "Loading your profile...",
+  "Curating your feed...",
+  "Almost there...",
 ];
 
 const AppLoader = () => {
@@ -32,143 +33,78 @@ const AppLoader = () => {
 
   return (
     <div
-      className="relative flex min-h-screen w-full flex-col items-center justify-center overflow-hidden"
-      style={{ background: "#120a06", fontFamily: "'Public Sans', sans-serif" }}
+      className="relative flex h-screen w-full flex-col items-center justify-center overflow-hidden transition-colors duration-500"
+      style={{ background: "#221610", fontFamily: "'Public Sans', sans-serif" }}
     >
-      {/* Background glows */}
-      <div className="absolute inset-0 pointer-events-none">
-        <div
-          className="absolute rounded-full"
-          style={{
-            top: "-10%", left: "-10%",
-            width: "40%", height: "40%",
-            background: "rgba(236,91,19,0.1)",
-            filter: "blur(120px)",
-          }}
-        />
-        <div
-          className="absolute rounded-full"
-          style={{
-            bottom: "-10%", right: "-10%",
-            width: "40%", height: "40%",
-            background: "rgba(236,91,19,0.05)",
-            filter: "blur(120px)",
-          }}
-        />
+      {/* Ambient background glows */}
+      <div className="absolute inset-0 z-0 overflow-hidden">
+        <div className="absolute -top-[10%] -left-[10%] w-[40%] h-[40%] rounded-full"
+          style={{ background: "rgba(236,91,19,0.1)", filter: "blur(120px)" }} />
+        <div className="absolute -bottom-[10%] -right-[10%] w-[40%] h-[40%] rounded-full"
+          style={{ background: "rgba(236,91,19,0.05)", filter: "blur(120px)" }} />
       </div>
 
-      <div className="relative z-10 flex flex-col items-center gap-12 w-full max-w-md px-6">
+      {/* Main content */}
+      <div className="relative z-10 flex flex-col items-center max-w-[960px] w-full px-6">
 
-        {/* Spinning ring + logo */}
-        <div className="relative flex items-center justify-center">
-          {/* Static outer ring */}
-          <div
-            className="absolute rounded-full border-2"
-            style={{ width: 192, height: 192, borderColor: "rgba(236,91,19,0.2)" }}
-          />
-          {/* Spinning top-accent ring */}
-          <div
-            className="absolute rounded-full border-t-2"
+        {/* Spinner + logo */}
+        <div className="relative flex items-center justify-center mb-12">
+          {/* Static ring */}
+          <div className="absolute w-32 h-32 rounded-full border-2"
+            style={{ borderColor: "rgba(236,91,19,0.2)" }} />
+          {/* Spinning ring */}
+          <div className="absolute w-32 h-32 rounded-full border-t-2"
+            style={{ borderColor: "#ec5b13", animation: "loaderSpin 1.5s linear infinite" }} />
+          {/* Logo circle */}
+          <div className="relative flex items-center justify-center w-24 h-24 rounded-full"
             style={{
-              width: 192, height: 192,
-              borderColor: "#ec5b13",
-              boxShadow: "0 0 20px rgba(236,91,19,0.35)",
-              animation: "spin 1.6s linear infinite",
-            }}
-          />
-          {/* Center logo */}
-          <div
-            className="relative flex items-center justify-center rounded-full"
-            style={{
-              width: 128, height: 128,
-              background: "rgba(18,10,6,0.6)",
-              backdropFilter: "blur(16px)",
-              border: "1px solid rgba(255,255,255,0.08)",
-              boxShadow: "0 8px 40px rgba(0,0,0,0.6)",
-            }}
-          >
-            <svg width="64" height="64" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <defs>
-                <linearGradient id="logo-grad" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" style={{ stopColor: "#ec5b13", stopOpacity: 1 }} />
-                  <stop offset="100%" style={{ stopColor: "#ff8c52", stopOpacity: 1 }} />
-                </linearGradient>
-              </defs>
-              <path
-                d="M24 4C25.7818 14.2173 33.7827 22.2182 44 24C33.7827 25.7818 25.7818 33.7827 24 44C22.2182 33.7827 14.2173 25.7818 4 24C14.2173 22.2182 22.2182 14.2173 24 4Z"
-                fill="url(#logo-grad)"
-              />
-            </svg>
+              background: "linear-gradient(135deg, #ec5b13, #fb923c)",
+              boxShadow: "0 0 40px rgba(236,91,19,0.3)",
+            }}>
+            <Play className="w-10 h-10 text-white ml-1" fill="white" />
           </div>
+          {/* Pulsing halo */}
+          <div className="absolute w-24 h-24 rounded-full animate-ping"
+            style={{ background: "rgba(236,91,19,0.4)", opacity: 0.2 }} />
         </div>
 
-        {/* Text + progress */}
-        <div className="flex flex-col items-center gap-6 w-full">
+        {/* Text & progress */}
+        <div className="flex flex-col items-center gap-6 w-full max-w-md">
           <div className="flex flex-col items-center gap-2">
-            <h2 className="text-2xl font-bold tracking-tight text-white">PlayVibe</h2>
-            <p
-              className="text-xs font-medium uppercase tracking-widest"
-              style={{ color: "rgba(236,91,19,0.75)" }}
-            >
-              Premium Video Experience
+            <h1 className="text-slate-100 text-2xl font-semibold tracking-tight">PlayVibe</h1>
+            <p className="text-slate-400 text-sm font-medium uppercase tracking-[0.2em] animate-pulse">
+              Loading Experience
             </p>
           </div>
 
           {/* Progress bar */}
-          <div className="w-full max-w-xs space-y-3">
-            <div className="flex justify-between items-end">
-              <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                Initializing
-              </span>
-              <span className="text-sm font-bold" style={{ color: "#ec5b13" }}>
-                {Math.round(progress)}%
-              </span>
-            </div>
+          <div className="w-full h-1 rounded-full overflow-hidden"
+            style={{ background: "rgba(255,255,255,0.08)" }}>
             <div
-              className="h-1.5 w-full rounded-full overflow-hidden"
-              style={{ background: "rgba(236,91,19,0.12)" }}
-            >
-              <div
-                className="h-full rounded-full transition-all duration-300"
-                style={{
-                  width: `${progress}%`,
-                  background: "#ec5b13",
-                  boxShadow: "0 0 10px rgba(236,91,19,0.5)",
-                }}
-              />
-            </div>
-            <p className="text-[11px] text-center italic text-slate-500">
-              {STEPS[stepIdx]}
+              className="h-full rounded-full transition-all duration-700 ease-out"
+              style={{ width: `${progress}%`, background: "#ec5b13" }}
+            />
+          </div>
+
+          {/* Status */}
+          <div className="flex flex-col items-center gap-1">
+            <p className="text-slate-400 text-xs font-normal">{STEPS[stepIdx]}</p>
+            <p className="text-[10px] font-bold uppercase tracking-widest mt-4"
+              style={{ color: "#ec5b13" }}>
+              Premium Membership Active
             </p>
           </div>
         </div>
       </div>
 
-      {/* Footer badge */}
-      <div className="absolute bottom-10 z-10">
-        <div
-          className="flex items-center gap-2 px-4 py-2 rounded-full"
-          style={{
-            border: "1px solid rgba(255,255,255,0.06)",
-            background: "rgba(255,255,255,0.03)",
-            backdropFilter: "blur(8px)",
-          }}
-        >
-          {/* star icon */}
-          <svg className="w-3.5 h-3.5 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24" style={{ color: "#ec5b13" }}>
-            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-          </svg>
-          <span
-            className="text-[10px] font-medium uppercase tracking-widest"
-            style={{ color: "#64748b" }}
-          >
-            High Fidelity Stream Engine
-          </span>
-        </div>
+      {/* Bottom branding */}
+      <div className="absolute bottom-10 left-0 right-0 text-center">
+        <p className="text-slate-600 text-[11px] font-medium tracking-widest uppercase">
+          Cinematic Intelligence • Ultra HD Ready
+        </p>
       </div>
 
-      {/* Inline spin keyframe */}
-      <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
+      <style>{`@keyframes loaderSpin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
     </div>
   );
 };
