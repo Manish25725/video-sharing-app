@@ -1,17 +1,17 @@
-import React, { useState, useEffect } from 'react';
-import { History, Trash2, Play, Clock } from 'lucide-react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { History, Trash2, Play, Search, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import watchHistoryService from '../services/watchHistoryService';
-import VideoCard from '../components/VideoCard';
-import Toast from '../components/Toast';
 import { useAuth } from '../contexts/AuthContext';
-import { formatDuration } from '../utils/formatters';
+import { formatDuration, formatViews } from '../utils/formatters';
 
 const WatchHistory = () => {
   const { user, isLoggedIn } = useAuth();
   const navigate = useNavigate();
   const [watchHistory, setWatchHistory] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [miniPlayer, setMiniPlayer] = useState(null);
   const [toast, setToast] = useState({ show: false, message: '', type: '' });
 
   useEffect(() => {
@@ -64,11 +64,11 @@ const WatchHistory = () => {
           };
         });
 
-        // Sort by watchedAt in descending order (most recent first)
         historyVideos.sort((a, b) => new Date(b.watchedAt) - new Date(a.watchedAt));
         
         console.log('Transformed and sorted watch history:', historyVideos);
         setWatchHistory(historyVideos);
+        setMiniPlayer(historyVideos[0] || null);
       } else {
         console.log('No watch history found');
         setWatchHistory([]);
