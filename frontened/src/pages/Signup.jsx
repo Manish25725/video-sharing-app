@@ -1,26 +1,71 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useSignup } from "../contexts/SignupContext.jsx";
-import { User, Mail, Lock, AtSign, Eye, EyeOff, Play } from "lucide-react";
+import { Eye, EyeOff } from "lucide-react";
 import api from "../services/api.js";
 
 const StepIndicator = ({ current, total }) => (
-  <div className="flex items-center gap-3 mb-8">
+  <div className="flex items-center gap-2 mb-8">
     {Array.from({ length: total }, (_, i) => (
-      <div key={i} className="flex items-center gap-3">
-        <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold transition-all
-          ${i + 1 === current ? "bg-indigo-600 text-white shadow-md shadow-indigo-200" : ""}
-          ${i + 1 < current ? "bg-indigo-100 text-indigo-600" : ""}
-          ${i + 1 > current ? "bg-gray-100 text-gray-400" : ""}`}>
+      <div key={i} className="flex items-center gap-2">
+        <div
+          className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all"
+          style={
+            i + 1 === current
+              ? { background: "#ec5b13", color: "#fff", boxShadow: "0 0 0 3px rgba(236,91,19,0.2)" }
+              : i + 1 < current
+              ? { background: "rgba(236,91,19,0.2)", color: "#ec5b13" }
+              : { background: "rgba(255,255,255,0.06)", color: "#64748b" }
+          }
+        >
           {i + 1 < current ? "✓" : i + 1}
         </div>
         {i < total - 1 && (
-          <div className={`flex-1 h-0.5 w-8 rounded-full ${i + 1 < current ? "bg-indigo-400" : "bg-gray-200"}`} />
+          <div
+            className="w-8 h-0.5 rounded-full"
+            style={{ background: i + 1 < current ? "rgba(236,91,19,0.5)" : "rgba(255,255,255,0.07)" }}
+          />
         )}
       </div>
     ))}
-    <span className="ml-1 text-xs font-medium text-gray-400">Step {current} of {total}</span>
+    <span className="ml-2 text-xs font-medium" style={{ color: "#64748b" }}>Step {current} of {total}</span>
   </div>
+);
+
+/* Dark glass input style */
+const inputStyle = {
+  base: {
+    height: "48px",
+    width: "100%",
+    borderRadius: "12px",
+    border: "1px solid rgba(255,255,255,0.07)",
+    background: "rgba(18,10,6,0.5)",
+    padding: "0 16px",
+    fontSize: "14px",
+    color: "#e2e8f0",
+    outline: "none",
+    transition: "all 0.2s",
+  }
+};
+
+const DarkInput = ({ hasError, ...props }) => (
+  <input
+    {...props}
+    style={{
+      ...inputStyle.base,
+      borderColor: hasError ? "rgba(239,68,68,0.5)" : "rgba(255,255,255,0.07)",
+    }}
+    onFocus={e => {
+      e.target.style.borderColor = hasError ? "rgba(239,68,68,0.7)" : "rgba(236,91,19,0.55)";
+      e.target.style.boxShadow = hasError ? "0 0 0 3px rgba(239,68,68,0.1)" : "0 0 0 3px rgba(236,91,19,0.1)";
+      e.target.style.background = "rgba(30,15,5,0.8)";
+    }}
+    onBlur={e => {
+      e.target.style.borderColor = hasError ? "rgba(239,68,68,0.5)" : "rgba(255,255,255,0.07)";
+      e.target.style.boxShadow = "none";
+      e.target.style.background = "rgba(18,10,6,0.5)";
+    }}
+  />
 );
 
 const Signup = () => {
@@ -32,8 +77,10 @@ const Signup = () => {
     email: signupData.email || "",
     userName: signupData.userName || "",
     password: signupData.password || "",
+    confirmPassword: "",
   });
   const [showPw, setShowPw] = useState(false);
+  const [showCpw, setShowCpw] = useState(false);
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
   const [apiError, setApiError] = useState("");
@@ -47,6 +94,7 @@ const Signup = () => {
     if (!form.userName.trim()) errs.userName = "Username is required";
     if (form.userName.includes(" ")) errs.userName = "No spaces allowed";
     if (form.password.length < 8) errs.password = "Minimum 8 characters";
+    if (form.confirmPassword !== form.password) errs.confirmPassword = "Passwords do not match";
     return errs;
   };
 
@@ -67,95 +115,226 @@ const Signup = () => {
     }
   };
 
-  const inputClass = (key) =>
-    `w-full pl-10 pr-4 py-2.5 border rounded-xl text-sm placeholder-gray-400 bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 transition-all
-    ${errors[key] ? "border-red-400 focus:ring-red-400/30" : "border-gray-200 focus:border-indigo-500 focus:ring-indigo-500/30"}`;
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-indigo-50 flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
-        {/* Header */}
-        <div className="flex items-center gap-2 mb-10">
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-fuchsia-600 flex items-center justify-center shadow-md">
-            <Play className="w-4 h-4 text-white fill-current" />
+    <div
+      className="min-h-screen flex flex-col"
+      style={{ background: "#120a06", fontFamily: "'Public Sans', sans-serif" }}
+    >
+      {/* Page header */}
+      <header
+        className="flex items-center justify-between px-6 py-4 lg:px-16 sticky top-0 z-50 border-b"
+        style={{ background: "rgba(28,18,13,0.7)", backdropFilter: "blur(12px)", borderColor: "rgba(255,255,255,0.05)" }}
+      >
+        <div className="flex items-center gap-3">
+          <div
+            className="w-10 h-10 rounded-xl flex items-center justify-center shadow-lg"
+            style={{ background: "linear-gradient(135deg,#ec5b13 0%,#8b5cf6 100%)", boxShadow: "0 4px 16px rgba(236,91,19,0.3)" }}
+          >
+            <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
           </div>
-          <span className="font-bold text-xl text-gray-900">PlayVibe</span>
+          <h1
+            className="text-xl font-bold tracking-tight"
+            style={{ background: "linear-gradient(90deg,#fff 40%,#94a3b8)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}
+          >
+            PlayVibe
+          </h1>
         </div>
+        <a href="#" className="text-sm font-semibold transition-colors" style={{ color: "#ec5b13" }}
+          onMouseEnter={e => (e.target.style.color = "#fb923c")}
+          onMouseLeave={e => (e.target.style.color = "#ec5b13")}>
+          Support
+        </a>
+      </header>
 
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
-          <StepIndicator current={1} total={4} />
+      {/* Content */}
+      <div className="flex flex-1 items-center justify-center p-6">
+        <div className="w-full max-w-[480px] space-y-8">
 
-          <h2 className="text-xl font-bold text-gray-900 mb-1">Create your account</h2>
-          <p className="text-sm text-gray-500 mb-6">Tell us a bit about yourself</p>
+          {/* Hero banner */}
+          <div
+            className="relative h-36 w-full overflow-hidden rounded-2xl border"
+            style={{ background: "rgba(28,18,13,0.7)", borderColor: "rgba(255,255,255,0.05)", boxShadow: "0 8px 32px rgba(0,0,0,0.4)" }}
+          >
+            <div
+              className="absolute inset-0 opacity-40"
+              style={{ background: "linear-gradient(135deg,#ec5b13,#120a06)" }}
+            />
+            <div className="relative z-10 flex h-full flex-col items-center justify-center text-center px-6">
+              <h1 className="text-3xl font-black text-white tracking-tight">Join the Vibe</h1>
+              <p className="text-slate-400 mt-2 text-sm">Unlock all features and connect with the world</p>
+            </div>
+            <div className="absolute -right-4 -bottom-4 opacity-10 pointer-events-none">
+              <svg className="w-24 h-24 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"/></svg>
+            </div>
+          </div>
 
-          {apiError && (
-            <div className="mb-4 p-3.5 rounded-xl bg-red-50 border border-red-100 text-sm text-red-700">{apiError}</div>
-          )}
+          {/* Form card */}
+          <div
+            className="rounded-2xl border p-8 space-y-6"
+            style={{ background: "rgba(28,18,13,0.7)", backdropFilter: "blur(12px)", borderColor: "rgba(255,255,255,0.06)", boxShadow: "0 8px 40px rgba(0,0,0,0.4)" }}
+          >
+            <StepIndicator current={1} total={4} />
 
-          <form onSubmit={handleNext} className="space-y-4">
-            {/* Full Name */}
             <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1.5">Full name</label>
-              <div className="relative">
-                <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
-                <input type="text" placeholder="Jane Smith" value={form.fullName} onChange={set("fullName")} className={inputClass("fullName")} />
-              </div>
-              {errors.fullName && <p className="mt-1 text-xs text-red-500">{errors.fullName}</p>}
+              <h2 className="text-2xl font-bold text-white tracking-tight">Create Account</h2>
+              <p className="text-slate-500 mt-1 text-sm">Fill in your details to get started.</p>
             </div>
 
-            {/* Username */}
-            <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1.5">Username</label>
-              <div className="relative">
-                <AtSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
-                <input type="text" placeholder="janesmith" value={form.userName} onChange={set("userName")} className={inputClass("userName")} />
+            {apiError && (
+              <div
+                className="p-3.5 rounded-xl text-sm"
+                style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.25)", color: "#fca5a5" }}
+              >
+                {apiError}
               </div>
-              {errors.userName && <p className="mt-1 text-xs text-red-500">{errors.userName}</p>}
-            </div>
+            )}
 
-            {/* Email */}
-            <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1.5">Email address</label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
-                <input type="email" placeholder="jane@example.com" value={form.email} onChange={set("email")} className={inputClass("email")} />
+            <form onSubmit={handleNext} className="space-y-4">
+              {/* Full Name */}
+              <div className="grid gap-1.5">
+                <label className="text-sm font-semibold text-slate-300 ml-1">Full Name</label>
+                <DarkInput
+                  type="text" placeholder="John Doe"
+                  value={form.fullName} onChange={set("fullName")}
+                  hasError={!!errors.fullName}
+                />
+                {errors.fullName && <p className="text-xs ml-1" style={{ color: "#f87171" }}>{errors.fullName}</p>}
               </div>
-              {errors.email && <p className="mt-1 text-xs text-red-500">{errors.email}</p>}
-            </div>
 
-            {/* Password */}
-            <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1.5">Password</label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
-                <input type={showPw ? "text" : "password"} placeholder="Min. 8 characters"
-                  value={form.password} onChange={set("password")}
-                  className="w-full pl-10 pr-10 py-2.5 border border-gray-200 rounded-xl text-sm placeholder-gray-400 bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 transition-all" />
-                <button type="button" onClick={() => setShowPw(!showPw)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors">
-                  {showPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                </button>
+              {/* Email */}
+              <div className="grid gap-1.5">
+                <label className="text-sm font-semibold text-slate-300 ml-1">Email</label>
+                <DarkInput
+                  type="email" placeholder="name@example.com"
+                  value={form.email} onChange={set("email")}
+                  hasError={!!errors.email}
+                />
+                {errors.email && <p className="text-xs ml-1" style={{ color: "#f87171" }}>{errors.email}</p>}
               </div>
-              {errors.password && <p className="mt-1 text-xs text-red-500">{errors.password}</p>}
-            </div>
 
-            <button type="submit"
-              disabled={loading}
-              className="w-full py-2.5 mt-2 bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 active:scale-[0.99] text-white rounded-xl text-sm font-semibold shadow-sm hover:shadow-md transition-all disabled:opacity-60 disabled:cursor-not-allowed">
-              {loading ? (
-                <span className="flex items-center justify-center gap-2">
-                  <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  Sending code…
+              {/* Username */}
+              <div className="grid gap-1.5">
+                <label className="text-sm font-semibold text-slate-300 ml-1">Username</label>
+                <DarkInput
+                  type="text" placeholder="johndoe"
+                  value={form.userName} onChange={set("userName")}
+                  hasError={!!errors.userName}
+                />
+                {errors.userName && <p className="text-xs ml-1" style={{ color: "#f87171" }}>{errors.userName}</p>}
+              </div>
+
+              {/* Password + Confirm Password — 2-col grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="grid gap-1.5">
+                  <label className="text-sm font-semibold text-slate-300 ml-1">Password</label>
+                  <div className="relative">
+                    <DarkInput
+                      type={showPw ? "text" : "password"} placeholder="••••••••"
+                      value={form.password} onChange={set("password")}
+                      hasError={!!errors.password}
+                      style={{ ...inputStyle.base, paddingRight: "42px", borderColor: errors.password ? "rgba(239,68,68,0.5)" : "rgba(255,255,255,0.07)" }}
+                    />
+                    <button type="button" onClick={() => setShowPw(p => !p)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 transition-colors"
+                      style={{ color: "#64748b" }}
+                      onMouseEnter={e => (e.currentTarget.style.color = "#ec5b13")}
+                      onMouseLeave={e => (e.currentTarget.style.color = "#64748b")}>
+                      {showPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                  {errors.password && <p className="text-xs ml-1" style={{ color: "#f87171" }}>{errors.password}</p>}
+                </div>
+                <div className="grid gap-1.5">
+                  <label className="text-sm font-semibold text-slate-300 ml-1">Confirm Password</label>
+                  <div className="relative">
+                    <DarkInput
+                      type={showCpw ? "text" : "password"} placeholder="••••••••"
+                      value={form.confirmPassword} onChange={set("confirmPassword")}
+                      hasError={!!errors.confirmPassword}
+                      style={{ ...inputStyle.base, paddingRight: "42px", borderColor: errors.confirmPassword ? "rgba(239,68,68,0.5)" : "rgba(255,255,255,0.07)" }}
+                    />
+                    <button type="button" onClick={() => setShowCpw(p => !p)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 transition-colors"
+                      style={{ color: "#64748b" }}
+                      onMouseEnter={e => (e.currentTarget.style.color = "#ec5b13")}
+                      onMouseLeave={e => (e.currentTarget.style.color = "#64748b")}>
+                      {showCpw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                  {errors.confirmPassword && <p className="text-xs ml-1" style={{ color: "#f87171" }}>{errors.confirmPassword}</p>}
+                </div>
+              </div>
+
+              {/* Submit */}
+              <button
+                type="submit"
+                disabled={loading}
+                className="mt-2 w-full h-12 flex items-center justify-center rounded-xl text-sm font-bold text-white transition-all active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed"
+                style={{ background: "#ec5b13", boxShadow: "0 4px 16px rgba(236,91,19,0.3)" }}
+                onMouseEnter={e => { if (!loading) e.currentTarget.style.transform = "scale(1.02)"; }}
+                onMouseLeave={e => { e.currentTarget.style.transform = "scale(1)"; }}
+              >
+                {loading ? (
+                  <span className="flex items-center gap-2">
+                    <span className="w-4 h-4 border-2 rounded-full animate-spin" style={{ borderColor: "rgba(255,255,255,0.3)", borderTopColor: "#fff" }} />
+                    Sending OTP…
+                  </span>
+                ) : "Create Account"}
+              </button>
+            </form>
+
+            {/* Divider */}
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t" style={{ borderColor: "rgba(255,255,255,0.06)" }} />
+              </div>
+              <div className="relative flex justify-center">
+                <span
+                  className="px-3 text-[11px] font-bold uppercase tracking-widest"
+                  style={{ background: "rgba(28,18,13,0.9)", color: "#475569" }}
+                >
+                  Or continue with
                 </span>
-              ) : "Continue →"}
-            </button>
-          </form>
-        </div>
+              </div>
+            </div>
 
-        <p className="mt-5 text-center text-sm text-gray-500">
-          Already have an account?{" "}
-          <Link to="/login" className="text-indigo-600 hover:text-indigo-700 font-medium transition-colors">Sign in</Link>
-        </p>
+            {/* Google */}
+            <div className="flex justify-center">
+              <button
+                type="button"
+                className="flex h-12 w-full max-w-xs items-center justify-center gap-3 rounded-xl border transition-all text-sm font-bold"
+                style={{ background: "rgba(255,255,255,0.03)", borderColor: "rgba(255,255,255,0.08)", color: "#e2e8f0" }}
+                onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,0.07)"; }}
+                onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.03)"; }}
+              >
+                <svg className="w-5 h-5" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+                  <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                  <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/>
+                  <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+                </svg>
+                Continue with Google
+              </button>
+            </div>
+
+            <p className="text-center text-sm" style={{ color: "#64748b" }}>
+              Already have an account?{" "}
+              <Link to="/login" className="font-bold transition-colors" style={{ color: "#ec5b13" }}
+                onMouseEnter={e => (e.target.style.textDecoration = "underline")}
+                onMouseLeave={e => (e.target.style.textDecoration = "none")}>
+                Log in
+              </Link>
+            </p>
+          </div>
+
+          {/* Legal */}
+          <p className="text-center text-xs leading-relaxed px-4" style={{ color: "#475569" }}>
+            By clicking continue, you agree to our{" "}
+            <a href="#" className="underline underline-offset-4 transition-colors hover:text-orange-400">Terms of Service</a>{" "}
+            and{" "}
+            <a href="#" className="underline underline-offset-4 transition-colors hover:text-orange-400">Privacy Policy</a>.
+          </p>
+        </div>
       </div>
     </div>
   );

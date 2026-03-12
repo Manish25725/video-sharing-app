@@ -999,6 +999,7 @@ const forgotPassword = asyncHandler(async (req, res) => {
 
     const user = await User.findOne({ email: { $regex: new RegExp(`^${email.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i') } });
 
+    let devResetUrl = null;
     // Don't reveal whether the email exists
     if (user) {
         const token    = crypto.randomBytes(32).toString("hex");
@@ -1007,7 +1008,10 @@ const forgotPassword = asyncHandler(async (req, res) => {
         await pub.setex(`pwreset:${token}`, 3600, user._id.toString());
 
         const isDev = process.env.NODE_ENV !== "production";
-        if (isDev) console.log(`\n[DEV] Password reset link for ${user.email}:\n${resetUrl}\n`);
+        if (isDev) {
+            console.log(`\n[DEV] Password reset link for ${user.email}:\n${resetUrl}\n`);
+            devResetUrl = resetUrl;
+        }
 
         sendEmail({
             to:      user.email,
@@ -1017,7 +1021,7 @@ const forgotPassword = asyncHandler(async (req, res) => {
     }
 
     return res.status(200).json(
-        new ApiResponse(200, null, "If that email is registered, a reset link has been sent")
+        new ApiResponse(200, devResetUrl ? { resetUrl: devResetUrl } : null, "If that email is registered, a reset link has been sent")
     );
 });
 

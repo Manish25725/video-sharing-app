@@ -17,6 +17,7 @@ import GoLive from "./pages/GoLive"
 import ScheduledStreams from "./pages/ScheduledStreams"
 import Header from "./components/HeaderNew"
 import Sidebar from "./components/Sidebar"
+import AppLoader from "./components/AppLoader"
 import Home from "./pages/Home"
 import VideoPlayer from "./pages/VideoPlayer"
 import MyChannel from "./pages/MyChannel"
@@ -56,18 +57,7 @@ function AppContent() {
   };
 
   // Show loading screen
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-12 h-12 bg-gradient-to-br from-indigo-600 to-fuchsia-600 rounded flex items-center justify-center mx-auto mb-4">
-            <span className="text-white font-bold text-lg">PV</span>
-          </div>
-          <div className="text-lg text-gray-600">Loading...</div>
-        </div>
-      </div>
-    );
-  }
+  if (loading) return <AppLoader />;
 
   // Admin login page — accessible without any login
   if (location.pathname === "/admin-login") {
@@ -107,19 +97,17 @@ function AppContent() {
 
   // Main layout with sidebar and routing
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Header
-        onMenuClick={toggleSidebar}
-        showProfileMenu={showProfileMenu}
-        setShowProfileMenu={setShowProfileMenu}
-        showSubscriptionMenu={showSubscriptionMenu}
-        setShowSubscriptionMenu={setShowSubscriptionMenu}
-      />
+    <div className="flex min-h-screen bg-[#120a06]">
+      <Sidebar isOpen={sidebarOpen} />
 
-      <div className="flex pt-16">
-        <Sidebar isOpen={sidebarOpen} />
-        
-        <main className={`flex-1 transition-all duration-300 ${sidebarOpen ? "ml-64" : "ml-16"}`}>
+      <main className={`flex-1 relative min-h-screen transition-all duration-300 ${sidebarOpen ? "ml-64" : "ml-16"}`}>
+        <Header
+          onMenuClick={toggleSidebar}
+          showProfileMenu={showProfileMenu}
+          setShowProfileMenu={setShowProfileMenu}
+          showSubscriptionMenu={showSubscriptionMenu}
+          setShowSubscriptionMenu={setShowSubscriptionMenu}
+        />
           <Routes>
             <Route path="/" element={<Home onVideoSelect={handleVideoSelect} />} />
             <Route path="/search" element={<Search />} />
@@ -159,7 +147,6 @@ function AppContent() {
             <Route path="*" element={<Navigate to="/" />} />
           </Routes>
         </main>
-      </div>
     </div>
   );
 }

@@ -8,13 +8,15 @@ const ForgotPassword = () => {
   const [loading, setLoading] = useState(false);
   const [sent, setSent]       = useState(false);
   const [error, setError]     = useState("");
+  const [devResetUrl, setDevResetUrl] = useState("");
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
     setLoading(true);
     try {
-      await api.post("/users/forgot-password", { email });
+      const res = await api.post("/users/forgot-password", { email });
+      if (res?.resetUrl) setDevResetUrl(res.resetUrl);
       setSent(true);
     } catch (err) {
       setError(err?.message || "Something went wrong. Please try again.");
@@ -48,6 +50,12 @@ const ForgotPassword = () => {
                 If <strong>{email}</strong> is registered, we've sent a password reset link.
                 It expires in <strong>1 hour</strong>.
               </p>
+              {devResetUrl && (
+                <div className="mb-4 p-3.5 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-800 text-left break-all">
+                  <p className="font-semibold mb-1">⚠️ Dev mode — click to reset:</p>
+                  <a href={devResetUrl} className="underline text-indigo-600 break-all">{devResetUrl}</a>
+                </div>
+              )}
               <p className="text-xs text-gray-400 mb-6">
                 Didn't receive it? Check your spam folder, or{" "}
                 <button
