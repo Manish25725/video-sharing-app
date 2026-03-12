@@ -1,5 +1,6 @@
 import {
   Home,
+  TrendingUp,
   History,
   Clock,
   ThumbsUp,
@@ -52,7 +53,8 @@ const Sidebar = ({ isOpen }) => {
   const { user } = useAuth();
 
   const menuItems = [
-    { icon: Home, label: "Home", path: "/" },
+    { icon: Home,        label: "Home",     path: "/" },
+    { icon: TrendingUp,  label: "Trending",  path: "/trending" },
   ];
 
   const libraryItems = [
@@ -70,11 +72,10 @@ const Sidebar = ({ isOpen }) => {
 
   return (
     <aside
-      className={`fixed left-0 top-0 border-r transition-all duration-300 z-50 flex flex-col ${
+      className={`border-r transition-all duration-300 flex flex-col flex-shrink-0 ${
         isOpen ? "w-64" : "w-16"
       }`}
       style={{
-        height: "100vh",
         background: "rgba(22,13,8,0.92)",
         backdropFilter: "blur(16px)",
         WebkitBackdropFilter: "blur(16px)",

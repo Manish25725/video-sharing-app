@@ -130,7 +130,7 @@ const Signup = () => {
             className="w-10 h-10 rounded-xl flex items-center justify-center shadow-lg"
             style={{ background: "linear-gradient(135deg,#ec5b13 0%,#8b5cf6 100%)", boxShadow: "0 4px 16px rgba(236,91,19,0.3)" }}
           >
-            <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+            <svg className="w-5 h-5" fill="white" viewBox="0 0 48 48"><path d="M24 4C25.7818 14.2173 33.7827 22.2182 44 24C33.7827 25.7818 25.7818 33.7827 24 44C22.2182 33.7827 14.2173 25.7818 4 24C14.2173 22.2182 22.2182 14.2173 24 4Z"/></svg>
           </div>
           <h1
             className="text-xl font-bold tracking-tight"

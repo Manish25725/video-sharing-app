@@ -97,17 +97,19 @@ function AppContent() {
 
   // Main layout with sidebar and routing
   return (
-    <div className="flex min-h-screen bg-[#120a06]">
-      <Sidebar isOpen={sidebarOpen} />
+    <div className="flex flex-col h-screen bg-[#120a06]">
+      <Header
+        onMenuClick={toggleSidebar}
+        showProfileMenu={showProfileMenu}
+        setShowProfileMenu={setShowProfileMenu}
+        showSubscriptionMenu={showSubscriptionMenu}
+        setShowSubscriptionMenu={setShowSubscriptionMenu}
+      />
 
-      <main className={`flex-1 relative min-h-screen transition-all duration-300 ${sidebarOpen ? "ml-64" : "ml-16"}`}>
-        <Header
-          onMenuClick={toggleSidebar}
-          showProfileMenu={showProfileMenu}
-          setShowProfileMenu={setShowProfileMenu}
-          showSubscriptionMenu={showSubscriptionMenu}
-          setShowSubscriptionMenu={setShowSubscriptionMenu}
-        />
+      <div className="flex flex-1 overflow-hidden">
+        <Sidebar isOpen={sidebarOpen} />
+
+        <main className="flex-1 overflow-y-auto">
           <Routes>
             <Route path="/" element={<Home onVideoSelect={handleVideoSelect} />} />
             <Route path="/search" element={<Search />} />
@@ -147,6 +149,7 @@ function AppContent() {
             <Route path="*" element={<Navigate to="/" />} />
           </Routes>
         </main>
+      </div>
     </div>
   );
 }

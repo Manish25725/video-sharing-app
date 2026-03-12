@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Play, MoreVertical, Trash2, Edit, List } from 'lucide-react';
+import { Plus, Play, MoreVertical, Trash2, List, PlusCircle } from 'lucide-react';
 import { playlistService } from '../services/playlistService';
 import { videoService } from '../services/videoService';
 import { useAuth } from '../contexts/AuthContext';
@@ -131,13 +131,18 @@ const Playlists = () => {
 
   if (!isLoggedIn) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center" style={{ background: "#120a06" }}>
         <div className="text-center">
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">Sign in to view your playlists</h2>
-          <p className="text-gray-600 mb-6">You need to be signed in to create and manage playlists.</p>
+          <div className="w-20 h-20 rounded-2xl flex items-center justify-center mx-auto mb-6"
+            style={{ background: "linear-gradient(135deg,#ec5b13,#9333ea)" }}>
+            <List className="w-10 h-10 text-white" />
+          </div>
+          <h2 className="text-2xl font-black text-white mb-3">Sign in to view your playlists</h2>
+          <p className="text-slate-400 mb-8">You need to be signed in to create and manage playlists.</p>
           <button
             onClick={() => navigate('/auth')}
-            className="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition-colors"
+            className="px-8 py-3 rounded-xl font-bold text-white shadow-lg transition-all hover:brightness-110 active:scale-95"
+            style={{ background: "#ec5b13", boxShadow: "0 8px 24px rgba(236,91,19,0.35)" }}
           >
             Sign In
           </button>
@@ -148,160 +153,133 @@ const Playlists = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center" style={{ background: "#120a06" }}>
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading your playlists...</p>
+          <div className="w-12 h-12 rounded-full border-2 border-transparent border-t-[#ec5b13] animate-spin mx-auto mb-4"
+            style={{ borderTopColor: "#ec5b13", borderRightColor: "rgba(236,91,19,0.2)" }} />
+          <p className="text-slate-400">Loading your playlists…</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-white p-6">
+    <div className="min-h-screen p-8" style={{ background: "#120a06" }}>
       <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">Your Playlists</h1>
-            <p className="text-gray-600 mt-2">Create and manage your personal video collections</p>
+
+        {/* ── Title & Actions ── */}
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
+          <div className="space-y-1">
+            <h2 className="text-4xl font-black tracking-tight text-white">My Playlists</h2>
+            <p className="text-slate-400">Curate and organize your favorite videos</p>
           </div>
           <button
             onClick={() => setShowCreateModal(true)}
-            className="bg-red-600 text-white px-6 py-3 rounded hover:bg-red-700 transition-colors flex items-center gap-2"
+            className="flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-white shadow-lg transition-all hover:brightness-110 active:scale-95"
+            style={{ background: "#ec5b13", boxShadow: "0 8px 24px rgba(236,91,19,0.3)" }}
           >
-            <Plus className="w-5 h-5" />
-            Create Playlist
+            <PlusCircle className="w-5 h-5" />
+            <span>Create New Playlist</span>
           </button>
         </div>
 
-        {/* Playlists Grid */}
+        {/* ── Tabs ── */}
+        <div className="flex gap-8 mb-8" style={{ borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
+          <button className="pb-4 px-2 text-sm font-bold border-b-2 transition-colors"
+            style={{ borderColor: "#ec5b13", color: "#ec5b13" }}>
+            All Playlists
+          </button>
+          <button className="pb-4 px-2 text-sm font-bold border-b-2 border-transparent text-slate-500 hover:text-slate-300 transition-colors">
+            Recently Added
+          </button>
+          <button className="pb-4 px-2 text-sm font-bold border-b-2 border-transparent text-slate-500 hover:text-slate-300 transition-colors">
+            Shared with me
+          </button>
+        </div>
+
+        {/* ── Empty State ── */}
         {playlists.length === 0 ? (
-          <div className="text-center py-16">
-            <List className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-xl font-semibold text-gray-900 mb-2">No playlists yet</h3>
-            <p className="text-gray-600 mb-6">Create your first playlist to organize your favorite videos</p>
+          <div className="text-center py-24">
+            <div className="w-20 h-20 rounded-2xl flex items-center justify-center mx-auto mb-6"
+              style={{ background: "rgba(236,91,19,0.12)" }}>
+              <List className="w-10 h-10" style={{ color: "#ec5b13" }} />
+            </div>
+            <h3 className="text-xl font-bold text-white mb-2">No playlists yet</h3>
+            <p className="text-slate-400 mb-8">Create your first playlist to organize your favorite videos</p>
             <button
               onClick={() => setShowCreateModal(true)}
-              className="bg-red-600 text-white px-6 py-3 rounded hover:bg-red-700 transition-colors"
+              className="px-8 py-3 rounded-xl font-bold text-white shadow-lg transition-all hover:brightness-110 active:scale-95"
+              style={{ background: "#ec5b13", boxShadow: "0 8px 24px rgba(236,91,19,0.35)" }}
             >
               Create Your First Playlist
             </button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+          /* ── Playlist Grid ── */
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6">
             {playlists.map((playlist) => (
               <div
                 key={playlist._id}
-                className="bg-white rounded-lg overflow-hidden hover:shadow-md transition-shadow cursor-pointer group"
+                className="group flex flex-col gap-3 p-4 rounded-2xl cursor-pointer transition-all duration-200"
+                style={{
+                  background: "rgba(30,17,10,0.7)",
+                  border: "1px solid rgba(255,255,255,0.05)",
+                  backdropFilter: "blur(8px)",
+                }}
+                onMouseEnter={e => e.currentTarget.style.border = "1px solid rgba(236,91,19,0.25)"}
+                onMouseLeave={e => e.currentTarget.style.border = "1px solid rgba(255,255,255,0.05)"}
                 onClick={() => handlePlaylistClick(playlist._id)}
               >
-                {/* Playlist Thumbnail */}
-                <div className="relative aspect-video bg-gray-900 overflow-hidden">
-                  {playlist.videos && playlist.videos.length > 0 ? (
-                    <div className="relative w-full h-full">
-                      {/* Main thumbnail - show actual first video thumbnail */}
-                      <div className="absolute inset-0">
-                        {playlistThumbnails[playlist._id] ? (
-                          <img 
-                            src={playlistThumbnails[playlist._id]} 
-                            alt={`${playlist.name} thumbnail`}
-                            className="w-full h-full object-cover"
-                            onError={(e) => {
-                              e.target.style.display = 'none';
-                              e.target.nextSibling.style.display = 'flex';
-                            }}
-                          />
-                        ) : null}
-                        
-                        {/* Fallback gradient background */}
-                        <div className="w-full h-full bg-gradient-to-br from-gray-800 to-gray-900 flex items-center justify-center" style={{display: playlistThumbnails[playlist._id] ? 'none' : 'flex'}}>
-                          <div className="bg-red-600 rounded-full p-3 shadow-lg">
-                            <Play className="w-6 h-6 text-white fill-current" />
-                          </div>
-                        </div>
-                        
-                        {/* Overlay gradient for better text readability */}
-                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-transparent to-black/60"></div>
-                      </div>
-                      
-                      {/* Sidebar showing video count */}
-                      <div className="absolute right-0 top-0 bottom-0 w-1/3 bg-black/80 flex flex-col justify-center items-center text-white">
-                        <div className="text-center">
-                          <div className="text-lg font-semibold">{playlist.videos?.length || 0}</div>
-                          <div className="text-xs opacity-80">
-                            {(playlist.videos?.length || 0) === 1 ? 'video' : 'videos'}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
+                {/* Thumbnail — square */}
+                <div className="relative aspect-square rounded-xl overflow-hidden shadow-xl"
+                  style={{ background: "rgba(12,6,2,0.8)" }}>
+                  {playlistThumbnails[playlist._id] ? (
+                    <img
+                      src={playlistThumbnails[playlist._id]}
+                      alt={playlist.name}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    />
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center bg-gray-100 relative">
-                      {/* Empty playlist design */}
-                      <div className="text-center text-gray-400">
-                        <List className="w-12 h-12 mx-auto mb-2" />
-                        <div className="text-xs">No videos</div>
-                      </div>
+                    <div className="w-full h-full flex items-center justify-center"
+                      style={{ background: "linear-gradient(135deg,rgba(236,91,19,0.15),rgba(147,51,234,0.15))" }}>
+                      <List className="w-12 h-12 text-slate-600" />
                     </div>
                   )}
-                  
-                  {/* Video Count Overlay (bottom right) */}
-                  <div className="absolute bottom-1 right-1 bg-black/80 text-white text-xs px-2 py-0.5 rounded flex items-center">
-                    <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                      <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z" />
-                    </svg>
-                    {playlist.videos?.length || 0}
-                  </div>
 
-
-
-                  {/* Hover Overlay */}
-                  <div className="absolute inset-0 bg-black/0 hover:bg-black/20 transition-all duration-200 flex items-center justify-center opacity-0 hover:opacity-100">
-                    <div className="bg-white/90 backdrop-blur-sm text-gray-900 px-4 py-2 rounded-full font-medium flex items-center shadow-lg transform scale-95 hover:scale-100 transition-transform">
-                      <Play className="w-4 h-4 mr-2" />
-                      Play all
-                    </div>
-                  </div>
-                  
-                  {/* Options Menu */}
-                  <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                  {/* Hover play overlay */}
+                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                     <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        // Add dropdown logic here if needed
-                      }}
-                      className="bg-black/60 hover:bg-black/80 text-white p-1.5 rounded-full backdrop-blur-sm"
+                      className="w-14 h-14 rounded-full text-white flex items-center justify-center shadow-2xl transform translate-y-4 group-hover:translate-y-0 transition-all"
+                      style={{ background: "#ec5b13", boxShadow: "0 8px 32px rgba(236,91,19,0.5)" }}
+                      onClick={(e) => { e.stopPropagation(); handlePlaylistClick(playlist._id); }}
                     >
-                      <MoreVertical className="w-4 h-4" />
+                      <Play className="w-6 h-6 fill-current ml-0.5" />
                     </button>
+                  </div>
+
+                  {/* Video count badge */}
+                  <div className="absolute bottom-2 right-2 px-2 py-0.5 rounded-lg text-[10px] font-semibold text-white"
+                    style={{ background: "rgba(0,0,0,0.75)", backdropFilter: "blur(4px)" }}>
+                    {playlist.videos?.length || 0} videos
                   </div>
                 </div>
 
-                {/* Playlist Info */}
-                <div className="p-3">
-                  <h3 className="font-semibold text-gray-900 text-sm line-clamp-2 mb-1 min-h-[2.5rem]">
-                    {playlist.name}
-                  </h3>
-                  
-                  <div className="text-xs text-gray-600 space-y-1">
-                    <div className="flex items-center justify-between">
-                      <span>View full playlist</span>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDeletePlaylist(playlist._id);
-                        }}
-                        className="text-gray-400 hover:text-red-500 transition-colors"
-                        title="Delete playlist"
-                      >
-                        <Trash2 className="w-3 h-3" />
-                      </button>
-                    </div>
-                    
-                    <div className="text-gray-500">
+                {/* Info row */}
+                <div className="flex justify-between items-start pt-1">
+                  <div className="min-w-0">
+                    <h3 className="font-bold text-white truncate pr-2 text-sm">{playlist.name}</h3>
+                    <p className="text-xs text-slate-500 mt-1">
                       {playlist.videos?.length || 0} video{(playlist.videos?.length || 0) !== 1 ? 's' : ''}
-                    </div>
+                      {playlist.description ? ` • ${playlist.description.slice(0, 30)}${playlist.description.length > 30 ? '…' : ''}` : ''}
+                    </p>
                   </div>
+                  <button
+                    className="text-slate-500 hover:text-[#ec5b13] transition-colors flex-shrink-0"
+                    onClick={(e) => { e.stopPropagation(); handleDeletePlaylist(playlist._id); }}
+                    title="Delete playlist"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
                 </div>
               </div>
             ))}
@@ -309,78 +287,72 @@ const Playlists = () => {
         )}
       </div>
 
-      {/* Create Playlist Modal */}
+      {/* ── Create Playlist Modal ── */}
       {showCreateModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg w-full max-w-md">
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="w-full max-w-md rounded-2xl overflow-hidden shadow-2xl"
+            style={{ background: "rgba(28,15,8,0.95)", border: "1px solid rgba(236,91,19,0.2)", backdropFilter: "blur(24px)" }}>
+
             {/* Modal Header */}
-            <div className="flex items-center justify-between p-6 border-b border-gray-200">
-              <h2 className="text-xl font-semibold text-gray-900">New playlist</h2>
+            <div className="flex items-center justify-between px-6 py-5" style={{ borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
+              <h2 className="text-lg font-bold text-white">New Playlist</h2>
               <button
-                onClick={() => {
-                  setShowCreateModal(false);
-                  setNewPlaylistName('');
-                  setNewPlaylistDescription('');
-                  setIsPrivate(false);
-                }}
-                className="text-gray-400 hover:text-gray-600 transition-colors"
+                onClick={() => { setShowCreateModal(false); setNewPlaylistName(''); setNewPlaylistDescription(''); }}
+                className="text-slate-500 hover:text-white transition-colors"
               >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
             </div>
 
             {/* Modal Body */}
-            <form onSubmit={handleCreatePlaylist} className="p-6">
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Title
-                </label>
+            <form onSubmit={handleCreatePlaylist} className="p-6 space-y-5">
+              <div>
+                <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Title</label>
                 <input
                   type="text"
                   value={newPlaylistName}
                   onChange={(e) => setNewPlaylistName(e.target.value)}
-                  className="w-full px-3 py-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                  className="w-full px-4 py-3 rounded-xl text-sm text-white placeholder-slate-600 outline-none transition-all"
+                  style={{
+                    background: "rgba(255,255,255,0.05)",
+                    border: "1px solid rgba(255,255,255,0.08)",
+                  }}
+                  onFocus={e => e.target.style.border = "1px solid rgba(236,91,19,0.5)"}
+                  onBlur={e => e.target.style.border = "1px solid rgba(255,255,255,0.08)"}
                   placeholder="Enter playlist title"
                   required
                   maxLength={50}
                 />
-                <div className="text-xs text-gray-500 mt-1 text-right">
-                  {newPlaylistName.length}/50
-                </div>
+                <div className="text-[10px] text-slate-600 mt-1 text-right">{newPlaylistName.length}/50</div>
               </div>
 
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Description
-                </label>
+              <div>
+                <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Description</label>
                 <textarea
                   value={newPlaylistDescription}
                   onChange={(e) => setNewPlaylistDescription(e.target.value)}
-                  className="w-full px-3 py-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent resize-none"
+                  className="w-full px-4 py-3 rounded-xl text-sm text-white placeholder-slate-600 outline-none transition-all resize-none"
+                  style={{
+                    background: "rgba(255,255,255,0.05)",
+                    border: "1px solid rgba(255,255,255,0.08)",
+                  }}
+                  onFocus={e => e.target.style.border = "1px solid rgba(236,91,19,0.5)"}
+                  onBlur={e => e.target.style.border = "1px solid rgba(255,255,255,0.08)"}
                   placeholder="Tell viewers about your playlist"
                   rows="3"
                   maxLength={200}
                 />
-                <div className="text-xs text-gray-500 mt-1 text-right">
-                  {newPlaylistDescription.length}/200
-                </div>
+                <div className="text-[10px] text-slate-600 mt-1 text-right">{newPlaylistDescription.length}/200</div>
               </div>
 
-
-
-              {/* Modal Footer */}
-              <div className="flex justify-end space-x-3">
+              <div className="flex justify-end gap-3 pt-2">
                 <button
                   type="button"
-                  onClick={() => {
-                    setShowCreateModal(false);
-                    setNewPlaylistName('');
-                    setNewPlaylistDescription('');
-                    setIsPrivate(false);
-                  }}
-                  className="px-4 py-2 text-red-600 hover:bg-red-50 rounded transition-colors"
+                  onClick={() => { setShowCreateModal(false); setNewPlaylistName(''); setNewPlaylistDescription(''); }}
+                  className="px-5 py-2.5 rounded-xl text-sm font-semibold text-slate-400 hover:text-white transition-colors"
+                  style={{ background: "rgba(255,255,255,0.05)" }}
                   disabled={creating}
                 >
                   Cancel
@@ -388,9 +360,10 @@ const Playlists = () => {
                 <button
                   type="submit"
                   disabled={creating || !newPlaylistName.trim()}
-                  className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  className="px-5 py-2.5 rounded-xl text-sm font-bold text-white shadow-lg transition-all hover:brightness-110 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
+                  style={{ background: "#ec5b13", boxShadow: "0 4px 14px rgba(236,91,19,0.35)" }}
                 >
-                  {creating ? 'Creating...' : 'Create'}
+                  {creating ? 'Creating…' : 'Create'}
                 </button>
               </div>
             </form>
@@ -398,7 +371,7 @@ const Playlists = () => {
         </div>
       )}
 
-      {/* Toast Notification */}
+      {/* Toast */}
       {toast.show && (
         <Toast
           message={toast.message}
@@ -411,3 +384,4 @@ const Playlists = () => {
 };
 
 export default Playlists;
+

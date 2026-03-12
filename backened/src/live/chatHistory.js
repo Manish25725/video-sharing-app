@@ -55,3 +55,4 @@ export async function getChatHistory(streamKey) {
 export async function clearChatHistory(streamKey) {
     await pub.del(KEY(streamKey));
 }
+
