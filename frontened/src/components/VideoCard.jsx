@@ -82,26 +82,38 @@ const VideoCard = ({ video, onVideoSelect }) => {
     }, 3000);
   };
 
+  const getOwnerId = () => {
+    if (typeof video.owner === 'string') return video.owner;
+    if (typeof video.ownerDetails === 'string') return video.ownerDetails;
+
+    return (
+      video.owner?._id ||
+      video.owner?.id ||
+      video.ownerDetails?._id ||
+      video.ownerDetails?.id ||
+      video.ownerId ||
+      video.channelId ||
+      video.userId ||
+      video.user?._id ||
+      video.user?.id ||
+      null
+    );
+  };
+
   const handleVideoClick = () => {
     const videoId = video.id || video._id;
-    console.log('Video click navigation:', { videoId });
     if (onVideoSelect) {
       onVideoSelect(videoId);
     } else if (videoId) {
       navigate(`/video/${videoId}`);
-    } else {
-      console.error('No video ID found:', video);
     }
   };
 
   const handleChannelClick = (e) => {
     e.stopPropagation();
-    const ownerId = video.owner?._id || video.ownerDetails?._id || video.userId || video.user?._id;
-    console.log('Channel navigation:', { ownerId, videoId: video.id || video._id });
+    const ownerId = getOwnerId();
     if (ownerId) {
       navigate(`/profile/${ownerId}`);
-    } else {
-      console.error('No owner ID found for video:', video);
     }
   };
 
@@ -231,8 +243,15 @@ const VideoCard = ({ video, onVideoSelect }) => {
     ? `https://picsum.photos/320/180?random=${video.id || video._id}`
     : video.thumbnail;
 
-  const channelName = video.owner?.fullName || video.ownerDetails?.fullName || 'Unknown Channel';
-  const channelAvatar = video.owner?.avatar || video.ownerDetails?.avatar;
+  const channelName =
+    video.owner?.fullName ||
+    video.owner?.userName ||
+    video.ownerDetails?.fullName ||
+    video.ownerDetails?.userName ||
+    video.channelName ||
+    'Unknown Channel';
+  const channelAvatar = video.owner?.avatar || video.ownerDetails?.avatar || video.channelAvatar;
+  const channelOwnerId = getOwnerId();
 
   return (
     <div className="bg-white rounded-lg hover:shadow-lg transition-shadow duration-200 cursor-pointer group relative video-card-container" style={{ overflow: 'visible' }}>
@@ -268,21 +287,29 @@ const VideoCard = ({ video, onVideoSelect }) => {
             </h3>
 
             {/* Channel Info */}
-            <div className="flex items-center mb-2">
+            <div className="flex items-center mb-2 gap-2">
               {channelAvatar && (
-                <img
-                  src={channelAvatar}
-                  alt={channelName}
-                  className="w-6 h-6 rounded-full mr-2 cursor-pointer hover:opacity-80"
+                <button
+                  type="button"
+                  className="rounded-full cursor-pointer hover:opacity-80 transition-opacity disabled:cursor-default"
                   onClick={handleChannelClick}
-                />
+                  disabled={!channelOwnerId}
+                >
+                  <img
+                    src={channelAvatar}
+                    alt={channelName}
+                    className="w-6 h-6 rounded-full"
+                  />
+                </button>
               )}
-              <p 
-                className="text-sm text-gray-600 cursor-pointer hover:text-gray-800 transition-colors"
+              <button
+                type="button"
+                className="text-sm text-gray-600 hover:text-gray-800 transition-colors disabled:cursor-default disabled:hover:text-gray-600"
                 onClick={handleChannelClick}
+                disabled={!channelOwnerId}
               >
                 {channelName}
-              </p>
+              </button>
             </div>
 
             {/* Video Stats */}

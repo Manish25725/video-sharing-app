@@ -459,7 +459,10 @@ const Profile = ({ onVideoSelect }) => {
                       `}</style>
                       {videos.map((video) => (
                         <div key={video.id} className="profile-video-card">
-                          <VideoCard video={video} onVideoSelect={onVideoSelect} />
+                          <VideoCard
+                            video={video.owner ? video : { ...video, owner: profileUser }}
+                            onVideoSelect={onVideoSelect}
+                          />
                         </div>
                       ))}
                     </div>
