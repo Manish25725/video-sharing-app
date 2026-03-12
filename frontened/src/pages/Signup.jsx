@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useSignup } from "../contexts/SignupContext.jsx";
 import { Eye, EyeOff } from "lucide-react";
@@ -118,7 +118,7 @@ const Signup = () => {
   return (
     <div
       className="min-h-screen flex flex-col"
-      style={{ background: "#120a06", fontFamily: "'Public Sans', sans-serif" }}
+      style={{ background: "#0a0a0a", fontFamily: "'Public Sans', sans-serif" }}
     >
       {/* Page header */}
       <header
@@ -157,7 +157,7 @@ const Signup = () => {
           >
             <div
               className="absolute inset-0 opacity-40"
-              style={{ background: "linear-gradient(135deg,#ec5b13,#120a06)" }}
+              style={{ background: "linear-gradient(135deg,#ec5b13,#0a0a0a)" }}
             />
             <div className="relative z-10 flex h-full flex-col items-center justify-center text-center px-6">
               <h1 className="text-3xl font-black text-white tracking-tight">Join the Vibe</h1>

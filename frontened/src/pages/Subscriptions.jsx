@@ -68,7 +68,7 @@ const Subscriptions = ({ onVideoSelect }) => {
   /* â”€â”€ Loading â”€â”€ */
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: '#221610' }}>
+      <div className="min-h-screen flex items-center justify-center" style={{ background: '#141414' }}>
         <div className="flex flex-col items-center gap-4">
           <div className="w-12 h-12 rounded-full border-2 animate-spin"
             style={{ borderColor: 'rgba(236,91,19,0.2)', borderTopColor: '#ec5b13' }} />
@@ -81,7 +81,7 @@ const Subscriptions = ({ onVideoSelect }) => {
   /* â”€â”€ Not authenticated â”€â”€ */
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: '#221610' }}>
+      <div className="min-h-screen flex items-center justify-center" style={{ background: '#141414' }}>
         <div className="text-center">
           <div className="w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6"
             style={{ background: 'rgba(236,91,19,0.1)' }}>
@@ -95,13 +95,13 @@ const Subscriptions = ({ onVideoSelect }) => {
   }
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ background: '#221610' }}>
+    <div className="min-h-screen flex flex-col" style={{ background: '#141414' }}>
 
       {/* â”€â”€ Header â”€â”€ */}
       <header
         className="h-20 flex items-center justify-between px-8 sticky top-0 z-40 border-b"
         style={{
-          background: 'rgba(34,22,16,0.8)',
+          background: 'rgba(15,15,15,0.8)',
           backdropFilter: 'blur(12px)',
           WebkitBackdropFilter: 'blur(12px)',
           borderColor: 'rgba(236,91,19,0.05)',
@@ -161,7 +161,7 @@ const Subscriptions = ({ onVideoSelect }) => {
                     >
                       <div
                         className="w-full h-full rounded-full overflow-hidden border-4"
-                        style={{ borderColor: '#221610' }}
+                        style={{ borderColor: '#141414' }}
                       >
                         {channel.avatar ? (
                           <img src={channel.avatar} alt={channel.name} className="w-full h-full object-cover" />
@@ -177,8 +177,8 @@ const Subscriptions = ({ onVideoSelect }) => {
                     <button
                       className="absolute bottom-0 right-0 w-6 h-6 rounded-full flex items-center justify-center border-2 shadow-md hover:scale-110 transition-transform disabled:opacity-50"
                       style={{
-                        background: channel.isNotificationOn ? '#ec5b13' : 'rgba(34,22,16,1)',
-                        borderColor: '#221610',
+                        background: channel.isNotificationOn ? '#ec5b13' : 'rgba(15,15,15,1)',
+                        borderColor: '#141414',
                       }}
                       title={channel.isNotificationOn ? "Turn off notifications" : "Turn on notifications"}
                       disabled={togglingNotif === channel.id}

@@ -128,7 +128,7 @@ const Tweets = () => {
 
   if (!user) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: '#221610' }}>
+      <div className="min-h-screen flex items-center justify-center" style={{ background: '#141414' }}>
         <div className="text-center">
           <div
             className="w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6"
@@ -144,50 +144,7 @@ const Tweets = () => {
   }
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ background: '#221610' }}>
-
-      {/* ── Page header ── */}
-      <header
-        className="sticky top-0 z-10 flex items-center justify-between px-8 py-4 border-b"
-        style={{
-          background: 'rgba(45,30,22,0.6)',
-          backdropFilter: 'blur(12px)',
-          WebkitBackdropFilter: 'blur(12px)',
-          borderColor: 'rgba(65,46,36,1)',
-        }}
-      >
-        <div className="flex flex-col">
-          <h1 className="text-2xl font-bold tracking-tight text-slate-100">My Tweets</h1>
-          <p className="text-xs text-slate-400 font-medium uppercase tracking-widest">Community Stream</p>
-        </div>
-        <div className="flex items-center gap-4">
-          {/* Search */}
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-            <input
-              type="text"
-              placeholder="Search thoughts..."
-              className="rounded-xl pl-10 pr-4 py-2 text-sm text-slate-100 placeholder-slate-500 outline-none w-64 transition-all"
-              style={{ background: 'rgba(58,40,30,1)', border: 'none' }}
-              onFocus={e => { e.currentTarget.style.boxShadow = '0 0 0 1px #ec5b13'; }}
-              onBlur={e => { e.currentTarget.style.boxShadow = 'none'; }}
-            />
-          </div>
-          {/* Notification */}
-          <div className="relative">
-            <button
-              className="w-10 h-10 rounded-xl flex items-center justify-center text-slate-300 hover:text-white transition-colors"
-              style={{ background: 'rgba(58,40,30,1)' }}
-            >
-              <Bell className="w-5 h-5" />
-            </button>
-            <span
-              className="absolute top-2.5 right-2.5 w-2 h-2 rounded-full ring-2"
-              style={{ background: '#ec5b13', ringColor: 'rgba(45,30,22,1)' }}
-            />
-          </div>
-        </div>
-      </header>
+    <div className="min-h-screen flex flex-col" style={{ background: '#141414' }}>
 
       {/* ── Content ── */}
       <div className="max-w-4xl w-full mx-auto px-8 py-8 flex flex-col gap-8 flex-1">
@@ -262,7 +219,7 @@ const Tweets = () => {
                     onChange={e => setPollQuestion(e.target.value)}
                     placeholder="Ask a question…"
                     className="w-full rounded-lg px-3 py-2 text-sm mb-3 outline-none text-slate-100 placeholder-slate-500"
-                    style={{ background: 'rgba(34,22,16,0.8)', border: '1px solid rgba(65,46,36,1)' }}
+                    style={{ background: 'rgba(15,15,15,0.8)', border: '1px solid rgba(65,46,36,1)' }}
                     maxLength={200}
                     onFocus={e => { e.currentTarget.style.borderColor = '#ec5b13'; }}
                     onBlur={e => { e.currentTarget.style.borderColor = 'rgba(65,46,36,1)'; }}
@@ -275,7 +232,7 @@ const Tweets = () => {
                           onChange={e => updatePollOption(i, e.target.value)}
                           placeholder={`Option ${i + 1}`}
                           className="flex-1 rounded-lg px-3 py-2 text-sm outline-none text-slate-100 placeholder-slate-500"
-                          style={{ background: 'rgba(34,22,16,0.8)', border: '1px solid rgba(65,46,36,1)' }}
+                          style={{ background: 'rgba(15,15,15,0.8)', border: '1px solid rgba(65,46,36,1)' }}
                           maxLength={100}
                           onFocus={e => { e.currentTarget.style.borderColor = '#ec5b13'; }}
                           onBlur={e => { e.currentTarget.style.borderColor = 'rgba(65,46,36,1)'; }}
@@ -317,7 +274,7 @@ const Tweets = () => {
                         min={new Date().toISOString().slice(0, 16)}
                         className="rounded px-2 py-1 text-xs outline-none text-slate-300"
                         style={{
-                          background: 'rgba(34,22,16,0.8)',
+                          background: 'rgba(15,15,15,0.8)',
                           border: '1px solid rgba(65,46,36,1)',
                           colorScheme: 'dark',
                         }}

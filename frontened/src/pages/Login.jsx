@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext.jsx";
 import { Eye, EyeOff } from "lucide-react";
@@ -24,7 +24,7 @@ const Login = () => {
   return (
     <div
       className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden"
-      style={{ background: "#120a06", fontFamily: "'Public Sans', sans-serif" }}
+      style={{ background: "#0a0a0a", fontFamily: "'Public Sans', sans-serif" }}
     >
       {/* Decorative blobs */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden -z-0">

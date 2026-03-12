@@ -193,40 +193,57 @@ const CommentComponent = ({
   const canReply = user && depth < maxDepth;
 
   return (
-    <div className={`${depth > 0 ? 'ml-8 pl-4 border-l-2 border-gray-100' : ''}`}>
-      <div className="flex space-x-3">
+    <div
+      className={`${depth > 0 ? 'ml-6 pl-4' : ''}`}
+      style={depth > 0 ? { borderLeft: '1px solid rgba(236,91,19,0.16)' } : undefined}
+    >
+      <div
+        className="flex space-x-3 rounded-2xl p-4"
+        style={{
+          background: depth > 0 ? 'rgba(18,12,8,0.55)' : 'rgba(236,91,19,0.04)',
+          border: '1px solid rgba(236,91,19,0.1)'
+        }}
+      >
         <img
           src={comment.user?.avatar || "/placeholder.svg?height=24&width=24&text=U"}
           alt={comment.user?.name}
-          className="w-6 h-6 rounded-full object-cover flex-shrink-0"
+          className="w-8 h-8 rounded-full object-cover flex-shrink-0"
         />
         <div className="flex-1">
           <div className="flex items-center space-x-2 mb-1">
-            <span className="font-medium text-sm text-gray-900">
+            <span className="font-medium text-sm" style={{ color: '#f8fafc' }}>
               {comment.user?.name || 'Anonymous'}
             </span>
-            <span className="text-xs text-gray-500">
+            <span className="text-xs" style={{ color: '#94a3b8' }}>
               {formatTimeAgo(comment.createdAt)}
             </span>
             {comment.isReply && (
-              <span className="text-xs text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">
+              <span
+                className="text-xs px-2 py-0.5 rounded-full"
+                style={{
+                  color: '#ec5b13',
+                  background: 'rgba(236,91,19,0.12)',
+                  border: '1px solid rgba(236,91,19,0.16)'
+                }}
+              >
                 Reply
               </span>
             )}
           </div>
           
-          <p className="text-sm text-gray-700 leading-relaxed mb-2">
+          <p className="text-sm leading-relaxed mb-3" style={{ color: '#e2e8f0' }}>
             {comment.content}
           </p>
           
-          <div className="flex items-center space-x-4 text-xs text-gray-600">
+          <div className="flex items-center flex-wrap gap-4 text-xs" style={{ color: '#cbd5e1' }}>
             {/* Like Button */}
             <button 
               onClick={() => onLike && onLike(comment.id || comment._id)}
               disabled={isLoading || !onLike}
-              className={`flex items-center space-x-1 hover:text-gray-800 transition-colors ${
-                comment.isLikedByUser ? 'text-blue-600' : ''
+              className={`flex items-center space-x-1 transition-colors ${
+                comment.isLikedByUser ? '' : ''
               } ${isLoading || !onLike ? 'opacity-50 cursor-not-allowed' : ''}`}
+              style={{ color: comment.isLikedByUser ? '#ec5b13' : '#cbd5e1' }}
             >
               <ThumbsUp className={`w-3 h-3 ${comment.isLikedByUser ? 'fill-current' : ''}`} />
               <span>{comment.likesCount || 0}</span>
@@ -236,9 +253,10 @@ const CommentComponent = ({
             <button 
               onClick={() => onDislike && onDislike(comment.id || comment._id)}
               disabled={isLoading || !onDislike}
-              className={`flex items-center space-x-1 hover:text-gray-800 transition-colors ${
-                comment.isDislikedByUser ? 'text-red-600' : ''
+              className={`flex items-center space-x-1 transition-colors ${
+                comment.isDislikedByUser ? '' : ''
               } ${isLoading || !onDislike ? 'opacity-50 cursor-not-allowed' : ''}`}
+              style={{ color: comment.isDislikedByUser ? '#f87171' : '#cbd5e1' }}
             >
               <ThumbsDown className={`w-3 h-3 ${comment.isDislikedByUser ? 'fill-current' : ''}`} />
               <span>{comment.dislikesCount || 0}</span>
@@ -252,7 +270,8 @@ const CommentComponent = ({
                   window.dispatchEvent(new CustomEvent('reply-form-opened', { detail: { commentId: componentId } }));
                   setShowReplyForm(!showReplyForm);
                 }}
-                className={`hover:text-gray-800 transition-colors ${showReplyForm ? 'text-blue-600' : ''}`}
+                className="transition-colors"
+                style={{ color: showReplyForm ? '#ec5b13' : '#cbd5e1' }}
               >
                 {showReplyForm ? 'Cancel' : 'Reply'}
               </button>
@@ -263,7 +282,8 @@ const CommentComponent = ({
               <button
                 title="Report comment"
                 onClick={() => setShowReportModal(true)}
-                className="hover:text-red-600 transition-colors"
+                className="transition-colors"
+                style={{ color: '#fca5a5' }}
               >
                 <Flag className="w-3 h-3" />
               </button>
@@ -272,7 +292,7 @@ const CommentComponent = ({
 
           {/* Reply Form */}
           {showReplyForm && user && (
-            <div className="mt-3 ml-0">
+            <div className="mt-4 ml-0">
               <form onSubmit={handleReplySubmit} className="space-y-2">
                 <div className="flex space-x-2">
                   <img
@@ -284,7 +304,12 @@ const CommentComponent = ({
                     value={replyContent}
                     onChange={(e) => setReplyContent(e.target.value)}
                     placeholder={`Reply to ${comment.user?.name}...`}
-                    className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                    className="flex-1 rounded-xl px-3 py-2 text-sm resize-none focus:outline-none"
+                    style={{
+                      background: 'rgba(18,12,8,0.82)',
+                      color: '#f8fafc',
+                      border: '1px solid rgba(236,91,19,0.18)'
+                    }}
                     rows={2}
                   />
                 </div>
@@ -295,14 +320,20 @@ const CommentComponent = ({
                       setShowReplyForm(false);
                       setReplyContent('');
                     }}
-                    className="px-3 py-1 text-xs text-gray-600 hover:bg-gray-100 rounded transition-colors"
+                    className="px-3 py-1 text-xs rounded-full transition-colors"
+                    style={{
+                      color: '#cbd5e1',
+                      background: 'rgba(148,163,184,0.08)',
+                      border: '1px solid rgba(148,163,184,0.18)'
+                    }}
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
                     disabled={!replyContent.trim() || repliesLoading}
-                    className="px-3 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    className="px-3 py-1 text-xs text-white rounded-full disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    style={{ background: '#ec5b13' }}
                   >
                     {repliesLoading ? 'Replying...' : 'Reply'}
                   </button>
@@ -315,7 +346,8 @@ const CommentComponent = ({
           {(comment.repliesCount > 0 || replies.length > 0) && (
             <button
               onClick={handleToggleReplies}
-              className="flex items-center space-x-1 mt-2 text-xs text-blue-600 hover:text-blue-800 transition-colors"
+              className="flex items-center space-x-1 mt-3 text-xs transition-colors"
+              style={{ color: '#ec5b13' }}
               disabled={loadingReplies}
             >
               {showReplies ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}

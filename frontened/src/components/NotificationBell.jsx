@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useRef } from 'react';
+﻿import React, { useState, useEffect, useRef } from 'react';
 import { BellIcon } from '@heroicons/react/24/outline';
 import { BellIcon as BellIconSolid, XMarkIcon, PlayIcon } from '@heroicons/react/24/solid';
-import { Radio } from 'lucide-react';
+import { MessageCircle, Radio, CalendarDays } from 'lucide-react';
 import notificationService from '../services/notificationService';
 import socketService from '../services/socketService';
 import { useAuth } from '../contexts/AuthContext';
@@ -14,7 +14,6 @@ const NotificationBell = () => {
     const [loading, setLoading] = useState(false);
     const [isOnline, setIsOnline] = useState(navigator.onLine);
     const { user } = useAuth();
-    const dropdownRef = useRef(null);
 
     // Use a ref so the offline handler always has the latest notifications
     // without being listed as a useEffect dependency
@@ -135,11 +134,15 @@ const NotificationBell = () => {
         }
     };
 
-    const handleBellClick = () => {
-        setShowDropdown(!showDropdown);
-        if (!showDropdown && notifications.length === 0) {
+    const handleDropdownOpen = () => {
+        setShowDropdown(true);
+        if (notifications.length === 0) {
             fetchRecentNotifications();
         }
+    };
+
+    const handleDropdownClose = () => {
+        setShowDropdown(false);
     };
 
     const handleMarkAsRead = async (notificationId) => {
@@ -183,6 +186,54 @@ const NotificationBell = () => {
         return `${Math.floor(diffInSeconds / 86400)}d ago`;
     };
 
+    const getNotificationMeta = (notification) => {
+        switch (notification.type) {
+            case 'video_upload':
+                return {
+                    border: 'border-[#ec5b13]',
+                    dot: '#ec5b13',
+                    iconBg: 'bg-[#ec5b13]',
+                    previewBg: 'rgba(236,91,19,0.08)',
+                    textAccent: '#fdba74',
+                    label: 'New video',
+                };
+            case 'tweet_post':
+                return {
+                    border: 'border-sky-500/60',
+                    dot: '#38bdf8',
+                    iconBg: 'bg-sky-500',
+                    previewBg: 'rgba(56,189,248,0.08)',
+                    textAccent: '#7dd3fc',
+                    label: 'New post',
+                };
+            case 'stream_scheduled':
+                return {
+                    border: 'border-rose-500/70',
+                    dot: '#f43f5e',
+                    iconBg: 'bg-rose-500',
+                    previewBg: 'rgba(244,63,94,0.08)',
+                    textAccent: '#fda4af',
+                    label: 'Live event',
+                };
+            default:
+                return {
+                    border: 'border-white/10',
+                    dot: '#ec5b13',
+                    iconBg: 'bg-[#ec5b13]',
+                    previewBg: 'rgba(255,255,255,0.04)',
+                    textAccent: '#fdba74',
+                    label: 'Update',
+                };
+        }
+    };
+
+    const getNotificationTarget = (notification) => {
+        if (notification.content?.video?._id) return `/video/${notification.content.video._id}`;
+        if (notification.type === 'stream_scheduled' || notification.content?.scheduledStream?._id) return '/scheduled-streams';
+        if (notification.content?.tweet?._id) return '/tweets';
+        return null;
+    };
+
     // Request notification permission on mount
     useEffect(() => {
         if ('Notification' in window && Notification.permission === 'default') {
@@ -193,175 +244,199 @@ const NotificationBell = () => {
     if (!user) return null;
 
     return (
-        <div className="relative">
+        <div
+            className="relative"
+            onMouseEnter={handleDropdownOpen}
+            onMouseLeave={handleDropdownClose}
+        >
             <button
-                onClick={handleBellClick}
-                className="relative p-2 text-gray-600 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded-full"
+                onClick={handleDropdownOpen}
+                className="relative p-2 rounded-xl transition-colors focus:outline-none"
+                style={{
+                    background: 'rgba(255,255,255,0.05)',
+                    color: unreadCount > 0 ? '#ec5b13' : '#cbd5e1',
+                    border: '1px solid rgba(236,91,19,0.08)'
+                }}
                 title={`${unreadCount} notifications`}
             >
                 {unreadCount > 0 ? (
-                    <BellIconSolid className="h-6 w-6 text-blue-600" />
+                    <BellIconSolid className="h-6 w-6" />
                 ) : (
                     <BellIcon className="h-6 w-6" />
                 )}
                 
                 {unreadCount > 0 && (
-                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center min-w-[20px]">
-                        {unreadCount > 99 ? '99+' : unreadCount}
-                    </span>
+                    <>
+                        <span className="absolute top-2 right-2 flex h-2 w-2">
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#ec5b13] opacity-75"></span>
+                            <span className="relative inline-flex rounded-full h-2 w-2 bg-[#ec5b13]"></span>
+                        </span>
+                        <span className="absolute -top-2 -right-2 bg-[#ec5b13] text-white text-[10px] rounded-full h-5 min-w-[20px] px-1.5 flex items-center justify-center font-bold shadow-lg shadow-[#ec5b13]/30">
+                            {unreadCount > 99 ? '99+' : unreadCount}
+                        </span>
+                    </>
                 )}
             </button>
 
             {showDropdown && (
-                <div className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg border border-gray-200 z-50">
-                    <div className="p-4 border-b border-gray-200">
-                        <div className="flex justify-between items-center">
-                            <h3 className="text-lg font-semibold text-gray-900">Notifications</h3>
+                <div className="absolute right-0 mt-3 z-50 w-[min(24rem,calc(100vw-1.5rem))] max-w-md animate-in fade-in slide-in-from-top-4 duration-300">
+                    <div className="overflow-hidden rounded-2xl shadow-2xl" style={{ background: 'rgba(15,15,15,0.88)', backdropFilter: 'blur(16px)', border: '1px solid rgba(255,255,255,0.08)', boxShadow: '0 18px 60px rgba(120,53,15,0.35)' }}>
+                    <div className="px-6 py-5 border-b border-white/5">
+                        <div className="flex justify-between items-center gap-4">
+                            <h3 className="text-lg font-bold text-slate-100 flex items-center gap-2">
+                                Notifications
+                                <span className="bg-[#ec5b13] text-white text-[10px] px-2 py-0.5 rounded-full uppercase tracking-widest font-black">Premium</span>
+                            </h3>
                             {unreadCount > 0 && (
                                 <button
                                     onClick={handleMarkAllAsRead}
-                                    className="text-sm text-blue-600 hover:text-blue-800"
+                                    className="text-xs font-semibold transition-colors flex items-center gap-1"
+                                    style={{ color: '#ec5b13' }}
                                 >
+                                    <span className="text-sm">✓</span>
                                     Mark all read
                                 </button>
                             )}
                         </div>
                     </div>
 
-                    <div className="max-h-96 overflow-y-auto">
+                    <div className="max-h-[500px] overflow-y-auto">
                         {loading ? (
-                            <div className="p-4 text-center text-gray-500">Loading...</div>
+                            <div className="p-6 text-center text-sm" style={{ color: '#94a3b8' }}>Loading...</div>
                         ) : notifications.length === 0 ? (
-                            <div className="p-4 text-center text-gray-500">No notifications yet</div>
+                            <div className="p-6 text-center text-sm" style={{ color: '#94a3b8' }}>No notifications yet</div>
                         ) : (
-                            notifications.map((notification) => (
-                                <div
-                                    key={notification._id}
-                                    className="relative group"
-                                >
-                                    <div className="p-4 border-b border-gray-100 hover:bg-gray-50 bg-blue-50">
-                                        <div className="flex items-start space-x-3">
-                                            {/* Sender Avatar */}
-                                            {notification.sender?.avatar ? (
-                                                <img
-                                                    src={notification.sender.avatar}
-                                                    alt={notification.sender.fullName || notification.sender.userName}
-                                                    className="w-10 h-10 rounded-full object-cover flex-shrink-0"
-                                                />
-                                            ) : (
-                                                <div className="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center flex-shrink-0">
-                                                    <span className="text-sm text-gray-600 font-medium">
+                            notifications.map((notification) => {
+                                const meta = getNotificationMeta(notification);
+                                const targetPath = getNotificationTarget(notification);
+                                const Wrapper = targetPath ? Link : 'div';
+
+                                return (
+                                    <div key={notification._id} className={`px-6 py-4 flex gap-4 hover:bg-white/5 transition-colors relative group border-l-4 ${notification.isRead ? 'border-transparent opacity-75' : meta.border}`}>
+                                        <Wrapper
+                                            {...(targetPath ? { to: targetPath } : {})}
+                                            className="flex gap-4 flex-1 min-w-0"
+                                            onClick={() => {
+                                                handleMarkAsRead(notification._id);
+                                                setShowDropdown(false);
+                                            }}
+                                        >
+                                            <div className="relative shrink-0">
+                                                {notification.sender?.avatar ? (
+                                                    <img
+                                                        src={notification.sender.avatar}
+                                                        alt={notification.sender.fullName || notification.sender.userName}
+                                                        className="w-12 h-12 rounded-full object-cover"
+                                                    />
+                                                ) : (
+                                                    <div className="w-12 h-12 rounded-full flex items-center justify-center font-bold text-sm text-white" style={{ background: 'rgba(236,91,19,0.2)' }}>
                                                         {(notification.sender?.fullName || notification.sender?.userName || 'U')[0].toUpperCase()}
-                                                    </span>
+                                                    </div>
+                                                )}
+                                                <div className={`absolute -bottom-1 -right-1 ${meta.iconBg} rounded-full p-1 flex items-center justify-center shadow-lg`}>
+                                                    {notification.type === 'video_upload' && <PlayIcon className="w-3 h-3 text-white" />}
+                                                    {notification.type === 'tweet_post' && <MessageCircle className="w-3 h-3 text-white" />}
+                                                    {notification.type === 'stream_scheduled' && <Radio className="w-3 h-3 text-white" />}
                                                 </div>
-                                            )}
-                                            
-                                            <div className="flex-1 min-w-0">
-                                                {/* Notification Message */}
-                                                <p className="text-sm text-gray-900 font-medium mb-2">
+                                            </div>
+
+                                            <div className="flex-1 min-w-0 space-y-1">
+                                                <p className="text-sm font-medium leading-tight text-slate-300">
                                                     {notification.message}
                                                 </p>
-                                                
-                                                {/* Rich Content */}
+                                                <div className="flex items-center gap-2 text-[11px]">
+                                                    <span className="px-2 py-0.5 rounded-full uppercase tracking-widest font-bold" style={{ background: meta.previewBg, color: meta.textAccent }}>
+                                                        {meta.label}
+                                                    </span>
+                                                    <span style={{ color: '#94a3b8' }}>{formatTimeAgo(notification.createdAt)}</span>
+                                                </div>
+
                                                 {notification.content?.video && (
-                                                    <div className="flex items-center space-x-3 p-2 bg-gray-50 rounded-lg mb-2">
-                                                        <div className="relative">
+                                                    <div className="flex items-center gap-3 p-2 rounded-xl mt-2" style={{ background: 'rgba(255,255,255,0.04)' }}>
+                                                        <div className="relative shrink-0">
                                                             <img
                                                                 src={notification.content.video.thumbnail}
                                                                 alt={notification.content.video.title}
-                                                                className="w-16 h-12 object-cover rounded"
+                                                                className="w-16 h-12 object-cover rounded-lg"
                                                             />
                                                             <div className="absolute inset-0 flex items-center justify-center">
-                                                                <PlayIcon className="w-4 h-4 text-white bg-black bg-opacity-50 rounded-full p-1" />
+                                                                <PlayIcon className="w-4 h-4 text-white bg-black/60 rounded-full p-1" />
                                                             </div>
                                                         </div>
                                                         <div className="flex-1 min-w-0">
-                                                            <p className="text-xs font-medium text-gray-900 truncate">
+                                                            <p className="text-xs font-medium text-slate-100 truncate">
                                                                 {notification.content.video.title}
                                                             </p>
-                                                            <p className="text-xs text-gray-500">
+                                                            <p className="text-[11px] text-slate-500">
                                                                 {notification.content.video.duration && `${Math.floor(notification.content.video.duration / 60)}:${(notification.content.video.duration % 60).toString().padStart(2, '0')}`}
                                                             </p>
                                                         </div>
                                                     </div>
                                                 )}
-                                                
+
                                                 {notification.content?.tweet && (
-                                                    <div className="p-2 bg-gray-50 rounded-lg mb-2">
-                                                        <p className="text-xs text-gray-700 italic">
+                                                    <div className="p-3 rounded-xl mt-2" style={{ background: 'rgba(255,255,255,0.04)' }}>
+                                                        <p className="text-xs italic text-slate-300 leading-relaxed">
                                                             "{notification.content.tweet.content.substring(0, 100)}{notification.content.tweet.content.length > 100 ? '...' : ''}"
                                                         </p>
                                                     </div>
                                                 )}
 
                                                 {(notification.type === 'stream_scheduled' || notification.content?.scheduledStream) && (
-                                                    <Link to="/scheduled-streams"
-                                                        className="flex items-center gap-2 p-2 bg-indigo-50 rounded-lg mb-2 hover:bg-indigo-100 transition-colors"
-                                                        onClick={() => setShowDropdown(false)}
-                                                    >
-                                                        <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center flex-shrink-0">
-                                                            <Radio className="w-4 h-4 text-indigo-600" />
+                                                    <div className="flex items-center gap-3 p-2 rounded-xl mt-2" style={{ background: 'rgba(255,255,255,0.04)' }}>
+                                                        <div className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: 'rgba(244,63,94,0.14)' }}>
+                                                            <CalendarDays className="w-4 h-4" style={{ color: '#fda4af' }} />
                                                         </div>
                                                         <div className="min-w-0">
-                                                            <p className="text-xs font-medium text-indigo-800 truncate">
+                                                            <p className="text-xs font-medium text-slate-100 truncate">
                                                                 {notification.content?.scheduledStream?.title || 'Upcoming stream'}
                                                             </p>
                                                             {notification.content?.scheduledStream?.scheduledAt && (
-                                                                <p className="text-xs text-indigo-500">
+                                                                <p className="text-[11px]" style={{ color: '#94a3b8' }}>
                                                                     {new Date(notification.content.scheduledStream.scheduledAt).toLocaleString(undefined, {
-                                                                        month: 'short', day: 'numeric',
-                                                                        hour: '2-digit', minute: '2-digit'
+                                                                        month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
                                                                     })}
                                                                 </p>
                                                             )}
                                                         </div>
-                                                    </Link>
+                                                    </div>
                                                 )}
-                                                
-                                                {/* Timestamp */}
-                                                <p className="text-xs text-gray-500">
-                                                    {formatTimeAgo(notification.createdAt)}
-                                                </p>
                                             </div>
-                                            
-                                            {/* Cross Button */}
+                                        </Wrapper>
+
+                                        <div className="shrink-0 flex items-start gap-2">
+                                            {!notification.isRead && (
+                                                <div className="w-2 h-2 rounded-full mt-2" style={{ background: meta.dot }}></div>
+                                            )}
                                             <button
                                                 onClick={(e) => handleDismissNotification(notification._id, e)}
-                                                className="opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-gray-200 rounded-full"
+                                                className="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded-full hover:bg-white/10"
                                                 title="Dismiss notification"
                                             >
-                                                <XMarkIcon className="w-4 h-4 text-gray-500" />
+                                                <XMarkIcon className="w-4 h-4 text-slate-400" />
                                             </button>
                                         </div>
                                     </div>
-                                </div>
-                            ))
+                                );
+                            })
                         )}
                     </div>
 
                     {notifications.length > 0 && (
-                        <div className="p-4 border-t border-gray-200">
+                        <div className="p-4 text-center border-t border-white/5 bg-white/5">
                             <button
                                 onClick={() => {
                                     setShowDropdown(false);
-                                    // Navigate to notifications page if you have one
-                                    // navigate('/notifications');
                                 }}
-                                className="w-full text-center text-sm text-blue-600 hover:text-blue-800"
+                                className="w-full py-2 text-sm font-bold transition-colors"
+                                style={{ color: '#cbd5e1' }}
                             >
                                 View all notifications
                             </button>
                         </div>
                     )}
+                    </div>
                 </div>
-            )}
-
-            {/* Click outside to close */}
-            {showDropdown && (
-                <div
-                    className="fixed inset-0 z-40"
-                    onClick={() => setShowDropdown(false)}
-                ></div>
             )}
         </div>
     );

@@ -18,14 +18,28 @@ const CopyField = ({ label, value, mono = false }) => {
   };
   return (
     <div>
-      <label className="block text-xs font-medium text-gray-500 mb-1.5 uppercase tracking-wider">{label}</label>
+      <label className="block text-xs font-semibold mb-1.5 uppercase tracking-[0.2em]" style={{ color: "#ec5b13" }}>{label}</label>
       <div className="flex items-center gap-2">
-        <div className={`flex-1 px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-800 truncate ${mono ? "font-mono" : ""}`}>
+        <div
+          className={`flex-1 px-4 py-3 rounded-xl text-sm truncate ${mono ? "font-mono" : ""}`}
+          style={{
+            background: "rgba(18,12,8,0.8)",
+            border: "1px solid rgba(236,91,19,0.14)",
+            color: "#f8fafc",
+          }}
+        >
           {value}
         </div>
-        <button onClick={copy}
-          className="flex items-center gap-1.5 px-3 py-2.5 border border-gray-200 rounded-xl text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors whitespace-nowrap">
-          {copied ? <CheckCircle className="w-4 h-4 text-emerald-500" /> : <Copy className="w-4 h-4" />}
+        <button
+          onClick={copy}
+          className="flex items-center gap-1.5 px-4 py-3 rounded-xl text-sm font-semibold transition-colors whitespace-nowrap"
+          style={{
+            background: copied ? "rgba(74,222,128,0.14)" : "rgba(236,91,19,0.14)",
+            border: copied ? "1px solid rgba(74,222,128,0.3)" : "1px solid rgba(236,91,19,0.2)",
+            color: copied ? "#86efac" : "#ec5b13",
+          }}
+        >
+          {copied ? <CheckCircle className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
           {copied ? "Copied" : "Copy"}
         </button>
       </div>
@@ -35,12 +49,18 @@ const CopyField = ({ label, value, mono = false }) => {
 
 const StatusBadge = ({ isLive }) =>
   isLive ? (
-    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-red-100 text-red-700 text-xs font-bold">
-      <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" /> LIVE
+    <span
+      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold"
+      style={{ background: "rgba(239,68,68,0.14)", color: "#fda4af", border: "1px solid rgba(239,68,68,0.25)" }}
+    >
+      <span className="w-1.5 h-1.5 rounded-full bg-red-400 animate-pulse" /> LIVE
     </span>
   ) : (
-    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-gray-100 text-gray-500 text-xs font-semibold">
-      <span className="w-1.5 h-1.5 rounded-full bg-gray-400" /> OFFLINE
+    <span
+      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold"
+      style={{ background: "rgba(148,163,184,0.12)", color: "#cbd5e1", border: "1px solid rgba(148,163,184,0.16)" }}
+    >
+      <span className="w-1.5 h-1.5 rounded-full bg-slate-400" /> OFFLINE
     </span>
   );
 
@@ -77,6 +97,7 @@ const GoLive = () => {
   const [schedLoading, setSchedLoading] = useState(false);
   const [schedError, setSchedError] = useState("");
   const [schedSuccess, setSchedSuccess] = useState(null);
+  const [autoPost, setAutoPost] = useState(true);
 
   // Re-hydrate only if OBS is actively connected (isLive: true).
   // Never auto-restore a stale stream where the key was generated but OBS never connected.
@@ -213,396 +234,479 @@ const GoLive = () => {
     'Click OK then click "Start Streaming" in OBS',
   ];
 
+  const panelStyle = {
+    background: "rgba(42,27,20,0.6)",
+    backdropFilter: "blur(12px)",
+    border: "1px solid rgba(236,91,19,0.1)",
+  };
+
+  const inputStyle = {
+    background: "rgba(26,15,10,0.7)",
+    border: "1px solid rgba(236,91,19,0.18)",
+    color: "#f8fafc",
+  };
+
   return (
-    <div className="min-h-screen bg-gray-50 py-8 px-4">
-      <div className="max-w-2xl mx-auto">
-        {/* Header */}
-        <div className="flex items-center gap-3 mb-8">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-red-500 to-rose-600 flex items-center justify-center shadow-md">
-            <Radio className="w-5 h-5 text-white" />
-          </div>
-          <div>
-            <h1 className="text-xl font-bold text-gray-900">Go Live</h1>
-            <p className="text-sm text-gray-500">Broadcast to your audience in real time</p>
-          </div>
-          {streamData && <div className="ml-auto"><StatusBadge isLive={streamData.stream?.isLive} /></div>}
-        </div>
-
-        {/* Mode tabs — only shown when not actively streaming */}
-        {step !== "live" && step !== "ended" && (
-          <div className="flex gap-2 mb-6">
-            <button
-              onClick={() => setMode("live")}
-              className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold transition-all ${
-                mode === "live" ? "bg-red-500 text-white shadow-sm" : "bg-white border border-gray-200 text-gray-500 hover:bg-gray-50"
-              }`}
-            >
-              <Radio className="w-4 h-4" /> Go Live Now
-            </button>
-            <button
-              onClick={() => setMode("schedule")}
-              className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold transition-all ${
-                mode === "schedule" ? "bg-indigo-600 text-white shadow-sm" : "bg-white border border-gray-200 text-gray-500 hover:bg-gray-50"
-              }`}
-            >
-              <Calendar className="w-4 h-4" /> Schedule
-            </button>
-          </div>
-        )}
-
-        {error && mode === "live" && (
-          <div className="mb-6 p-4 rounded-xl bg-red-50 border border-red-100 flex items-start gap-2.5 text-sm text-red-700">
-            <AlertTriangle className="w-4 h-4 mt-0.5 flex-shrink-0" />
-            {error}
-          </div>
-        )}
-
-        {/* ── Step 1: Stream details ── */}
-        {mode === "live" && step === "details" && (
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-            <h2 className="text-base font-semibold text-gray-900 mb-5">Stream Details</h2>
-            <form onSubmit={handleCreate} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">Stream Title *</label>
-                <input
-                  type="text"
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  placeholder="e.g. Coding live — building a chat app"
-                  maxLength={120}
-                  className="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 transition-all"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">Description</label>
-                <textarea
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  placeholder="Tell viewers what you'll be streaming about..."
-                  rows={3}
-                  maxLength={500}
-                  className="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 transition-all resize-none"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">Category</label>
-                <select
-                  value={category}
-                  onChange={(e) => setCategory(e.target.value)}
-                  className="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 transition-all">
-                  <option value="">Select a category (optional)</option>
-                  <option value="Music">Music</option>
-                  <option value="Gaming">Gaming</option>
-                  <option value="Movies">Movies</option>
-                  <option value="News">News</option>
-                  <option value="Sports">Sports</option>
-                  <option value="Learning">Learning</option>
-                  <option value="Fashion">Fashion</option>
-                  <option value="Other">Other</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">Stream Thumbnail</label>
-                {thumbnailPreview ? (
-                  <div className="relative w-full aspect-video rounded-xl overflow-hidden border border-gray-200 bg-gray-100">
-                    <img src={thumbnailPreview} alt="thumbnail preview" className="w-full h-full object-cover" />
-                    <button type="button" onClick={clearThumbnail}
-                      className="absolute top-2 right-2 p-1 bg-gray-900/60 hover:bg-gray-900/80 text-white rounded-full transition-colors">
-                      <X className="w-4 h-4" />
-                    </button>
-                  </div>
-                ) : (
-                  <button type="button" onClick={() => thumbnailInputRef.current?.click()}
-                    className="w-full flex flex-col items-center justify-center gap-2 py-8 border-2 border-dashed border-gray-200 rounded-xl text-gray-400 hover:border-indigo-400 hover:text-indigo-500 hover:bg-indigo-50/30 transition-all">
-                    <ImagePlus className="w-8 h-8" />
-                    <span className="text-sm font-medium">Click to upload thumbnail</span>
-                    <span className="text-xs">PNG, JPG, WEBP up to 5 MB</span>
-                  </button>
-                )}
-                <input ref={thumbnailInputRef} type="file" accept="image/*" onChange={handleThumbnailChange} className="hidden" />
-              </div>
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full py-2.5 flex items-center justify-center gap-2 bg-gradient-to-r from-red-500 to-rose-600 hover:from-red-600 hover:to-rose-700 active:scale-[0.99] text-white rounded-xl text-sm font-semibold shadow-sm hover:shadow-md transition-all disabled:opacity-60">
-                {loading ? (
-                  <><span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Generating...</>
-                ) : (
-                  <><Play className="w-4 h-4 fill-current" /> Generate Stream Key</>
-                )}
-              </button>
-            </form>
-          </div>
-        )}
-
-        {/* ── Step 2: Live dashboard ── */}
-        {mode === "live" && step === "live" && streamData && (
-          <div className="space-y-4">
-            {/* Stream key card */}
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-5">
-              <div className="flex items-center justify-between">
-                <h2 className="text-base font-semibold text-gray-900">OBS Configuration</h2>
-                <button onClick={() => navigate(`/live/${streamData.streamKey}`)}
-                  className="flex items-center gap-1.5 text-xs text-indigo-600 hover:text-indigo-700 font-medium transition-colors">
-                  <ExternalLink className="w-3.5 h-3.5" /> Preview stream
-                </button>
-              </div>
-
-              <CopyField label="RTMP Server URL" value={streamData.rtmpUrl} mono />
-
-              <div>
-                <label className="block text-xs font-medium text-gray-500 mb-1.5 uppercase tracking-wider">Stream Key</label>
-                <div className="flex items-center gap-2">
-                  <div className="flex-1 px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm font-mono text-gray-800 truncate">
-                    {showKey ? streamData.streamKey : "••••••••••••••••••••••"}
-                  </div>
-                  <button onClick={() => setShowKey(!showKey)}
-                    className="p-2.5 border border-gray-200 rounded-xl text-gray-500 hover:bg-gray-50 transition-colors">
-                    {showKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                  </button>
-                  {showKey && (
-                    <button onClick={() => navigator.clipboard.writeText(streamData.streamKey)}
-                      className="p-2.5 border border-gray-200 rounded-xl text-gray-500 hover:bg-gray-50 transition-colors">
-                      <Copy className="w-4 h-4" />
-                    </button>
-                  )}
-                </div>
-                <p className="mt-1.5 text-xs text-amber-600 flex items-center gap-1">
-                  <AlertTriangle className="w-3.5 h-3.5" />
-                  Keep your stream key private — anyone with it can broadcast on your channel.
-                </p>
-              </div>
-
-              <CopyField label="HLS Playback URL (for testing)" value={streamData.hlsUrl} mono />
-            </div>
-
-            {/* OBS Setup Guide */}
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-              <button
-                onClick={() => setShowObs(!showObs)}
-                className="w-full flex items-center justify-between px-6 py-4 text-sm font-semibold text-gray-800 hover:bg-gray-50 transition-colors">
-                <span className="flex items-center gap-2"><BookOpen className="w-4 h-4 text-indigo-500" /> OBS Setup Guide</span>
-                {showObs ? <ChevronUp className="w-4 h-4 text-gray-400" /> : <ChevronDown className="w-4 h-4 text-gray-400" />}
-              </button>
-              {showObs && (
-                <div className="px-6 pb-5 border-t border-gray-100">
-                  <ol className="mt-4 space-y-3">
-                    {obsSteps.map((step, i) => (
-                      <li key={i} className="flex gap-3 text-sm text-gray-700">
-                        <span className="w-6 h-6 rounded-full bg-indigo-100 text-indigo-700 text-xs font-bold flex items-center justify-center flex-shrink-0">
-                          {i + 1}
-                        </span>
-                        {step}
-                      </li>
-                    ))}
-                  </ol>
-                  <div className="mt-4 p-3.5 rounded-xl bg-blue-50 border border-blue-100 text-xs text-blue-700">
-                    💡 Tip: Set your OBS output to 1080p 30fps, bitrate 3000–6000 kbps for best quality.
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Status + end button */}
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <Wifi className={`w-5 h-5 ${streamData.stream?.isLive ? "text-emerald-500" : "text-gray-300"}`} />
-                <div>
-                  <p className="text-sm font-semibold text-gray-900">
-                    {streamData.stream?.isLive ? "Stream is live" : "Waiting for OBS connection…"}
-                  </p>
-                  <p className="text-xs text-gray-400 mt-0.5">
-                    {streamData.stream?.isLive
-                      ? `${(streamData.stream.viewerCount || 0).toLocaleString()} viewers`
-                      : "Start streaming in OBS to go live"}
-                  </p>
-                </div>
-              </div>
-              <button
-                onClick={handleEndStream}
-                disabled={ending}
-                className="flex items-center gap-2 px-4 py-2 bg-red-50 hover:bg-red-100 active:scale-95 text-red-600 border border-red-200 rounded-xl text-sm font-medium transition-all disabled:opacity-50">
-                {ending ? <span className="w-4 h-4 border-2 border-red-300 border-t-red-600 rounded-full animate-spin" /> : <Square className="w-4 h-4" />}
-                End Stream
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* ── Step 3: Stream ended — save recording prompt ── */}
-        {mode === "live" && step === "ended" && (
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 text-center space-y-6">
-            <div className="w-16 h-16 mx-auto rounded-full bg-red-100 flex items-center justify-center">
-              <Square className="w-8 h-8 text-red-500" />
-            </div>
-
+    <div className="min-h-screen w-full" style={{ background: "#1a0f0a", color: "#f8fafc" }}>
+      <main className="min-h-screen overflow-y-auto">
+        <div className="p-4 md:p-8 max-w-6xl mx-auto w-full">
+          <div className="mb-8 flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
             <div>
-              <h2 className="text-xl font-bold text-gray-900">Stream Ended</h2>
-              <p className="text-sm text-gray-500 mt-1.5">
-                Save it as a video so anyone can watch it later — with the live chat replay included.
+              <h1 className="text-3xl font-black tracking-tight mb-2">{step === "live" ? "Broadcast Control" : step === "ended" ? "Stream Recap" : "Stream Setup"}</h1>
+              <p style={{ color: "#94a3b8" }}>
+                {step === "live"
+                  ? "Manage your stream, copy OBS settings, and monitor your live status in one place."
+                  : step === "ended"
+                    ? "Your stream has ended. Save the recording so your audience can watch it later."
+                    : "Configure your broadcast and connect with your audience in real-time."}
               </p>
             </div>
-
-            {savedVideoId ? (
-              /* ── Saved successfully ── */
-              <div className="space-y-4">
-                <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-100 flex flex-col items-center gap-2">
-                  <CheckCircle className="w-7 h-7 text-emerald-600" />
-                  <p className="text-sm font-semibold text-emerald-800">Recording saved successfully!</p>
-                  <p className="text-xs text-emerald-600">
-                    Chat messages are saved with exact timestamps — viewers see them appear as they watch.
-                  </p>
-                </div>
-                <button
-                  onClick={() => navigate(`/video/${savedVideoId}`)}
-                  className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-semibold transition-colors">
-                  View Recording →
-                </button>
-                <button
-                  onClick={() => {
-                    setStep("details");
-                    setTitle("");
-                    setDescription("");
-                    setEndedStreamKey(null);
-                    setSavedVideoId(null);
-                  }}
-                  className="w-full py-2 text-gray-400 text-sm hover:text-gray-600 transition-colors">
-                  Back to Dashboard
-                </button>
-              </div>
-            ) : (
-              /* ── Save / Skip buttons ── */
-              <div className="space-y-3">
-                <button
-                  onClick={handleSaveRecording}
-                  disabled={saving}
-                  className="w-full py-2.5 flex items-center justify-center gap-2 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 disabled:opacity-60 text-white rounded-xl text-sm font-semibold shadow-sm transition-all">
-                  {saving ? (
-                    <>
-                      <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                      Uploading recording…
-                    </>
-                  ) : (
-                    <>
-                      <Video className="w-4 h-4" /> Save Stream as Video
-                    </>
-                  )}
-                </button>
-                {saving && (
-                  <p className="text-xs text-gray-400">
-                    This may take a few minutes depending on stream length. Please don't close this page.
-                  </p>
-                )}
-                <button
-                  onClick={() => {
-                    setStep("details");
-                    setTitle("");
-                    setDescription("");
-                    setEndedStreamKey(null);
-                  }}
-                  disabled={saving}
-                  className="w-full py-2 text-gray-400 text-sm hover:text-gray-600 transition-colors disabled:opacity-40">
-                  Skip — Don't Save
-                </button>
-              </div>
-            )}
+            {streamData && <StatusBadge isLive={streamData.stream?.isLive} />}
           </div>
-        )}
-        {/* ── Schedule panel ── */}
-        {mode === "schedule" && (
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-            {schedSuccess ? (
-              <div className="space-y-4 text-center py-4">
-                <div className="w-14 h-14 mx-auto rounded-full bg-indigo-100 flex items-center justify-center">
-                  <Calendar className="w-7 h-7 text-indigo-600" />
-                </div>
-                <div>
-                  <p className="text-base font-bold text-gray-900">Stream Scheduled!</p>
-                  <p className="text-sm text-gray-500 mt-1">&ldquo;{schedSuccess.title}&rdquo;</p>
-                  <p className="text-sm font-medium text-indigo-600 mt-2">
-                    {new Date(schedSuccess.scheduledAt).toLocaleString(undefined, {
-                      weekday: "short", month: "short", day: "numeric",
-                      hour: "2-digit", minute: "2-digit",
-                    })}
-                  </p>
-                </div>
-                <p className="text-xs text-gray-400">
-                  Subscribers who have notifications on will be notified.
-                  Come back before stream time and click &ldquo;Go Live Now&rdquo; to get your OBS key.
-                </p>
-                <button
-                  onClick={() => { setSchedSuccess(null); setSched({ title: "", description: "", scheduledAt: "" }); clearSchedThumb(); }}
-                  className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-semibold transition-all">
-                  Schedule Another
-                </button>
-              </div>
-            ) : (
-              <form onSubmit={handleSchedule} className="space-y-4">
-                <h2 className="text-base font-semibold text-gray-900 mb-1">Schedule a Stream</h2>
 
-                {schedError && (
-                  <div className="p-3 rounded-xl bg-red-50 border border-red-100 flex items-center gap-2 text-sm text-red-700">
-                    <AlertTriangle className="w-4 h-4 flex-shrink-0" /> {schedError}
+          {step !== "live" && step !== "ended" && (
+            <div className="flex gap-1 p-1 rounded-xl mb-8 w-fit" style={{ background: "rgba(236,91,19,0.05)" }}>
+              <button
+                onClick={() => setMode("live")}
+                className="px-6 py-2.5 rounded-lg text-sm font-bold transition-all"
+                style={mode === "live" ? { background: "#ec5b13", color: "#fff", boxShadow: "0 8px 18px rgba(236,91,19,0.24)" } : { color: "#94a3b8" }}
+              >
+                Go Live Now
+              </button>
+              <button
+                onClick={() => setMode("schedule")}
+                className="px-6 py-2.5 rounded-lg text-sm font-semibold transition-all"
+                style={mode === "schedule" ? { background: "#ec5b13", color: "#fff", boxShadow: "0 8px 18px rgba(236,91,19,0.24)" } : { color: "#94a3b8" }}
+              >
+                Schedule
+              </button>
+            </div>
+          )}
+
+          {error && mode === "live" && (
+            <div className="mb-6 p-4 rounded-xl flex items-start gap-2.5 text-sm" style={{ background: "rgba(239,68,68,0.12)", border: "1px solid rgba(239,68,68,0.2)", color: "#fecaca" }}>
+              <AlertTriangle className="w-4 h-4 mt-0.5 flex-shrink-0" />
+              {error}
+            </div>
+          )}
+
+          {mode === "live" && step === "details" && (
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              <div className="lg:col-span-2 space-y-6">
+                <form id="go-live-form" onSubmit={handleCreate} className="p-6 rounded-2xl space-y-5" style={panelStyle}>
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold uppercase tracking-[0.2em] block" style={{ color: "#ec5b13" }}>Stream Title</label>
+                    <input
+                      type="text"
+                      value={title}
+                      onChange={(e) => setTitle(e.target.value)}
+                      placeholder="What are you streaming today?"
+                      maxLength={120}
+                      className="w-full px-4 py-3 rounded-xl outline-none text-base"
+                      style={inputStyle}
+                    />
                   </div>
-                )}
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold uppercase tracking-[0.2em] block" style={{ color: "#ec5b13" }}>Description</label>
+                    <textarea
+                      value={description}
+                      onChange={(e) => setDescription(e.target.value)}
+                      placeholder="Tell your viewers what's happening..."
+                      rows={4}
+                      maxLength={500}
+                      className="w-full px-4 py-3 rounded-xl outline-none text-base resize-none"
+                      style={inputStyle}
+                    />
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <label className="text-xs font-bold uppercase tracking-[0.2em] block" style={{ color: "#ec5b13" }}>Category</label>
+                      <select value={category} onChange={(e) => setCategory(e.target.value)} className="w-full px-4 py-3 rounded-xl outline-none text-base appearance-none" style={inputStyle}>
+                        <option value="">Select category</option>
+                        <option value="Gaming">Gaming</option>
+                        <option value="Music">Music</option>
+                        <option value="Learning">Learning</option>
+                        <option value="Sports">Sports</option>
+                        <option value="Movies">Movies</option>
+                        <option value="Other">Other</option>
+                      </select>
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-xs font-bold uppercase tracking-[0.2em] block" style={{ color: "#ec5b13" }}>Privacy</label>
+                      <div className="w-full px-4 py-3 rounded-xl text-base flex items-center justify-between" style={inputStyle}>
+                        <span>Public broadcast</span>
+                        <span className="text-xs font-semibold px-2 py-1 rounded-full" style={{ background: "rgba(236,91,19,0.12)", color: "#ec5b13" }}>Default</span>
+                      </div>
+                    </div>
+                  </div>
+                </form>
 
-                {/* Thumbnail */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Stream Thumbnail</label>
-                  {schedThumbPreview ? (
-                    <div className="relative w-full aspect-video rounded-xl overflow-hidden border border-gray-200 bg-gray-100">
-                      <img src={schedThumbPreview} alt="preview" className="w-full h-full object-cover" />
-                      <button type="button" onClick={clearSchedThumb}
-                        className="absolute top-2 right-2 p-1 bg-gray-900/60 hover:bg-gray-900/80 text-white rounded-full transition-colors">
+                <div className="p-6 rounded-2xl border-l-4" style={{ ...panelStyle, borderLeftColor: "#ec5b13" }}>
+                  <div className="flex items-center justify-between mb-4 gap-3">
+                    <div>
+                      <h3 className="font-bold text-lg">Stream Key</h3>
+                      <p className="text-xs" style={{ color: "#94a3b8" }}>Your secure key appears after you start setup and will be ready for OBS.</p>
+                    </div>
+                    <button type="button" className="text-sm font-bold" style={{ color: "#ec5b13" }}>
+                      Generate
+                    </button>
+                  </div>
+                  <div className="flex gap-2 flex-col sm:flex-row">
+                    <div className="flex-1 px-4 py-3 rounded-xl border flex items-center justify-between text-sm font-mono" style={{ background: "rgba(18,12,8,0.8)", borderColor: "rgba(236,91,19,0.12)", color: "#e2e8f0" }}>
+                      <span>•••• •••• •••• •••• ••••</span>
+                      <EyeOff className="w-4 h-4" style={{ color: "#94a3b8" }} />
+                    </div>
+                    <button type="submit" form="go-live-form" disabled={loading} className="px-4 rounded-xl font-bold text-sm py-3 transition-colors disabled:opacity-60" style={{ background: "rgba(236,91,19,0.16)", color: "#ec5b13" }}>
+                      {loading ? "Generating..." : "Start Setup"}
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-6">
+                <div className="p-6 rounded-2xl space-y-4" style={panelStyle}>
+                  <label className="text-xs font-bold uppercase tracking-[0.2em] block" style={{ color: "#ec5b13" }}>Stream Thumbnail</label>
+                  {thumbnailPreview ? (
+                    <div className="relative aspect-video rounded-xl overflow-hidden" style={{ background: "rgba(18,12,8,0.8)", border: "1px solid rgba(236,91,19,0.18)" }}>
+                      <img src={thumbnailPreview} alt="thumbnail preview" className="w-full h-full object-cover" />
+                      <button type="button" onClick={clearThumbnail} className="absolute top-2 right-2 p-1 rounded-full text-white" style={{ background: "rgba(0,0,0,0.45)" }}>
                         <X className="w-4 h-4" />
                       </button>
                     </div>
                   ) : (
-                    <button type="button" onClick={() => schedThumbRef.current?.click()}
-                      className="w-full flex flex-col items-center justify-center gap-2 py-8 border-2 border-dashed border-gray-200 rounded-xl text-gray-400 hover:border-indigo-400 hover:text-indigo-500 hover:bg-indigo-50/30 transition-all">
-                      <ImagePlus className="w-8 h-8" />
-                      <span className="text-sm font-medium">Click to upload thumbnail</span>
-                      <span className="text-xs">PNG, JPG, WEBP up to 5 MB</span>
+                    <button type="button" onClick={() => thumbnailInputRef.current?.click()} className="aspect-video rounded-xl border-2 border-dashed flex flex-col items-center justify-center p-4 text-center w-full transition-all" style={{ background: "rgba(18,12,8,0.8)", borderColor: "rgba(236,91,19,0.2)", color: "#94a3b8" }}>
+                      <ImagePlus className="w-10 h-10 mb-2" style={{ color: "rgba(236,91,19,0.5)" }} />
+                      <p className="text-sm font-medium">Click to upload or drag image</p>
+                      <p className="text-[10px] mt-1" style={{ color: "#64748b" }}>Recommended: 1280x720px</p>
+                    </button>
+                  )}
+                  <input ref={thumbnailInputRef} type="file" accept="image/*" onChange={handleThumbnailChange} className="hidden" />
+                </div>
+
+                <div className="p-6 rounded-2xl text-white space-y-6" style={{ background: "linear-gradient(135deg, #ec5b13 0%, #c2410c 100%)", boxShadow: "0 18px 40px rgba(236,91,19,0.25)" }}>
+                  <div className="space-y-1">
+                    <h3 className="text-xl font-black">Ready to go?</h3>
+                    <p className="text-sm text-white/80">Once you start your stream in your software, you'll be live to your followers.</p>
+                  </div>
+                  <div className="space-y-3">
+                    <button type="submit" form="go-live-form" disabled={loading} className="w-full py-4 bg-white text-[#ec5b13] rounded-xl font-black text-lg transition-all flex items-center justify-center gap-2 disabled:opacity-60">
+                      <Radio className="w-5 h-5" />
+                      {loading ? "STARTING..." : "START BROADCAST"}
+                    </button>
+                    <button type="button" className="w-full py-3 rounded-xl font-bold text-sm transition-colors" style={{ background: "rgba(0,0,0,0.18)" }}>
+                      Run a Speed Test
+                    </button>
+                  </div>
+                  <div className="pt-4 border-t border-white/20">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="flex items-center gap-1 opacity-80"><CheckCircle className="w-4 h-4" /> Auto-record</span>
+                      <span className="flex items-center gap-1 opacity-80"><CheckCircle className="w-4 h-4" /> Low Latency</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="p-6 rounded-2xl" style={panelStyle}>
+                  <h4 className="text-xs font-bold uppercase tracking-[0.2em] mb-4" style={{ color: "#94a3b8" }}>Stream Checklist</h4>
+                  <div className="space-y-3">
+                    {[
+                      { done: Boolean(title.trim()), label: "Title & Description" },
+                      { done: Boolean(category), label: "Category Tagging" },
+                      { done: Boolean(thumbnailPreview), label: "Thumbnail Uploaded" },
+                    ].map((item) => (
+                      <div key={item.label} className="flex items-center gap-3" style={{ opacity: item.done ? 1 : 0.55 }}>
+                        <div className="size-5 rounded-full border flex items-center justify-center" style={{ borderColor: item.done ? "rgba(236,91,19,0.45)" : "rgba(100,116,139,0.4)", color: "#ec5b13" }}>
+                          {item.done && <CheckCircle className="w-3.5 h-3.5" />}
+                        </div>
+                        <span className="text-sm" style={{ color: "#cbd5e1" }}>{item.label}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {mode === "live" && step === "live" && streamData && (
+            <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
+              <div className="xl:col-span-2 space-y-6">
+                <div className="p-6 rounded-2xl space-y-5" style={panelStyle}>
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                    <div>
+                      <h2 className="text-lg font-bold">OBS Configuration</h2>
+                      <p className="text-sm" style={{ color: "#94a3b8" }}>Copy these values into OBS, Streamlabs, or XSplit.</p>
+                    </div>
+                    <button onClick={() => navigate(`/live/${streamData.streamKey}`)} className="flex items-center gap-1.5 text-xs font-medium" style={{ color: "#ec5b13" }}>
+                      <ExternalLink className="w-3.5 h-3.5" /> Preview stream
+                    </button>
+                  </div>
+
+                  <CopyField label="RTMP Server URL" value={streamData.rtmpUrl} mono />
+
+                  <div>
+                    <label className="block text-xs font-semibold mb-1.5 uppercase tracking-[0.2em]" style={{ color: "#ec5b13" }}>Stream Key</label>
+                    <div className="flex items-center gap-2">
+                      <div className="flex-1 px-4 py-3 rounded-xl text-sm font-mono truncate" style={{ background: "rgba(18,12,8,0.8)", border: "1px solid rgba(236,91,19,0.14)", color: "#f8fafc" }}>
+                        {showKey ? streamData.streamKey : "••••••••••••••••••••••"}
+                      </div>
+                      <button onClick={() => setShowKey(!showKey)} className="p-3 rounded-xl transition-colors" style={{ background: "rgba(236,91,19,0.14)", border: "1px solid rgba(236,91,19,0.2)", color: "#ec5b13" }}>
+                        {showKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                      {showKey && (
+                        <button onClick={() => navigator.clipboard.writeText(streamData.streamKey)} className="p-3 rounded-xl transition-colors" style={{ background: "rgba(236,91,19,0.14)", border: "1px solid rgba(236,91,19,0.2)", color: "#ec5b13" }}>
+                          <Copy className="w-4 h-4" />
+                        </button>
+                      )}
+                    </div>
+                    <p className="mt-2 text-xs flex items-center gap-1" style={{ color: "#fdba74" }}>
+                      <AlertTriangle className="w-3.5 h-3.5" />
+                      Keep your stream key private. Anyone with it can broadcast on your channel.
+                    </p>
+                  </div>
+
+                  <CopyField label="HLS Playback URL" value={streamData.hlsUrl} mono />
+                </div>
+
+                <div className="rounded-2xl overflow-hidden" style={panelStyle}>
+                  <button onClick={() => setShowObs(!showObs)} className="w-full flex items-center justify-between px-6 py-4 text-sm font-semibold transition-colors" style={{ color: "#f8fafc" }}>
+                    <span className="flex items-center gap-2"><BookOpen className="w-4 h-4" style={{ color: "#ec5b13" }} /> OBS Setup Guide</span>
+                    {showObs ? <ChevronUp className="w-4 h-4" style={{ color: "#94a3b8" }} /> : <ChevronDown className="w-4 h-4" style={{ color: "#94a3b8" }} />}
+                  </button>
+                  {showObs && (
+                    <div className="px-6 pb-5" style={{ borderTop: "1px solid rgba(236,91,19,0.08)" }}>
+                      <ol className="mt-4 space-y-3">
+                        {obsSteps.map((obsStep, i) => (
+                          <li key={i} className="flex gap-3 text-sm" style={{ color: "#cbd5e1" }}>
+                            <span className="w-6 h-6 rounded-full text-xs font-bold flex items-center justify-center flex-shrink-0" style={{ background: "rgba(236,91,19,0.14)", color: "#ec5b13" }}>
+                              {i + 1}
+                            </span>
+                            {obsStep}
+                          </li>
+                        ))}
+                      </ol>
+                      <div className="mt-4 p-3.5 rounded-xl text-xs" style={{ background: "rgba(59,130,246,0.08)", border: "1px solid rgba(59,130,246,0.16)", color: "#bfdbfe" }}>
+                        Tip: Set OBS output to 1080p at 30fps with 3000 to 6000 kbps bitrate for a stable stream.
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="space-y-6">
+                <div className="p-6 rounded-2xl" style={{ background: "linear-gradient(135deg, rgba(236,91,19,0.18), rgba(194,65,12,0.35))", border: "1px solid rgba(236,91,19,0.18)" }}>
+                  <div className="flex items-center justify-between mb-4">
+                    <div>
+                      <h3 className="text-lg font-bold">Live Status</h3>
+                      <p className="text-sm" style={{ color: "#fed7aa" }}>
+                        {streamData.stream?.isLive ? "Your broadcast is active." : "Waiting for OBS connection..."}
+                      </p>
+                    </div>
+                    <StatusBadge isLive={streamData.stream?.isLive} />
+                  </div>
+                  <div className="flex items-center gap-3 mb-5">
+                    <Wifi className="w-5 h-5" style={{ color: streamData.stream?.isLive ? "#86efac" : "#94a3b8" }} />
+                    <div>
+                      <p className="text-sm font-semibold">{streamData.stream?.isLive ? "Stream is live" : "Stand by"}</p>
+                      <p className="text-xs" style={{ color: "#fdba74" }}>
+                        {streamData.stream?.isLive ? `${(streamData.stream.viewerCount || 0).toLocaleString()} viewers right now` : "Start streaming in OBS to go live."}
+                      </p>
+                    </div>
+                  </div>
+                  <button onClick={handleEndStream} disabled={ending} className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-semibold transition-all disabled:opacity-50" style={{ background: "rgba(0,0,0,0.24)", color: "#fff", border: "1px solid rgba(255,255,255,0.14)" }}>
+                    {ending ? <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Square className="w-4 h-4" />}
+                    End Stream
+                  </button>
+                </div>
+
+                <div className="p-6 rounded-2xl" style={panelStyle}>
+                  <h4 className="text-xs font-bold uppercase tracking-[0.2em] mb-4" style={{ color: "#94a3b8" }}>Broadcast Notes</h4>
+                  <div className="space-y-3 text-sm" style={{ color: "#cbd5e1" }}>
+                    <p className="flex items-start gap-2"><CheckCircle className="w-4 h-4 mt-0.5" style={{ color: "#ec5b13" }} /> Your stream key is ready and secure.</p>
+                    <p className="flex items-start gap-2"><CheckCircle className="w-4 h-4 mt-0.5" style={{ color: "#ec5b13" }} /> Preview your stream before sharing the link.</p>
+                    <p className="flex items-start gap-2"><CheckCircle className="w-4 h-4 mt-0.5" style={{ color: "#ec5b13" }} /> Ending the stream unlocks recording save options.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {mode === "live" && step === "ended" && (
+            <div className="max-w-2xl mx-auto p-8 text-center space-y-6 rounded-2xl" style={panelStyle}>
+              <div className="w-16 h-16 mx-auto rounded-full flex items-center justify-center" style={{ background: "rgba(239,68,68,0.14)", border: "1px solid rgba(239,68,68,0.2)" }}>
+                <Square className="w-8 h-8" style={{ color: "#fda4af" }} />
+              </div>
+
+              <div>
+                <h2 className="text-xl font-bold">Stream Ended</h2>
+                <p className="text-sm mt-1.5" style={{ color: "#94a3b8" }}>
+                  Save it as a video so anyone can watch it later, including live chat replay.
+                </p>
+              </div>
+
+              {savedVideoId ? (
+                <div className="space-y-4">
+                  <div className="p-4 rounded-xl flex flex-col items-center gap-2" style={{ background: "rgba(74,222,128,0.08)", border: "1px solid rgba(74,222,128,0.18)" }}>
+                    <CheckCircle className="w-7 h-7" style={{ color: "#86efac" }} />
+                    <p className="text-sm font-semibold" style={{ color: "#dcfce7" }}>Recording saved successfully.</p>
+                    <p className="text-xs" style={{ color: "#bbf7d0" }}>
+                      Chat messages are saved with exact timestamps so viewers see them appear naturally during playback.
+                    </p>
+                  </div>
+                  <button onClick={() => navigate(`/video/${savedVideoId}`)} className="w-full py-3 rounded-xl text-sm font-semibold transition-colors" style={{ background: "#ec5b13", color: "#fff" }}>
+                    View Recording
+                  </button>
+                  <button
+                    onClick={() => {
+                      setStep("details");
+                      setTitle("");
+                      setDescription("");
+                      setEndedStreamKey(null);
+                      setSavedVideoId(null);
+                    }}
+                    className="w-full py-2 text-sm transition-colors"
+                    style={{ color: "#94a3b8" }}
+                  >
+                    Back to Dashboard
+                  </button>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  <button onClick={handleSaveRecording} disabled={saving} className="w-full py-3 flex items-center justify-center gap-2 rounded-xl text-sm font-semibold transition-all disabled:opacity-60" style={{ background: "#ec5b13", color: "#fff" }}>
+                    {saving ? <><span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Uploading recording...</> : <><Video className="w-4 h-4" /> Save Stream as Video</>}
+                  </button>
+                  {saving && (
+                    <p className="text-xs" style={{ color: "#94a3b8" }}>
+                      This may take a few minutes depending on stream length. Please keep this page open.
+                    </p>
+                  )}
+                  <button
+                    onClick={() => {
+                      setStep("details");
+                      setTitle("");
+                      setDescription("");
+                      setEndedStreamKey(null);
+                    }}
+                    disabled={saving}
+                    className="w-full py-2 text-sm transition-colors disabled:opacity-40"
+                    style={{ color: "#94a3b8" }}
+                  >
+                    Skip — Don't Save
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+
+          {mode === "schedule" && (
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+              <div className="lg:col-span-5 space-y-6">
+                <div className="p-6 rounded-2xl space-y-4" style={panelStyle}>
+                  <label className="text-xs font-bold uppercase tracking-[0.2em] block" style={{ color: "#ec5b13" }}>Stream Thumbnail</label>
+                  {schedThumbPreview ? (
+                    <div className="relative aspect-video rounded-xl overflow-hidden" style={{ background: "rgba(18,12,8,0.8)", border: "1px solid rgba(236,91,19,0.18)" }}>
+                      <img src={schedThumbPreview} alt="preview" className="w-full h-full object-cover" />
+                      <button type="button" onClick={clearSchedThumb} className="absolute top-2 right-2 p-1 rounded-full text-white" style={{ background: "rgba(0,0,0,0.45)" }}>
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ) : (
+                    <button type="button" onClick={() => schedThumbRef.current?.click()} className="aspect-video rounded-xl border-2 border-dashed flex flex-col items-center justify-center p-4 text-center w-full transition-all" style={{ background: "rgba(18,12,8,0.8)", borderColor: "rgba(236,91,19,0.2)", color: "#94a3b8" }}>
+                      <ImagePlus className="w-10 h-10 mb-2" style={{ color: "rgba(236,91,19,0.5)" }} />
+                      <p className="text-sm font-medium">Click to upload or drag image</p>
+                      <p className="text-[10px] mt-1" style={{ color: "#64748b" }}>Recommended: 1280x720px</p>
                     </button>
                   )}
                   <input ref={schedThumbRef} type="file" accept="image/*" onChange={handleSchedThumb} className="hidden" />
                 </div>
 
-                {/* Title */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Stream Title *</label>
-                  <input type="text" value={sched.title} onChange={(e) => setSched((s) => ({ ...s, title: e.target.value }))} required maxLength={120}
-                    placeholder="What will you stream?"
-                    className="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 transition-all" />
+                <div className="p-6 rounded-2xl" style={panelStyle}>
+                  <h4 className="text-xs font-bold uppercase tracking-[0.2em] mb-4" style={{ color: "#94a3b8" }}>Streaming Tips</h4>
+                  <div className="space-y-3 text-sm" style={{ color: "#cbd5e1" }}>
+                    <p className="flex items-start gap-2"><CheckCircle className="w-4 h-4 mt-0.5" style={{ color: "#ec5b13" }} /> Schedule at least 15 minutes early so followers can set reminders.</p>
+                    <p className="flex items-start gap-2"><CheckCircle className="w-4 h-4 mt-0.5" style={{ color: "#ec5b13" }} /> Add a custom thumbnail to improve click-through when the event is announced.</p>
+                    <p className="flex items-start gap-2"><CheckCircle className="w-4 h-4 mt-0.5" style={{ color: "#ec5b13" }} /> Use a clear title so viewers know exactly what they'll join.</p>
+                  </div>
                 </div>
+              </div>
 
-                {/* Description */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Description</label>
-                  <textarea value={sched.description} onChange={(e) => setSched((s) => ({ ...s, description: e.target.value }))} rows={3} maxLength={500}
-                    placeholder="Tell viewers what your stream is about…"
-                    className="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 transition-all resize-none" />
+              <div className="lg:col-span-7">
+                <div className="p-6 rounded-2xl" style={panelStyle}>
+                  {schedSuccess ? (
+                    <div className="space-y-4 text-center py-4">
+                      <div className="w-14 h-14 mx-auto rounded-full flex items-center justify-center" style={{ background: "rgba(236,91,19,0.12)", border: "1px solid rgba(236,91,19,0.18)" }}>
+                        <Calendar className="w-7 h-7" style={{ color: "#ec5b13" }} />
+                      </div>
+                      <div>
+                        <p className="text-base font-bold">Stream Scheduled!</p>
+                        <p className="text-sm mt-1" style={{ color: "#94a3b8" }}>&ldquo;{schedSuccess.title}&rdquo;</p>
+                        <p className="text-sm font-medium mt-2" style={{ color: "#fdba74" }}>
+                          {new Date(schedSuccess.scheduledAt).toLocaleString(undefined, {
+                            weekday: "short", month: "short", day: "numeric",
+                            hour: "2-digit", minute: "2-digit",
+                          })}
+                        </p>
+                      </div>
+                      <p className="text-xs" style={{ color: "#94a3b8" }}>
+                        Subscribers with notifications enabled will be notified. Come back before stream time and use Go Live Now to get your OBS key.
+                      </p>
+                      <button onClick={() => { setSchedSuccess(null); setSched({ title: "", description: "", scheduledAt: "" }); clearSchedThumb(); }} className="w-full py-3 rounded-xl text-sm font-semibold transition-all" style={{ background: "#ec5b13", color: "#fff" }}>
+                        Schedule Another
+                      </button>
+                    </div>
+                  ) : (
+                    <form onSubmit={handleSchedule} className="space-y-5">
+                      <div>
+                        <h2 className="text-lg font-bold mb-1">Schedule a Stream</h2>
+                        <p className="text-sm" style={{ color: "#94a3b8" }}>Plan ahead and notify your audience before you go live.</p>
+                      </div>
+
+                      {schedError && (
+                        <div className="p-3 rounded-xl flex items-center gap-2 text-sm" style={{ background: "rgba(239,68,68,0.12)", border: "1px solid rgba(239,68,68,0.2)", color: "#fecaca" }}>
+                          <AlertTriangle className="w-4 h-4 flex-shrink-0" /> {schedError}
+                        </div>
+                      )}
+
+                      <div className="space-y-2">
+                        <label className="text-xs font-bold uppercase tracking-[0.2em] block" style={{ color: "#ec5b13" }}>Stream Title</label>
+                        <input type="text" value={sched.title} onChange={(e) => setSched((s) => ({ ...s, title: e.target.value }))} required maxLength={120} placeholder="What will you stream?" className="w-full px-4 py-3 rounded-xl outline-none text-base" style={inputStyle} />
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="text-xs font-bold uppercase tracking-[0.2em] block" style={{ color: "#ec5b13" }}>Description</label>
+                        <textarea value={sched.description} onChange={(e) => setSched((s) => ({ ...s, description: e.target.value }))} rows={4} maxLength={500} placeholder="Tell viewers what your stream is about..." className="w-full px-4 py-3 rounded-xl outline-none text-base resize-none" style={inputStyle} />
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <label className="text-xs font-bold uppercase tracking-[0.2em] block" style={{ color: "#ec5b13" }}>Date & Time</label>
+                          <input type="datetime-local" value={sched.scheduledAt} min={getMinDatetime()} onChange={(e) => setSched((s) => ({ ...s, scheduledAt: e.target.value }))} required className="w-full px-4 py-3 rounded-xl outline-none text-base" style={inputStyle} />
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-xs font-bold uppercase tracking-[0.2em] block" style={{ color: "#ec5b13" }}>Notifications</label>
+                          <button type="button" onClick={() => setAutoPost((prev) => !prev)} className="w-full px-4 py-3 rounded-xl text-left flex items-center justify-between" style={inputStyle}>
+                            <span>Auto-post reminder</span>
+                            <span className="w-11 h-6 rounded-full p-1 transition-all" style={{ background: autoPost ? "#ec5b13" : "rgba(100,116,139,0.35)" }}>
+                              <span className="block w-4 h-4 rounded-full bg-white transition-transform" style={{ transform: autoPost ? "translateX(20px)" : "translateX(0)" }} />
+                            </span>
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="flex flex-col sm:flex-row justify-end gap-3 pt-2">
+                        <button type="button" className="px-5 py-3 rounded-xl text-sm font-semibold" style={{ background: "rgba(148,163,184,0.08)", border: "1px solid rgba(148,163,184,0.18)", color: "#cbd5e1" }}>
+                          Save Draft
+                        </button>
+                        <button type="submit" disabled={schedLoading} className="px-5 py-3 flex items-center justify-center gap-2 rounded-xl text-sm font-semibold transition-all disabled:opacity-60" style={{ background: "#ec5b13", color: "#fff" }}>
+                          {schedLoading ? <><span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Scheduling...</> : <><Calendar className="w-4 h-4" /> Schedule Stream</>}
+                        </button>
+                      </div>
+                    </form>
+                  )}
                 </div>
-
-                {/* Date & Time */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Date &amp; Time *</label>
-                  <input type="datetime-local" value={sched.scheduledAt} min={getMinDatetime()}
-                    onChange={(e) => setSched((s) => ({ ...s, scheduledAt: e.target.value })) } required
-                    className="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 transition-all" />
-                </div>
-
-                <button type="submit" disabled={schedLoading}
-                  className="w-full py-2.5 flex items-center justify-center gap-2 bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white rounded-xl text-sm font-semibold shadow-sm transition-all disabled:opacity-60">
-                  {schedLoading
-                    ? <><span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Scheduling…</>
-                    : <><Calendar className="w-4 h-4" /> Schedule Stream</>}
-                </button>
-              </form>
-            )}
-          </div>
-        )}
-      </div>
+              </div>
+            </div>
+          )}
+        </div>
+      </main>
     </div>
   );
 };

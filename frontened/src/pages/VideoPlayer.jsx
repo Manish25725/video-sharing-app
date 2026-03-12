@@ -65,7 +65,7 @@ const ChatReplayPanel = ({ messages, allMessages, loading }) => {
 
   return (
     <div className="rounded-xl overflow-hidden sticky top-20"
-      style={{ background: 'rgba(34,22,16,0.85)', border: '1px solid rgba(236,91,19,0.15)', backdropFilter: 'blur(12px)' }}>
+      style={{ background: 'rgba(15,15,15,0.85)', border: '1px solid rgba(236,91,19,0.15)', backdropFilter: 'blur(12px)' }}>
       <div className="px-4 py-3 flex items-center gap-2"
         style={{ borderBottom: '1px solid rgba(236,91,19,0.1)', background: 'rgba(236,91,19,0.05)' }}>
         <MessageCircle className="w-4 h-4" style={{ color: '#ec5b13' }} />
@@ -778,7 +778,7 @@ const VideoPlayer = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen" style={{ background: '#221610' }}>
+      <div className="flex items-center justify-center min-h-screen" style={{ background: '#141414' }}>
         <div className="flex flex-col items-center gap-3">
           <div className="w-10 h-10 rounded-full animate-spin"
             style={{ border: '3px solid rgba(236,91,19,0.15)', borderTopColor: '#ec5b13' }} />
@@ -790,7 +790,7 @@ const VideoPlayer = () => {
 
   if (error || !video) {
     return (
-      <div className="flex items-center justify-center min-h-screen" style={{ background: '#221610' }}>
+      <div className="flex items-center justify-center min-h-screen" style={{ background: '#141414' }}>
         <div className="text-center">
           <h2 className="text-2xl font-bold mb-2" style={{ color: '#f1f5f9' }}>Video Not Found</h2>
           <p className="mb-4" style={{ color: '#94a3b8' }}>{error || "The video you're looking for doesn't exist."}</p>
@@ -809,7 +809,7 @@ const VideoPlayer = () => {
   console.log('Rendering video player with:', { video, user, videoId });
 
   return (
-    <div className="min-h-screen" style={{ background: '#221610' }}>
+    <div className="min-h-screen" style={{ background: '#141414' }}>
       <div className="max-w-[1440px] mx-auto px-4 md:px-10 py-6 grid grid-cols-1 lg:grid-cols-12 gap-8">
 
         {/* ── Video Player Column ── */}
@@ -1076,67 +1076,107 @@ const VideoPlayer = () => {
           </div>
 
           {/* Comments Section */}
-          <div className="flex flex-col gap-6">
-            <h2 className="text-xl font-bold flex items-center gap-2" style={{ color: '#f1f5f9' }}>
-              {comments.length} Comments
-              <button className="flex items-center gap-2 text-sm font-normal" style={{ color: '#94a3b8' }}>
-                <MessageCircle className="w-4 h-4" /> Sort by
+          <div
+            className="flex flex-col gap-6 rounded-2xl p-5 md:p-6"
+            style={{
+              background: 'rgba(45,30,22,0.5)',
+              border: '1px solid rgba(236,91,19,0.12)',
+              backdropFilter: 'blur(12px)'
+            }}
+          >
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              <h2 className="text-xl font-bold flex items-center gap-2" style={{ color: '#f8fafc' }}>
+                <MessageCircle className="w-5 h-5" style={{ color: '#ec5b13' }} />
+                {comments.length} Comments
+              </h2>
+              <button
+                className="flex items-center gap-2 text-sm font-medium px-3 py-2 rounded-full w-fit"
+                style={{
+                  color: '#cbd5e1',
+                  background: 'rgba(236,91,19,0.08)',
+                  border: '1px solid rgba(236,91,19,0.14)'
+                }}
+              >
+                <Clock className="w-4 h-4" style={{ color: '#ec5b13' }} />
+                Sort by newest
               </button>
-            </h2>
+            </div>
 
             {/* Comment Input */}
             {user ? (
-              <div className="flex gap-4">
+              <div
+                className="flex gap-4 rounded-2xl p-4"
+                style={{
+                  background: 'rgba(236,91,19,0.04)',
+                  border: '1px solid rgba(236,91,19,0.1)'
+                }}
+              >
                 <img
                   src={user.avatar || "/placeholder.svg?height=40&width=40&text=You"}
                   alt="Your avatar"
                   className="w-10 h-10 rounded-full object-cover flex-shrink-0"
                 />
-                <div className="flex-1 flex flex-col gap-2">
-                  <form onSubmit={handleCommentSubmit} className="flex flex-col gap-2">
-                    <input
+                <div className="flex-1 flex flex-col gap-3">
+                  <form onSubmit={handleCommentSubmit} className="flex flex-col gap-3">
+                    <textarea
                       value={newComment}
                       onChange={(e) => setNewComment(e.target.value)}
                       placeholder="Add a comment..."
-                      className="bg-transparent w-full py-2 text-sm focus:outline-none placeholder-slate-500"
-                      style={{ borderBottom: '1px solid rgba(236,91,19,0.2)', color: '#f1f5f9' }}
-                      onFocus={e => e.currentTarget.style.borderBottomColor = '#ec5b13'}
-                      onBlur={e => e.currentTarget.style.borderBottomColor = 'rgba(236,91,19,0.2)'}
+                      rows={3}
+                      className="w-full rounded-xl px-4 py-3 text-sm resize-none focus:outline-none"
+                      style={{
+                        background: 'rgba(18,12,8,0.7)',
+                        color: '#f8fafc',
+                        border: '1px solid rgba(236,91,19,0.18)'
+                      }}
                     />
-                    {newComment && (
-                      <div className="flex justify-end gap-3 mt-1">
-                        <button
-                          type="button"
-                          onClick={() => setNewComment("")}
-                          className="px-4 py-2 text-sm font-bold rounded-full transition-colors"
-                          style={{ color: '#94a3b8' }}
-                        >
-                          Cancel
-                        </button>
-                        <button
-                          type="submit"
-                          disabled={!newComment.trim()}
-                          className="px-4 py-2 text-sm font-bold rounded-full transition-colors disabled:opacity-50"
-                          style={{ background: 'rgba(236,91,19,0.15)', color: '#ec5b13', border: '1px solid rgba(236,91,19,0.25)' }}
-                        >
-                          Comment
-                        </button>
-                      </div>
-                    )}
+                    <div className="flex justify-end gap-3 mt-1">
+                      <button
+                        type="button"
+                        onClick={() => setNewComment("")}
+                        className="px-4 py-2 text-sm font-semibold rounded-full transition-colors"
+                        style={{
+                          color: '#cbd5e1',
+                          background: 'rgba(148,163,184,0.08)',
+                          border: '1px solid rgba(148,163,184,0.18)'
+                        }}
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="submit"
+                        disabled={!newComment.trim()}
+                        className="px-5 py-2 text-sm font-bold rounded-full transition-colors disabled:opacity-50"
+                        style={{
+                          background: '#ec5b13',
+                          color: '#fff',
+                          boxShadow: '0 4px 18px rgba(236,91,19,0.25)'
+                        }}
+                      >
+                        Comment
+                      </button>
+                    </div>
                   </form>
                 </div>
               </div>
             ) : (
-              <div className="flex items-center gap-3 text-sm" style={{ color: '#94a3b8' }}>
-                <MessageCircle className="w-5 h-5" />
+              <div
+                className="flex items-center gap-3 text-sm rounded-xl px-4 py-3"
+                style={{
+                  color: '#cbd5e1',
+                  background: 'rgba(236,91,19,0.04)',
+                  border: '1px solid rgba(236,91,19,0.1)'
+                }}
+              >
+                <MessageCircle className="w-5 h-5" style={{ color: '#ec5b13' }} />
                 <span>Sign in to leave a comment</span>
               </div>
             )}
 
             {/* Comments List */}
-            <div className="flex flex-col gap-6 mt-2">
+            <div className="flex flex-col gap-4 mt-1">
               {commentsLoading ? (
-                <div className="text-center py-8" style={{ color: '#94a3b8' }}>Loading comments...</div>
+                <div className="text-center py-8" style={{ color: '#cbd5e1' }}>Loading comments...</div>
               ) : comments.length > 0 ? (
                 comments.map((comment) => (
                   <CommentComponent
@@ -1151,7 +1191,14 @@ const VideoPlayer = () => {
                   />
                 ))
               ) : (
-                <div className="text-center py-8" style={{ color: '#94a3b8' }}>
+                <div
+                  className="text-center py-10 rounded-xl"
+                  style={{
+                    color: '#cbd5e1',
+                    background: 'rgba(236,91,19,0.03)',
+                    border: '1px dashed rgba(236,91,19,0.18)'
+                  }}
+                >
                   No comments yet. Be the first to share what you think!
                 </div>
               )}

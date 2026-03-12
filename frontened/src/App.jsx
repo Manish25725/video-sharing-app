@@ -1,4 +1,4 @@
-import { useState } from "react"
+﻿import { useState } from "react"
 import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate, useLocation } from "react-router-dom"
 import AdminDashboard from "./pages/AdminDashboard"
 import AdminLogin from "./pages/AdminLogin"
@@ -97,7 +97,7 @@ function AppContent() {
 
   // Main layout with sidebar and routing
   return (
-    <div className="flex flex-col h-screen bg-[#120a06]">
+    <div className="flex flex-col h-screen bg-[#0a0a0a]">
       <Header
         onMenuClick={toggleSidebar}
         showProfileMenu={showProfileMenu}

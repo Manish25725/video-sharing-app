@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+﻿import React, { useState, useEffect, useMemo } from 'react';
 import { History, Trash2, Play, Search, X, Clock } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import watchHistoryService from '../services/watchHistoryService';
@@ -121,7 +121,7 @@ const WatchHistory = () => {
 
   if (loading) {
     return (
-      <div style={{ background: '#221610' }} className="min-h-screen flex items-center justify-center">
+      <div style={{ background: '#141414' }} className="min-h-screen flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
           <div
             className="w-12 h-12 rounded-full border-2 animate-spin"
@@ -135,7 +135,7 @@ const WatchHistory = () => {
 
   if (!isLoggedIn || !user) {
     return (
-      <div style={{ background: '#221610' }} className="min-h-screen flex items-center justify-center">
+      <div style={{ background: '#141414' }} className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <div className="w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6" style={{ background: 'rgba(236,91,19,0.1)' }}>
             <History className="w-10 h-10" style={{ color: '#ec5b13' }} />
@@ -148,7 +148,7 @@ const WatchHistory = () => {
   }
 
   return (
-    <div style={{ background: '#221610' }} className="min-h-screen relative">
+    <div style={{ background: '#141414' }} className="min-h-screen relative">
       {/* Ambient background blob */}
       <div
         className="absolute top-0 right-0 w-96 h-96 rounded-full pointer-events-none -mr-48 -mt-48"
@@ -156,38 +156,6 @@ const WatchHistory = () => {
       />
 
       {/* Header */}
-      <header
-        className="sticky top-0 z-10 flex items-center justify-between px-8 py-5 border-b backdrop-blur-md"
-        style={{ borderColor: 'rgba(236,91,19,0.1)', background: 'rgba(34,22,16,0.85)' }}
-      >
-        <h2 className="text-2xl font-bold tracking-tight flex items-center gap-2 text-slate-100">
-          <History className="w-6 h-6" style={{ color: '#ec5b13' }} />
-          Watch History
-        </h2>
-        <div className="flex items-center gap-4">
-          {/* Search */}
-          <div className="relative group">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-            <input
-              value={searchQuery}
-              onChange={e => setSearchQuery(e.target.value)}
-              placeholder="Search your watch history..."
-              className="w-72 rounded-xl py-2.5 pl-11 pr-4 border outline-none text-slate-100 placeholder-slate-500 text-sm transition-all"
-              style={{ background: 'rgba(236,91,19,0.05)', borderColor: 'rgba(236,91,19,0.15)' }}
-            />
-          </div>
-          {/* Clear History */}
-          <button
-            onClick={handleClearHistory}
-            className="flex items-center gap-2 px-5 py-2.5 text-white font-bold rounded-xl hover:opacity-90 transition-all shadow-lg text-sm"
-            style={{ background: '#ec5b13', boxShadow: '0 4px 15px rgba(236,91,19,0.3)' }}
-          >
-            <Trash2 className="w-4 h-4" />
-            Clear History
-          </button>
-        </div>
-      </header>
-
       {/* Content */}
       <div className="px-8 pb-28">
         {filteredHistory.length === 0 ? (
@@ -237,7 +205,7 @@ const WatchHistory = () => {
                       {/* Duration badge */}
                       <div
                         className="absolute bottom-3 right-3 text-white text-xs font-bold px-2 py-1 rounded-lg"
-                        style={{ background: 'rgba(34,22,16,0.85)', backdropFilter: 'blur(6px)' }}
+                        style={{ background: 'rgba(15,15,15,0.85)', backdropFilter: 'blur(6px)' }}
                       >
                         {formatDuration(video.duration)}
                       </div>

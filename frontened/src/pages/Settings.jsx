@@ -206,7 +206,7 @@ const Settings = () => {
             <button
               onClick={() => navigate("/profile-settings")}
               className="absolute bottom-0 right-0 w-10 h-10 rounded-full flex items-center justify-center text-white border-4 shadow-xl hover:scale-105 transition-transform"
-              style={{ background: "#ec5b13", borderColor: "#221610" }}
+              style={{ background: "#ec5b13", borderColor: "#141414" }}
             >
               <User className="w-4 h-4" />
             </button>
@@ -458,14 +458,14 @@ const Settings = () => {
   ]
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ background: "#221610" }}>
+    <div className="min-h-screen flex flex-col" style={{ background: "#141414" }}>
       {toast && <Toast msg={toast.msg} type={toast.type} onClose={() => setToast(null)} />}
 
       {/* â”€â”€ Page header â”€â”€ */}
       <header
         className="sticky top-0 z-10 flex items-center justify-between px-8 h-16 border-b"
         style={{
-          background: "rgba(34,22,16,0.2)",
+          background: "rgba(15,15,15,0.2)",
           backdropFilter: "blur(8px)",
           WebkitBackdropFilter: "blur(8px)",
           borderColor: "rgba(236,91,19,0.1)",

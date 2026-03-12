@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+﻿import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { videoService, transformVideosArray } from "../services/videoService.js";
 import { useAuth } from "../contexts/AuthContext.jsx";
@@ -178,7 +178,7 @@ const Home = ({ onVideoSelect }) => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#120a06] flex items-center justify-center">
+      <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
           <div className="w-12 h-12 rounded-full border-4 border-[#ec5b13] border-t-transparent animate-spin" />
           <p className="text-slate-400 text-sm">Loading videos...</p>
@@ -188,7 +188,7 @@ const Home = ({ onVideoSelect }) => {
   }
 
   return (
-    <div className="min-h-screen bg-[#120a06] text-slate-100">
+    <div className="min-h-screen bg-[#0a0a0a] text-slate-100">
 
       {/* ── Hero Section ── */}
       <section className="relative h-[65vh] w-full overflow-hidden">
@@ -200,12 +200,12 @@ const Home = ({ onVideoSelect }) => {
               className="w-full h-full object-cover"
             />
           ) : (
-            <div className="w-full h-full bg-gradient-to-br from-[#1c120d] to-[#120a06]" />
+            <div className="w-full h-full bg-gradient-to-br from-[#1c120d] to-[#0a0a0a]" />
           )}
           {/* gradient overlay */}
           <div
             className="absolute inset-0"
-            style={{ background: "linear-gradient(0deg, #120a06 0%, rgba(18,10,6,0.9) 30%, rgba(18,10,6,0) 100%)" }}
+            style={{ background: "linear-gradient(0deg, #0a0a0a 0%, rgba(18,10,6,0.9) 30%, rgba(18,10,6,0) 100%)" }}
           />
         </div>
         <div className="relative h-full flex flex-col justify-end px-6 pb-14 lg:px-12 max-w-4xl">

@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Play } from 'lucide-react';
+import { ArrowLeft, Play, Shuffle, Heart, MoreHorizontal, Clock, ListVideo } from 'lucide-react';
 import { playlistService } from '../services/playlistService';
 import { videoService } from '../services/videoService';
 import { useAuth } from '../contexts/AuthContext';
@@ -126,12 +126,13 @@ const PlaylistDetail = ({ onVideoSelect }) => {
 
   if (!isLoggedIn) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center" style={{ background: '#080808' }}>
         <div className="text-center">
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">Sign in to view playlists</h2>
+          <h2 className="text-2xl font-bold text-slate-100 mb-4">Sign in to view playlists</h2>
           <button
             onClick={() => navigate('/auth')}
-            className="bg-red-600 text-white px-6 py-2 rounded hover:bg-red-700"
+            className="text-white px-6 py-2 rounded-xl font-bold"
+            style={{ background: '#ec5b13' }}
           >
             Sign In
           </button>
@@ -142,10 +143,13 @@ const PlaylistDetail = ({ onVideoSelect }) => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading playlist...</p>
+      <div className="min-h-screen flex items-center justify-center" style={{ background: '#080808' }}>
+        <div className="flex flex-col items-center gap-4">
+          <div
+            className="w-12 h-12 rounded-full border-2 animate-spin"
+            style={{ borderColor: '#ec5b13', borderTopColor: 'transparent' }}
+          />
+          <p className="text-slate-400 text-sm">Loading playlist...</p>
         </div>
       </div>
     );
@@ -153,12 +157,13 @@ const PlaylistDetail = ({ onVideoSelect }) => {
 
   if (!playlist) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center" style={{ background: '#080808' }}>
         <div className="text-center">
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">Playlist not found</h2>
+          <h2 className="text-2xl font-bold text-slate-100 mb-4">Playlist not found</h2>
           <button
             onClick={() => navigate('/playlists')}
-            className="bg-red-600 text-white px-6 py-2 rounded hover:bg-red-700"
+            className="text-white px-6 py-2 rounded-xl font-bold"
+            style={{ background: '#ec5b13' }}
           >
             Back to Playlists
           </button>
@@ -167,207 +172,312 @@ const PlaylistDetail = ({ onVideoSelect }) => {
     );
   }
 
+  const coverImage = videos.length > 0 ? videos[0].thumbnail : null;
+  const totalViews = videos.reduce((acc, v) => acc + (v.views || 0), 0);
+  const formatViews = (n) => {
+    if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
+    if (n >= 1_000) return `${(n / 1_000).toFixed(0)}K`;
+    return String(n);
+  };
+
   return (
-    <div className="min-h-screen bg-white">
-      {/* Main Content Container */}
-      <div className="flex flex-col lg:flex-row min-h-screen">
-        {/* Left Side - Playlist Info */}
-        <div className="w-full lg:w-1/3 xl:w-1/4 bg-gradient-to-b from-red-600 to-red-700 text-white min-h-screen lg:min-h-full">
-          <div className="p-6 h-full flex flex-col">
-            {/* Back Button */}
-            <button
-              onClick={() => navigate('/playlists')}
-              className="flex items-center text-white/80 hover:text-white mb-6 transition-colors"
+    <div className="min-h-screen" style={{ background: '#080808', color: '#f1f5f9' }}>
+      {/* Cinematic Playlist Header */}
+      <section
+        className="relative px-6 md:px-10 pt-10 pb-8"
+        style={{
+          background: coverImage
+            ? `linear-gradient(to bottom, rgba(236,91,19,0.18) 0%, rgba(8,8,8,0) 100%)`
+            : `linear-gradient(to bottom, rgba(236,91,19,0.12) 0%, rgba(8,8,8,0) 100%)`,
+        }}
+      >
+        {/* Back button */}
+        <button
+          onClick={() => navigate('/playlists')}
+          className="flex items-center gap-2 text-slate-400 hover:text-slate-100 transition-colors mb-8 text-sm font-medium"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Back to Playlists
+        </button>
+
+        <div className="flex flex-col md:flex-row gap-8 items-end">
+          {/* Cover art */}
+          <div className="relative group shrink-0">
+            <div
+              className="w-48 h-48 md:w-64 md:h-64 rounded-2xl overflow-hidden shadow-2xl"
+              style={{ border: '1px solid rgba(255,255,255,0.08)', boxShadow: '0 24px 60px rgba(236,91,19,0.15)' }}
             >
-              <ArrowLeft className="w-5 h-5 mr-2" />
-              Back to playlists
-            </button>
-
-            {/* Playlist Thumbnail */}
-            <div className="relative mb-6">
-              <div className="aspect-video bg-gray-900 rounded-lg overflow-hidden">
-                {videos.length > 0 ? (
-                  <div className="relative w-full h-full">
-                    {/* Main thumbnail area */}
-                    {videos[0].thumbnail ? (
-                      <img 
-                        src={videos[0].thumbnail} 
-                        alt="Playlist thumbnail"
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <div className="w-full h-full bg-gradient-to-br from-gray-800 to-gray-900 flex items-center justify-center">
-                        {/* Stacked effect for playlist */}
-                        <div className="relative">
-                          <div className="absolute inset-0 bg-gray-700 rounded transform rotate-1 translate-x-1 translate-y-1"></div>
-                          <div className="absolute inset-0 bg-gray-600 rounded transform -rotate-1"></div>
-                          <div className="relative bg-gray-500 rounded p-8 flex items-center justify-center">
-                            <Play className="w-12 h-12 text-white" />
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                    
-                    {/* Overlay gradient for better text visibility */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent"></div>
-                    
-                    {/* Video count overlay */}
-                    <div className="absolute bottom-3 right-3 bg-black/80 text-white text-sm px-3 py-1 rounded-full flex items-center backdrop-blur-sm">
-                      <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                        <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z" />
-                      </svg>
-                      {videos.length} video{videos.length !== 1 ? 's' : ''}
-                    </div>
-
-                    {/* Play overlay on hover */}
-                    <div className="absolute inset-0 bg-black/0 hover:bg-black/20 transition-all duration-200 flex items-center justify-center opacity-0 hover:opacity-100 cursor-pointer"
-                         onClick={handlePlayAll}>
-                      <div className="bg-red-600 rounded-full p-4 shadow-xl transform scale-90 hover:scale-100 transition-transform">
-                        <Play className="w-8 h-8 text-white fill-current" />
-                      </div>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="w-full h-full bg-gray-100 rounded-lg flex items-center justify-center">
-                    <div className="text-center text-gray-400">
-                      <Play className="w-16 h-16 mx-auto mb-4 opacity-60" />
-                      <p className="text-sm">No videos yet</p>
-                    </div>
-                  </div>
-                )}
+              {coverImage ? (
+                <img
+                  src={coverImage}
+                  alt={playlist.name}
+                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                />
+              ) : (
+                <div
+                  className="w-full h-full flex items-center justify-center"
+                  style={{ background: 'rgba(18,18,18,0.8)' }}
+                >
+                  <ListVideo className="w-16 h-16" style={{ color: '#ec5b13', opacity: 0.6 }} />
+                </div>
+              )}
+              {/* Hover play overlay */}
+              <div
+                className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center cursor-pointer"
+                style={{ background: 'rgba(0,0,0,0.45)' }}
+                onClick={handlePlayAll}
+              >
+                <Play className="w-16 h-16 text-white fill-white drop-shadow-xl" />
               </div>
             </div>
+          </div>
 
-            {/* Playlist Info */}
-            <div className="mb-6">
-              <h1 className="text-2xl font-bold mb-2 line-clamp-2">{playlist.name}</h1>
-              {playlist.description && (
-                <p className="text-white/80 text-sm mb-4 line-clamp-3">{playlist.description}</p>
+          {/* Playlist info */}
+          <div className="flex-1">
+            <span
+              className="text-xs font-bold uppercase tracking-[0.2em] mb-3 block"
+              style={{ color: '#ec5b13' }}
+            >
+              {playlist.isPublic === false ? 'Private Playlist' : 'Public Playlist'}
+            </span>
+            <h2 className="text-4xl md:text-6xl font-black tracking-tighter mb-4 text-slate-100">
+              {playlist.name}
+            </h2>
+            {playlist.description && (
+              <p className="text-slate-400 text-sm mb-4 max-w-xl line-clamp-2">{playlist.description}</p>
+            )}
+            <div className="flex flex-wrap items-center gap-3 text-sm font-medium text-slate-400">
+              {user && (
+                <div className="flex items-center gap-2">
+                  <div
+                    className="w-6 h-6 rounded-full overflow-hidden flex items-center justify-center text-white text-xs font-bold"
+                    style={{ background: '#ec5b13' }}
+                  >
+                    {user.avatar ? (
+                      <img src={user.avatar} alt={user.fullName} className="w-full h-full object-cover" />
+                    ) : (
+                      user.fullName?.[0]?.toUpperCase() || 'U'
+                    )}
+                  </div>
+                  <span className="text-slate-100">{user.fullName}</span>
+                </div>
+              )}
+              <span className="w-1 h-1 rounded-full bg-slate-600" />
+              <span>{videos.length} video{videos.length !== 1 ? 's' : ''}</span>
+              {totalViews > 0 && (
+                <>
+                  <span className="w-1 h-1 rounded-full bg-slate-600" />
+                  <span>{formatViews(totalViews)} views</span>
+                </>
+              )}
+              {playlist.updatedAt && (
+                <>
+                  <span className="w-1 h-1 rounded-full bg-slate-600" />
+                  <span>Updated {formatTimeAgo(playlist.updatedAt)}</span>
+                </>
               )}
             </div>
 
-            {/* Spacer to push Play button to bottom */}
-            <div className="flex-1"></div>
-
-            {/* Action Buttons */}
-            <div className="space-y-3 mb-6">
+            {/* Action buttons */}
+            <div className="flex flex-wrap gap-3 mt-8">
               <button
                 onClick={handlePlayAll}
                 disabled={videos.length === 0}
-                className="w-full bg-white text-gray-900 py-3 px-4 rounded-full font-medium hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                className="flex items-center gap-2 px-8 py-3 rounded-xl text-white font-bold transition-transform hover:scale-105 disabled:opacity-40 disabled:cursor-not-allowed"
+                style={{ background: '#ec5b13', boxShadow: '0 8px 24px rgba(236,91,19,0.25)' }}
               >
-                <Play className="w-5 h-5 mr-2" />
-                Play all
+                <Play className="w-5 h-5 fill-white" />
+                Play All
+              </button>
+              <button
+                onClick={() => {
+                  if (videos.length > 0) {
+                    const idx = Math.floor(Math.random() * videos.length);
+                    navigate(`/video/${videos[idx]._id}?list=${playlistId}&index=${idx}`);
+                  }
+                }}
+                disabled={videos.length === 0}
+                className="flex items-center gap-2 px-8 py-3 rounded-xl font-bold transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }}
+                onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.12)')}
+                onMouseLeave={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.06)')}
+              >
+                <Shuffle className="w-5 h-5" />
+                Shuffle
+              </button>
+              <button
+                className="p-3.5 rounded-xl transition-colors"
+                style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }}
+                onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.12)')}
+                onMouseLeave={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.06)')}
+              >
+                <Heart className="w-5 h-5" />
+              </button>
+              <button
+                className="p-3.5 rounded-xl transition-colors"
+                style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }}
+                onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.12)')}
+                onMouseLeave={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.06)')}
+              >
+                <MoreHorizontal className="w-5 h-5" />
               </button>
             </div>
           </div>
         </div>
+      </section>
 
-        {/* Right Side - Video List */}
-        <div className="flex-1 w-full lg:w-2/3 xl:w-3/4 min-h-screen bg-gray-50">
-          <div className="p-6 h-full">
-            {videosLoading ? (
-              <div className="text-center py-12">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-600 mx-auto mb-4"></div>
-                <p className="text-gray-600">Loading videos...</p>
-              </div>
-            ) : videos.length === 0 ? (
-              <div className="text-center py-16">
-                <Play className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">No videos in this playlist</h3>
-                <p className="text-gray-600 mb-6">Add videos to this playlist to see them here</p>
-                <button
-                  onClick={() => navigate('/')}
-                  className="bg-red-600 text-white px-6 py-3 rounded hover:bg-red-700"
-                >
-                  Browse Videos
-                </button>
-              </div>
-            ) : (
-              <div className="space-y-1">
-                {videos.map((video, index) => (
-                  <div
-                    key={video._id}
-                    className={`flex items-start p-3 rounded-lg hover:bg-gray-50 cursor-pointer group transition-colors relative ${
-                      index === currentVideoIndex ? 'bg-gray-50 border-l-4 border-red-600' : ''
-                    }`}
-                    onClick={() => handleVideoClick(video, index)}
-                  >
-                    {/* Current video indicator */}
-                    {index === currentVideoIndex && (
-                      <div className="absolute left-0 top-0 bottom-0 w-1 bg-red-600"></div>
-                    )}
+      {/* Divider */}
+      <div style={{ height: '1px', background: 'rgba(255,255,255,0.05)', margin: '0 2.5rem' }} />
 
-                    {/* Video Index */}
-                    <div className="w-8 flex items-center justify-center mr-3 text-gray-500">
-                      {index === currentVideoIndex ? (
-                        <div className="w-4 h-4 bg-red-600 rounded-full flex items-center justify-center">
-                          <Play className="w-2.5 h-2.5 text-white fill-current" />
-                        </div>
-                      ) : (
-                        <>
-                          <span className="group-hover:hidden text-sm">{index + 1}</span>
-                          <Play className="w-4 h-4 hidden group-hover:block text-gray-600" />
-                        </>
-                      )}
-                    </div>
-
-                    {/* Video Thumbnail */}
-                    <div className="relative flex-shrink-0">
-                      <div className="w-40 h-24 bg-gray-200 rounded overflow-hidden">
-                        {video.thumbnail ? (
-                          <img 
-                            src={video.thumbnail} 
-                            alt={video.title}
-                            className="w-full h-full object-cover"
-                          />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center bg-gray-100">
-                            <Play className="w-6 h-6 text-gray-400" />
-                          </div>
-                        )}
-                      </div>
-                      {video.duration && (
-                        <div className="absolute bottom-1 right-1 bg-black/80 text-white text-xs px-1.5 py-0.5 rounded">
-                          {formatDuration(video.duration)}
-                        </div>
-                      )}
-                      
-                      {/* Play overlay on hover */}
-                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all duration-200 flex items-center justify-center opacity-0 group-hover:opacity-100">
-                        <div className="bg-white/90 rounded-full p-2">
-                          <Play className="w-4 h-4 text-gray-900 fill-current" />
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Video Info */}
-                    <div className="flex-1 ml-4 min-w-0">
-                      <h3 className="font-medium text-gray-900 line-clamp-2 mb-1 text-sm leading-5">
-                        {video.title}
-                      </h3>
-                      <div className="text-xs text-gray-600 space-y-1">
-                        <p className="line-clamp-1 text-gray-700 hover:text-gray-900 cursor-pointer">
-                          {video.owner?.fullName || 'Unknown Channel'}
-                        </p>
-                        <div className="flex items-center text-gray-500">
-                          <span>{(video.views || 0).toLocaleString()} views</span>
-                          <span className="mx-1.5">•</span>
-                          <span>{formatTimeAgo(video.createdAt)}</span>
-                        </div>
-                      </div>
-                    </div>
-
-
-                  </div>
-                ))}
-              </div>
-            )}
+      {/* Video List */}
+      <section className="px-6 md:px-10 py-6">
+        {videosLoading ? (
+          <div className="flex justify-center py-16">
+            <div
+              className="w-10 h-10 rounded-full border-2 animate-spin"
+              style={{ borderColor: '#ec5b13', borderTopColor: 'transparent' }}
+            />
           </div>
-        </div>
-      </div>
+        ) : videos.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-24 gap-4">
+            <div
+              className="w-20 h-20 rounded-2xl flex items-center justify-center"
+              style={{ background: 'rgba(236,91,19,0.1)', border: '1px solid rgba(236,91,19,0.2)' }}
+            >
+              <ListVideo className="w-10 h-10" style={{ color: '#ec5b13' }} />
+            </div>
+            <h3 className="text-xl font-bold text-slate-100">No videos in this playlist</h3>
+            <p className="text-slate-500 text-sm">Add videos while browsing and they'll appear here.</p>
+            <button
+              onClick={() => navigate('/')}
+              className="mt-2 px-6 py-2.5 rounded-xl text-white font-bold text-sm"
+              style={{ background: '#ec5b13' }}
+            >
+              Browse Videos
+            </button>
+          </div>
+        ) : (
+          <div className="w-full overflow-x-auto">
+            <table className="w-full text-left border-separate" style={{ borderSpacing: '0 4px' }}>
+              <thead>
+                <tr
+                  className="text-[11px] font-bold uppercase tracking-widest"
+                  style={{ color: '#64748b' }}
+                >
+                  <th className="w-12 px-4 py-3">#</th>
+                  <th className="px-4 py-3">Title</th>
+                  <th className="px-4 py-3 hidden md:table-cell">Creator</th>
+                  <th className="px-4 py-3 hidden lg:table-cell">Date Added</th>
+                  <th className="w-24 px-4 py-3 text-right">
+                    <Clock className="w-4 h-4 inline-block" />
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="text-sm">
+                {videos.map((video, index) => (
+                  <tr
+                    key={video._id}
+                    className="group cursor-pointer transition-all"
+                    style={{ borderRadius: '0.75rem' }}
+                    onClick={() => handleVideoClick(video, index)}
+                    onMouseEnter={e => {
+                      e.currentTarget.style.background = 'rgba(255,255,255,0.04)';
+                    }}
+                    onMouseLeave={e => {
+                      e.currentTarget.style.background =
+                        index === currentVideoIndex ? 'rgba(236,91,19,0.08)' : 'transparent';
+                    }}
+                  >
+                    {/* # */}
+                    <td
+                      className="px-4 py-3 rounded-l-xl font-medium"
+                      style={{ color: index === currentVideoIndex ? '#ec5b13' : '#64748b' }}
+                    >
+                      {index === currentVideoIndex ? (
+                        <Play className="w-4 h-4 fill-current" style={{ color: '#ec5b13' }} />
+                      ) : (
+                        <span className="group-hover:hidden">{index + 1}</span>
+                      )}
+                      {index !== currentVideoIndex && (
+                        <Play className="w-4 h-4 hidden group-hover:block text-slate-400" />
+                      )}
+                    </td>
 
-      {/* Toast Notification */}
+                    {/* Title + thumbnail */}
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-4">
+                        <div className="relative w-14 h-10 flex-shrink-0 rounded-lg overflow-hidden">
+                          {video.thumbnail ? (
+                            <img
+                              src={video.thumbnail}
+                              alt={video.title}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <div
+                              className="w-full h-full flex items-center justify-center"
+                              style={{ background: 'rgba(18,18,18,0.8)' }}
+                            >
+                              <Play className="w-4 h-4 text-slate-500" />
+                            </div>
+                          )}
+                          {/* Hover play overlay */}
+                          <div
+                            className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
+                            style={{ background: 'rgba(0,0,0,0.55)' }}
+                          >
+                            <Play className="w-4 h-4 text-white fill-white" />
+                          </div>
+                          {/* Duration badge */}
+                          {video.duration && (
+                            <div className="absolute bottom-0.5 right-0.5 bg-black/80 px-1 rounded text-[9px] font-bold text-white">
+                              {formatDuration(video.duration)}
+                            </div>
+                          )}
+                        </div>
+                        <div className="min-w-0">
+                          <p
+                            className="font-bold text-slate-100 line-clamp-1 leading-tight transition-colors"
+                            style={index === currentVideoIndex ? { color: '#ec5b13' } : {}}
+                          >
+                            {video.title}
+                          </p>
+                          <p className="text-xs text-slate-500 mt-0.5 line-clamp-1">
+                            {(video.views || 0).toLocaleString()} views
+                          </p>
+                        </div>
+                      </div>
+                    </td>
+
+                    {/* Creator */}
+                    <td className="px-4 py-3 text-slate-400 font-medium hidden md:table-cell">
+                      {video.owner?.fullName || '—'}
+                    </td>
+
+                    {/* Date added */}
+                    <td className="px-4 py-3 text-slate-500 hidden lg:table-cell">
+                      {video.createdAt
+                        ? new Date(video.createdAt).toLocaleDateString('en-US', {
+                            month: 'short',
+                            day: 'numeric',
+                            year: 'numeric',
+                          })
+                        : '—'}
+                    </td>
+
+                    {/* Duration */}
+                    <td className="px-4 py-3 rounded-r-xl text-right text-slate-500 tabular-nums">
+                      {formatDuration(video.duration)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </section>
+
+      {/* Toast */}
       {toast.show && (
         <Toast
           message={toast.message}

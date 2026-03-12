@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react"
+﻿import { useState, useEffect, useRef } from "react"
 import { Link } from "react-router-dom"
 import { Upload, Plus, List, BarChart3, Users, Video, Trash2, Edit, Eye, Play, MoreVertical, Settings, Bell, Heart, MessageCircle, Share2, FolderPlus, FolderEdit, Radio, Search } from "lucide-react"
 import { videoService, transformVideosArray } from "../services/videoService"
@@ -657,14 +657,14 @@ const MyChannel = () => {
                   className="text-xs font-bold bg-transparent border-none outline-none focus:ring-0 cursor-pointer text-right"
                   style={{ color: '#ec5b13' }}
                 >
-                  <option value="" style={{ background: '#221610' }}>Select type</option>
-                  <option value="Music" style={{ background: '#221610' }}>Music</option>
-                  <option value="Movies" style={{ background: '#221610' }}>Movies</option>
-                  <option value="Gaming" style={{ background: '#221610' }}>Gaming</option>
-                  <option value="News" style={{ background: '#221610' }}>News</option>
-                  <option value="Sports" style={{ background: '#221610' }}>Sports</option>
-                  <option value="Learning" style={{ background: '#221610' }}>Learning</option>
-                  <option value="Fashion" style={{ background: '#221610' }}>Fashion</option>
+                  <option value="" style={{ background: '#141414' }}>Select type</option>
+                  <option value="Music" style={{ background: '#141414' }}>Music</option>
+                  <option value="Movies" style={{ background: '#141414' }}>Movies</option>
+                  <option value="Gaming" style={{ background: '#141414' }}>Gaming</option>
+                  <option value="News" style={{ background: '#141414' }}>News</option>
+                  <option value="Sports" style={{ background: '#141414' }}>Sports</option>
+                  <option value="Learning" style={{ background: '#141414' }}>Learning</option>
+                  <option value="Fashion" style={{ background: '#141414' }}>Fashion</option>
                 </select>
               </div>
             </div>
@@ -975,7 +975,7 @@ const MyChannel = () => {
                     {openDropdown === video.id && (
                       <div
                         className="absolute right-0 mt-2 w-48 rounded-xl z-20 overflow-hidden shadow-2xl"
-                        style={{ background: 'rgba(34,22,16,0.97)', border: '1px solid rgba(236,91,19,0.15)', backdropFilter: 'blur(16px)' }}
+                        style={{ background: 'rgba(15,15,15,0.97)', border: '1px solid rgba(236,91,19,0.15)', backdropFilter: 'blur(16px)' }}
                       >
                         {[
                           { label: 'Copy Link', action: () => { navigator.clipboard.writeText(`${window.location.origin}/video/${video.id}`); setOpenDropdown(null); showToast('Video link copied!', 'success'); } },
@@ -1198,7 +1198,7 @@ const MyChannel = () => {
   }
 
   return (
-    <div className="min-h-screen p-6" style={{ background: '#221610' }}>
+    <div className="min-h-screen p-6" style={{ background: '#141414' }}>
       {/* Page header */}
       <div className="flex items-center justify-between mb-8">
         <h1 className="text-3xl font-black text-white">My Channel</h1>

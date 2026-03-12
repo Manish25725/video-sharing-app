@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+﻿import { useEffect, useState } from "react";
 import { Play } from "lucide-react";
 
 const STEPS = [
@@ -34,7 +34,7 @@ const AppLoader = () => {
   return (
     <div
       className="relative flex h-screen w-full flex-col items-center justify-center overflow-hidden transition-colors duration-500"
-      style={{ background: "#221610", fontFamily: "'Public Sans', sans-serif" }}
+      style={{ background: "#141414", fontFamily: "'Public Sans', sans-serif" }}
     >
       {/* Ambient background glows */}
       <div className="absolute inset-0 z-0 overflow-hidden">

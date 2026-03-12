@@ -1,6 +1,6 @@
-import { useState, useEffect, useRef } from 'react';
+﻿import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, Bell, Settings, Play, Shuffle, ThumbsUp } from 'lucide-react';
+import { Play, Shuffle, ThumbsUp } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { likeService } from '../services/likeService';
 import { formatDuration, formatViews, formatTimeAgo } from '../utils/formatters';
@@ -82,7 +82,6 @@ const LikedVideos = ({ onVideoSelect }) => {
   const [likedVideos, setLikedVideos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [search, setSearch] = useState('');
   const [lastUpdated, setLastUpdated] = useState(null);
 
   useEffect(() => {
@@ -135,16 +134,13 @@ const LikedVideos = ({ onVideoSelect }) => {
     fetchLikedVideos();
   }, [isAuthenticated, user]);
 
-  const filtered = likedVideos.filter(v =>
-    !search || v.title?.toLowerCase().includes(search.toLowerCase()) ||
-    v.channelName?.toLowerCase().includes(search.toLowerCase())
-  );
+  const filtered = likedVideos;
 
   /* ── Unauthenticated ───────────────────────────────────────────── */
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen flex items-center justify-center p-8"
-        style={{ background: '#221610' }}>
+        style={{ background: '#141414' }}>
         <div className="text-center">
           <div className="w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6"
             style={{ background: 'rgba(236,91,19,0.15)', boxShadow: '0 0 40px rgba(236,91,19,0.2)' }}>
@@ -165,7 +161,7 @@ const LikedVideos = ({ onVideoSelect }) => {
   /* ── Loading ───────────────────────────────────────────────────── */
   if (loading) {
     return (
-      <div className="min-h-screen p-8" style={{ background: '#221610' }}>
+      <div className="min-h-screen p-8" style={{ background: '#141414' }}>
         {/* Sticky header skeleton */}
         <div className="h-16 rounded-2xl mb-8 animate-pulse"
           style={{ background: 'rgba(45,30,22,0.6)' }} />
@@ -195,63 +191,7 @@ const LikedVideos = ({ onVideoSelect }) => {
 
   /* ── Main render ───────────────────────────────────────────────── */
   return (
-    <div className="min-h-screen" style={{ background: '#221610' }}>
-      {/* Sticky frosted header */}
-      <header className="sticky top-0 z-40 px-8 py-4 flex items-center justify-between gap-6"
-        style={{
-          background: 'rgba(34,22,16,0.85)',
-          backdropFilter: 'blur(16px)',
-          WebkitBackdropFilter: 'blur(16px)',
-          borderBottom: '1px solid rgba(236,91,19,0.1)'
-        }}>
-        <div className="flex-1 max-w-xl relative">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none"
-            style={{ color: '#64748b' }} />
-          <input
-            type="text"
-            placeholder="Search your liked videos..."
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            className="w-full rounded-full pl-11 pr-4 py-2.5 text-sm outline-none transition-all"
-            style={{
-              background: 'rgba(236,91,19,0.06)',
-              border: '1px solid rgba(236,91,19,0.12)',
-              color: '#f1f5f9',
-            }}
-            onFocus={e => {
-              e.target.style.border = '1px solid rgba(236,91,19,0.5)';
-              e.target.style.boxShadow = '0 0 0 3px rgba(236,91,19,0.08)';
-            }}
-            onBlur={e => {
-              e.target.style.border = '1px solid rgba(236,91,19,0.12)';
-              e.target.style.boxShadow = 'none';
-            }}
-          />
-        </div>
-        <div className="flex items-center gap-3">
-          <button className="p-2 rounded-full transition-colors"
-            style={{ color: '#94a3b8' }}
-            onMouseEnter={e => e.currentTarget.style.background = 'rgba(236,91,19,0.1)'}
-            onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
-            <Bell className="w-5 h-5" />
-          </button>
-          <button className="p-2 rounded-full transition-colors"
-            style={{ color: '#94a3b8' }}
-            onMouseEnter={e => e.currentTarget.style.background = 'rgba(236,91,19,0.1)'}
-            onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
-            <Settings className="w-5 h-5" />
-          </button>
-          <div className="w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm border"
-            style={{
-              background: 'rgba(236,91,19,0.15)',
-              color: '#ec5b13',
-              borderColor: 'rgba(236,91,19,0.3)'
-            }}>
-            {user?.fullName?.[0]?.toUpperCase() || user?.userName?.[0]?.toUpperCase() || 'U'}
-          </div>
-        </div>
-      </header>
-
+    <div className="min-h-screen" style={{ background: '#141414' }}>
       {/* Content */}
       <div className="p-8">
         {/* Error banner */}
@@ -311,12 +251,10 @@ const LikedVideos = ({ onVideoSelect }) => {
                 style={{ background: '#ec5b13' }}>+</span>
             </div>
             <h3 className="text-xl font-black text-white mb-2">
-              {search ? 'No results found' : 'No liked videos yet'}
+              No liked videos yet
             </h3>
             <p className="text-sm text-center max-w-xs" style={{ color: '#94a3b8' }}>
-              {search
-                ? `No liked videos match "${search}"`
-                : 'Videos you like will show up here. Start exploring and hit that like button!'}
+              Videos you like will show up here. Start exploring and hit that like button!
             </p>
           </div>
         ) : (

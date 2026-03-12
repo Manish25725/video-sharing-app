@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Play, MoreVertical, Trash2, List, PlusCircle } from 'lucide-react';
+import { Search, Bell, Plus, Play, Trash2, List, PlusCircle, Grid3X3, Rows3, Clock3, Heart, Shuffle, SkipBack, SkipForward, Repeat, Volume2, Maximize2, Music4 } from 'lucide-react';
 import { playlistService } from '../services/playlistService';
 import { videoService } from '../services/videoService';
 import { useAuth } from '../contexts/AuthContext';
@@ -17,6 +17,8 @@ const Playlists = () => {
   const [newPlaylistDescription, setNewPlaylistDescription] = useState('');
   const [creating, setCreating] = useState(false);
   const [toast, setToast] = useState({ show: false, message: '', type: '' });
+  const [search, setSearch] = useState('');
+  const [viewMode, setViewMode] = useState('grid');
 
   useEffect(() => {
     if (isLoggedIn) {
@@ -129,9 +131,29 @@ const Playlists = () => {
     navigate(`/playlist/${playlistId}`);
   };
 
+  const filteredPlaylists = playlists.filter((playlist) => {
+    const term = search.trim().toLowerCase();
+    if (!term) return true;
+    return (
+      playlist.name?.toLowerCase().includes(term) ||
+      playlist.description?.toLowerCase().includes(term)
+    );
+  });
+
+  const recentTracks = playlists.slice(0, 5).map((playlist, index) => ({
+    id: playlist._id,
+    order: index + 1,
+    title: playlist.name,
+    artist: user?.fullName || user?.userName || 'PlayVibe',
+    album: playlist.description || 'Your playlist collection',
+    dateAdded: playlist.updatedAt ? new Date(playlist.updatedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : 'Recently updated',
+    duration: `${Math.max(1, playlist.videos?.length || 0)}:${String(((playlist.videos?.length || 0) * 7) % 60).padStart(2, '0')}`,
+    thumbnail: playlistThumbnails[playlist._id],
+  }));
+
   if (!isLoggedIn) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: "#120a06" }}>
+      <div className="min-h-screen flex items-center justify-center" style={{ background: "#0a0a0a" }}>
         <div className="text-center">
           <div className="w-20 h-20 rounded-2xl flex items-center justify-center mx-auto mb-6"
             style={{ background: "linear-gradient(135deg,#ec5b13,#9333ea)" }}>
@@ -153,7 +175,7 @@ const Playlists = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: "#120a06" }}>
+      <div className="min-h-screen flex items-center justify-center" style={{ background: "#0a0a0a" }}>
         <div className="text-center">
           <div className="w-12 h-12 rounded-full border-2 border-transparent border-t-[#ec5b13] animate-spin mx-auto mb-4"
             style={{ borderTopColor: "#ec5b13", borderRightColor: "rgba(236,91,19,0.2)" }} />
@@ -164,128 +186,214 @@ const Playlists = () => {
   }
 
   return (
-    <div className="min-h-screen p-8" style={{ background: "#120a06" }}>
-      <div className="max-w-7xl mx-auto">
-
-        {/* ── Title & Actions ── */}
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
-          <div className="space-y-1">
-            <h2 className="text-4xl font-black tracking-tight text-white">My Playlists</h2>
-            <p className="text-slate-400">Curate and organize your favorite videos</p>
-          </div>
-          <button
-            onClick={() => setShowCreateModal(true)}
-            className="flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-white shadow-lg transition-all hover:brightness-110 active:scale-95"
-            style={{ background: "#ec5b13", boxShadow: "0 8px 24px rgba(236,91,19,0.3)" }}
-          >
-            <PlusCircle className="w-5 h-5" />
-            <span>Create New Playlist</span>
-          </button>
-        </div>
-
-        {/* ── Tabs ── */}
-        <div className="flex gap-8 mb-8" style={{ borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
-          <button className="pb-4 px-2 text-sm font-bold border-b-2 transition-colors"
-            style={{ borderColor: "#ec5b13", color: "#ec5b13" }}>
-            All Playlists
-          </button>
-          <button className="pb-4 px-2 text-sm font-bold border-b-2 border-transparent text-slate-500 hover:text-slate-300 transition-colors">
-            Recently Added
-          </button>
-          <button className="pb-4 px-2 text-sm font-bold border-b-2 border-transparent text-slate-500 hover:text-slate-300 transition-colors">
-            Shared with me
-          </button>
-        </div>
-
-        {/* ── Empty State ── */}
-        {playlists.length === 0 ? (
-          <div className="text-center py-24">
-            <div className="w-20 h-20 rounded-2xl flex items-center justify-center mx-auto mb-6"
-              style={{ background: "rgba(236,91,19,0.12)" }}>
-              <List className="w-10 h-10" style={{ color: "#ec5b13" }} />
+    <div className="min-h-screen" style={{ background: "#080808" }}>
+      <main className="flex-1 flex flex-col overflow-y-auto">
+        <div className="p-4 md:p-8 max-w-7xl mx-auto w-full">
+          <div className="flex items-end justify-between mb-10 gap-4 flex-wrap">
+            <div>
+              <h2 className="text-4xl font-black tracking-tight text-slate-100">Playlists</h2>
+              <p className="mt-1" style={{ color: '#94a3b8' }}>
+                Organize your mood with {filteredPlaylists.length} active collection{filteredPlaylists.length !== 1 ? 's' : ''}
+              </p>
             </div>
-            <h3 className="text-xl font-bold text-white mb-2">No playlists yet</h3>
-            <p className="text-slate-400 mb-8">Create your first playlist to organize your favorite videos</p>
-            <button
-              onClick={() => setShowCreateModal(true)}
-              className="px-8 py-3 rounded-xl font-bold text-white shadow-lg transition-all hover:brightness-110 active:scale-95"
-              style={{ background: "#ec5b13", boxShadow: "0 8px 24px rgba(236,91,19,0.35)" }}
-            >
-              Create Your First Playlist
-            </button>
-          </div>
-        ) : (
-          /* ── Playlist Grid ── */
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6">
-            {playlists.map((playlist) => (
-              <div
-                key={playlist._id}
-                className="group flex flex-col gap-3 p-4 rounded-2xl cursor-pointer transition-all duration-200"
-                style={{
-                  background: "rgba(30,17,10,0.7)",
-                  border: "1px solid rgba(255,255,255,0.05)",
-                  backdropFilter: "blur(8px)",
-                }}
-                onMouseEnter={e => e.currentTarget.style.border = "1px solid rgba(236,91,19,0.25)"}
-                onMouseLeave={e => e.currentTarget.style.border = "1px solid rgba(255,255,255,0.05)"}
-                onClick={() => handlePlaylistClick(playlist._id)}
+            <div className="flex items-center gap-2 p-1 rounded-lg" style={{ background: 'rgba(236,91,19,0.1)' }}>
+              <button
+                onClick={() => setViewMode('grid')}
+                className="p-2 rounded-md shadow-sm transition-colors"
+                style={viewMode === 'grid' ? { background: 'rgba(236,91,19,0.2)', color: '#ec5b13' } : { color: '#94a3b8' }}
               >
-                {/* Thumbnail — square */}
-                <div className="relative aspect-square rounded-xl overflow-hidden shadow-xl"
-                  style={{ background: "rgba(12,6,2,0.8)" }}>
-                  {playlistThumbnails[playlist._id] ? (
-                    <img
-                      src={playlistThumbnails[playlist._id]}
-                      alt={playlist.name}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center"
-                      style={{ background: "linear-gradient(135deg,rgba(236,91,19,0.15),rgba(147,51,234,0.15))" }}>
-                      <List className="w-12 h-12 text-slate-600" />
-                    </div>
-                  )}
+                <Grid3X3 className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => setViewMode('list')}
+                className="p-2 rounded-md transition-colors"
+                style={viewMode === 'list' ? { background: 'rgba(236,91,19,0.2)', color: '#ec5b13' } : { color: '#94a3b8' }}
+              >
+                <Rows3 className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
 
-                  {/* Hover play overlay */}
-                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                    <button
-                      className="w-14 h-14 rounded-full text-white flex items-center justify-center shadow-2xl transform translate-y-4 group-hover:translate-y-0 transition-all"
-                      style={{ background: "#ec5b13", boxShadow: "0 8px 32px rgba(236,91,19,0.5)" }}
-                      onClick={(e) => { e.stopPropagation(); handlePlaylistClick(playlist._id); }}
+          {filteredPlaylists.length === 0 ? (
+            <div className="text-center py-24">
+              <div className="w-20 h-20 rounded-2xl flex items-center justify-center mx-auto mb-6" style={{ background: 'rgba(236,91,19,0.12)' }}>
+                <List className="w-10 h-10" style={{ color: '#ec5b13' }} />
+              </div>
+              <h3 className="text-xl font-bold text-white mb-2">{search ? 'No playlists found' : 'No playlists yet'}</h3>
+              <p className="mb-8" style={{ color: '#94a3b8' }}>
+                {search ? `No playlists match "${search}".` : 'Create your first playlist to organize your favorite videos.'}
+              </p>
+              <button
+                onClick={() => setShowCreateModal(true)}
+                className="px-8 py-3 rounded-xl font-bold text-white shadow-lg transition-all hover:brightness-110 active:scale-95"
+                style={{ background: '#ec5b13', boxShadow: '0 8px 24px rgba(236,91,19,0.35)' }}
+              >
+                Create Your First Playlist
+              </button>
+            </div>
+          ) : (
+            <>
+              <div className={viewMode === 'grid' ? 'grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6' : 'grid grid-cols-1 md:grid-cols-2 gap-4'}>
+                {filteredPlaylists.map((playlist, index) => (
+                  <div
+                    key={playlist._id}
+                    className="playlist-card group cursor-pointer"
+                    onClick={() => handlePlaylistClick(playlist._id)}
+                  >
+                    <div
+                      className={`${viewMode === 'grid' ? 'aspect-square' : 'aspect-[16/9]'} relative rounded-2xl overflow-hidden mb-4 transition-all duration-300 group-hover:-translate-y-2`}
+                      style={{
+                        background: 'rgba(30,17,10,0.7)',
+                        boxShadow: '0 0 0 1px rgba(236,91,19,0.08)',
+                      }}
                     >
-                      <Play className="w-6 h-6 fill-current ml-0.5" />
-                    </button>
-                  </div>
-
-                  {/* Video count badge */}
-                  <div className="absolute bottom-2 right-2 px-2 py-0.5 rounded-lg text-[10px] font-semibold text-white"
-                    style={{ background: "rgba(0,0,0,0.75)", backdropFilter: "blur(4px)" }}>
-                    {playlist.videos?.length || 0} videos
-                  </div>
-                </div>
-
-                {/* Info row */}
-                <div className="flex justify-between items-start pt-1">
-                  <div className="min-w-0">
-                    <h3 className="font-bold text-white truncate pr-2 text-sm">{playlist.name}</h3>
-                    <p className="text-xs text-slate-500 mt-1">
-                      {playlist.videos?.length || 0} video{(playlist.videos?.length || 0) !== 1 ? 's' : ''}
-                      {playlist.description ? ` • ${playlist.description.slice(0, 30)}${playlist.description.length > 30 ? '…' : ''}` : ''}
+                      {playlistThumbnails[playlist._id] ? (
+                        <img
+                          src={playlistThumbnails[playlist._id]}
+                          alt={playlist.name}
+                          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center" style={{ background: 'linear-gradient(135deg, rgba(236,91,19,0.12), rgba(59,130,246,0.08))' }}>
+                          <Music4 className="w-12 h-12" style={{ color: 'rgba(236,91,19,0.45)' }} />
+                        </div>
+                      )}
+                      <div className="play-overlay absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 transition-opacity duration-300">
+                        <div className="bg-[#ec5b13] w-14 h-14 rounded-full flex items-center justify-center text-white shadow-xl transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300">
+                          <Play className="w-7 h-7 fill-current ml-0.5" />
+                        </div>
+                      </div>
+                      <div className="absolute bottom-3 left-3 flex gap-1">
+                        <span className="bg-black/60 backdrop-blur-md text-[10px] px-2 py-1 rounded text-white font-bold uppercase tracking-wider">
+                          {playlist.videos?.length > 40 ? 'MEGA MIX' : playlist.videos?.length > 15 ? 'ENERGY' : 'CHILL'}
+                        </span>
+                      </div>
+                      <div className="absolute top-3 right-3 flex items-center gap-2">
+                        <span className="px-2 py-1 rounded-lg text-[10px] font-semibold text-white" style={{ background: 'rgba(0,0,0,0.65)' }}>
+                          {playlist.videos?.length || 0} tracks
+                        </span>
+                        <button
+                          className="p-2 rounded-full transition-colors"
+                          style={{ background: 'rgba(0,0,0,0.55)', color: '#f8fafc' }}
+                          onClick={(e) => { e.stopPropagation(); handleDeletePlaylist(playlist._id); }}
+                          title="Delete playlist"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                    <h3 className="font-bold text-lg transition-colors text-slate-100 group-hover:text-[#ec5b13]">{playlist.name}</h3>
+                    <p className="text-sm" style={{ color: '#94a3b8' }}>
+                      {playlist.videos?.length || 0} Tracks • {index === 0 ? 'Updated today' : index === 1 ? '2 hours ago' : index < 4 ? '3 days ago' : 'Last month'}
                     </p>
                   </div>
-                  <button
-                    className="text-slate-500 hover:text-[#ec5b13] transition-colors flex-shrink-0"
-                    onClick={(e) => { e.stopPropagation(); handleDeletePlaylist(playlist._id); }}
-                    title="Delete playlist"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
+                ))}
+
+                <div className="group cursor-pointer" onClick={() => setShowCreateModal(true)}>
+                  <div className={`${viewMode === 'grid' ? 'aspect-square' : 'aspect-[16/9]'} relative rounded-2xl border-2 border-dashed flex flex-col items-center justify-center mb-4 transition-all duration-300`} style={{ borderColor: 'rgba(236,91,19,0.2)', background: 'rgba(236,91,19,0.05)' }}>
+                    <div className="w-16 h-16 rounded-full flex items-center justify-center transition-transform duration-300 group-hover:scale-110" style={{ background: 'rgba(236,91,19,0.1)', color: '#ec5b13' }}>
+                      <Plus className="w-8 h-8" />
+                    </div>
+                  </div>
+                  <h3 className="font-bold text-lg text-center transition-colors text-slate-100 group-hover:text-[#ec5b13]">New Playlist</h3>
                 </div>
               </div>
-            ))}
-          </div>
+
+              <div className="mt-20">
+                <h3 className="text-2xl font-black mb-6 flex items-center gap-3 text-slate-100">
+                  <Clock3 className="w-6 h-6" style={{ color: '#ec5b13' }} />
+                  Recently Played
+                </h3>
+                <div className="rounded-3xl p-6 overflow-x-auto" style={{ background: 'rgba(236, 91, 19, 0.05)', backdropFilter: 'blur(12px)', border: '1px solid rgba(236, 91, 19, 0.1)' }}>
+                  <table className="w-full text-left min-w-[720px]">
+                    <thead>
+                      <tr className="text-sm border-b" style={{ color: '#94a3b8', borderColor: 'rgba(236,91,19,0.1)' }}>
+                        <th className="pb-4 font-medium pl-4">#</th>
+                        <th className="pb-4 font-medium">Title</th>
+                        <th className="pb-4 font-medium">Album</th>
+                        <th className="pb-4 font-medium">Date Added</th>
+                        <th className="pb-4 font-medium text-right pr-4">Duration</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {recentTracks.map((track) => (
+                        <tr key={track.id} className="group transition-colors cursor-pointer" onClick={() => handlePlaylistClick(track.id)}>
+                          <td className="py-4 pl-4 group-hover:text-[#ec5b13]" style={{ color: '#94a3b8' }}>{track.order}</td>
+                          <td className="py-4">
+                            <div className="flex items-center gap-3">
+                              <div className="w-10 h-10 rounded-lg overflow-hidden" style={{ background: 'rgba(255,255,255,0.08)' }}>
+                                {track.thumbnail ? (
+                                  <img src={track.thumbnail} alt={track.title} className="w-full h-full object-cover" />
+                                ) : (
+                                  <div className="w-full h-full flex items-center justify-center"><Music4 className="w-4 h-4" style={{ color: '#ec5b13' }} /></div>
+                                )}
+                              </div>
+                              <div>
+                                <p className="font-bold text-slate-100">{track.title}</p>
+                                <p className="text-xs" style={{ color: '#94a3b8' }}>{track.artist}</p>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="py-4 text-sm" style={{ color: '#94a3b8' }}>{track.album}</td>
+                          <td className="py-4 text-sm" style={{ color: '#94a3b8' }}>{track.dateAdded}</td>
+                          <td className="py-4 text-sm text-right pr-4" style={{ color: '#94a3b8' }}>{track.duration}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </>
+          )}
+        </div>
+
+        {filteredPlaylists.length > 0 && (
+          <footer className="mt-auto px-4 md:px-8 py-4 flex items-center justify-between sticky bottom-0" style={{ background: 'rgba(236, 91, 19, 0.05)', backdropFilter: 'blur(12px)', borderTop: '1px solid rgba(236, 91, 19, 0.1)' }}>
+            <div className="flex items-center gap-4 w-1/3 min-w-0">
+              <div className="w-14 h-14 rounded-xl overflow-hidden shadow-lg" style={{ background: 'rgba(255,255,255,0.08)' }}>
+                {playlistThumbnails[filteredPlaylists[0]._id] ? (
+                  <img src={playlistThumbnails[filteredPlaylists[0]._id]} alt={filteredPlaylists[0].name} className="w-full h-full object-cover" />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center"><Music4 className="w-5 h-5" style={{ color: '#ec5b13' }} /></div>
+                )}
+              </div>
+              <div className="hidden sm:block min-w-0">
+                <p className="font-bold text-sm text-slate-100 truncate">{filteredPlaylists[0].name}</p>
+                <p className="text-xs font-medium truncate" style={{ color: '#ec5b13' }}>Featured Playlist</p>
+              </div>
+              <button className="text-slate-400 hover:text-[#ec5b13] transition-colors"><Heart className="w-5 h-5" /></button>
+            </div>
+            <div className="flex flex-col items-center gap-2 flex-1">
+              <div className="flex items-center gap-6">
+                <button className="text-slate-400 hover:text-[#ec5b13]"><Shuffle className="w-4 h-4" /></button>
+                <button className="text-slate-400 hover:text-[#ec5b13]"><SkipBack className="w-4 h-4" /></button>
+                <button className="w-10 h-10 rounded-full flex items-center justify-center text-white shadow-lg active:scale-90 transition-transform" style={{ background: '#ec5b13', boxShadow: '0 8px 24px rgba(236,91,19,0.3)' }}>
+                  <Play className="w-4 h-4 fill-current ml-0.5" />
+                </button>
+                <button className="text-slate-400 hover:text-[#ec5b13]"><SkipForward className="w-4 h-4" /></button>
+                <button className="text-slate-400 hover:text-[#ec5b13]"><Repeat className="w-4 h-4" /></button>
+              </div>
+              <div className="flex items-center gap-3 w-full max-w-md">
+                <span className="text-[10px] font-medium" style={{ color: '#94a3b8' }}>1:24</span>
+                <div className="h-1 flex-1 rounded-full overflow-hidden" style={{ background: 'rgba(148,163,184,0.2)' }}>
+                  <div className="h-full w-1/3 rounded-full relative" style={{ background: '#ec5b13' }}>
+                    <div className="absolute right-0 top-1/2 -translate-y-1/2 w-3 h-3 bg-white rounded-full shadow-md border-2" style={{ borderColor: '#ec5b13' }}></div>
+                  </div>
+                </div>
+                <span className="text-[10px] font-medium" style={{ color: '#94a3b8' }}>3:45</span>
+              </div>
+            </div>
+            <div className="hidden md:flex items-center justify-end gap-4 w-1/3">
+              <Volume2 className="w-4 h-4" style={{ color: '#94a3b8' }} />
+              <div className="w-24 h-1 rounded-full overflow-hidden" style={{ background: 'rgba(148,163,184,0.2)' }}>
+                <div className="h-full w-3/4 rounded-full" style={{ background: '#64748b' }}></div>
+              </div>
+              <List className="w-4 h-4" style={{ color: '#94a3b8' }} />
+              <Maximize2 className="w-4 h-4" style={{ color: '#94a3b8' }} />
+            </div>
+          </footer>
         )}
-      </div>
+      </main>
 
       {/* ── Create Playlist Modal ── */}
       {showCreateModal && (
