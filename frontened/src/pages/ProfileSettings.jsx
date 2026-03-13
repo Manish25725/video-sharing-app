@@ -193,7 +193,7 @@ const ProfileTab = ({ user, updateUser }) => {
               type="text"
               value={userName}
               readOnly
-              icon={({ className }) => <span className={`text-slate-500 text-sm font-medium ${className}`}>@</span>}
+              icon={(props) => <span {...props} style={{ marginLeft: 4 }}>@</span>}
             />
           </Field>
           <Field label="Bio" hint={`${bio.length}/300 characters`}>
@@ -294,7 +294,7 @@ const SecurityTab = () => {
           className="w-full pl-10 pr-10 py-2.5 border border-white/10 rounded-xl text-sm bg-black/20 focus:bg-black/40 focus:outline-none focus:ring-2 focus:ring-[#ec5b13]/30 focus:border-[#ec5b13] transition-all"
         />
         <button type="button" onClick={toggle(showKey)}
-          className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-gray-600 transition-colors">
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors">
           {show[showKey] ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
         </button>
       </div>
@@ -527,7 +527,7 @@ const AccountTab = ({ user }) => {
                   <p className="text-xs text-slate-400">This action is permanent and irreversible.</p>
                 </div>
               </div>
-              <p className="text-sm text-gray-600 mb-4">
+              <p className="text-sm text-slate-400 mb-4">
                 Type your username <span className="font-semibold text-slate-100">@{user?.userName}</span> to confirm.
               </p>
               <input
@@ -591,7 +591,7 @@ const ProfileSettings = () => {
                   className={`w-full flex items-center gap-3 px-4 py-3.5 text-sm font-medium transition-all text-left border-b border-[#202020]/5 last:border-0
                     ${activeTab === tab.id
                       ? "bg-[#ec5b13]/10 text-[#ec5b13] border-l-2 border-l-[#ec5b13]"
-                      : "text-gray-600 hover:bg-black/20 hover:text-slate-100 border-l-2 border-l-transparent"
+                        : "text-slate-400 hover:bg-black/20 hover:text-slate-100 border-l-2 border-l-transparent"
                     }`}
                 >
                   <tab.icon className="w-4 h-4 flex-shrink-0" />
