@@ -7,8 +7,7 @@ const tweetSchema=new Schema({
         ref:"User"
     },
     content:{
-        type:String,
-        required:true
+        type:String
     },
     images:[{
         type:String   // cloudinary URLs
