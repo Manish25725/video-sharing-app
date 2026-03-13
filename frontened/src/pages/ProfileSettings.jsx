@@ -54,7 +54,11 @@ const Input = ({ icon: Icon, readOnly, className = "", ...props }) => (
       {...props}
       readOnly={readOnly}
       className={`w-full ${Icon ? "pl-10" : "pl-3.5"} pr-3.5 py-2.5 border border-white/10 rounded-xl text-sm 
-        ${readOnly ? "bg-black/20 text-slate-400 cursor-default" : "bg-black/20 text-slate-100 focus:bg-black/40 focus:outline-none focus:ring-2 focus:ring-[#ec5b13]/30 focus:border-[#ec5b13]"} 
+        ${readOnly ? "bg-black/20 text-slate-400 cursor-default" : "bg-black/20 text-slate-100 focus:bg-black/40 focus:outline-none focus:ring-2 focus:ring-[#ec5b13]/30 focus:border-[#ec5b13]"} ${className}`}
+    />
+  </div>
+);
+
 const ProfileTab = ({ user, updateUser }) => {
   const avatarRef = useRef(null);
   const coverRef = useRef(null);
@@ -319,7 +323,7 @@ const SecurityTab = () => {
       <Card title="Email Verification" subtitle="Verify your email address to secure your account.">
         <div className="flex items-center justify-between p-4 border border-white/10 rounded-xl bg-black/20 max-w-md">
           <div className="flex items-center gap-3">
-            <div className={`w-9 h-9 rounded-full flex items-center justify-center ${user?.isEmailVerified ? "bg-emerald-100" : "bg-amber-100"}`}>
+            <div className={"w-9 h-9 rounded-full flex items-center justify-center " + (user?.isEmailVerified ? "bg-emerald-100" : "bg-amber-100")}>
               {user?.isEmailVerified
                 ? <CheckCircle className="w-5 h-5 text-emerald-600" />
                 : <Mail className="w-5 h-5 text-amber-500" />}
