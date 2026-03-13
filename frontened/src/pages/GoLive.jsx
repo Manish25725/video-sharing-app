@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext.jsx";
+import socketService from "../services/socketService.js";
 import streamService from "../services/streamService.js";
 import {
   Radio, Copy, CheckCircle, Eye, EyeOff, Wifi, AlertTriangle,
@@ -150,6 +151,20 @@ const GoLive = () => {
     setThumbnailPreview("");
     if (thumbnailInputRef.current) thumbnailInputRef.current.value = "";
   };
+
+    useEffect(() => {
+    const socket = socketService?.socket;
+    if (!socket || !streamData?.streamKey) return;
+    const onEnd = (data) => {
+      if (data.streamKey === streamData.streamKey) {
+          setEndedStreamKey(streamData.streamKey);
+          setStreamData(null);
+          setStep("ended");
+      }
+    };
+    socket.on("stream-ended", onEnd);
+    return () => socket.off("stream-ended", onEnd);
+  }, [streamData?.streamKey]);
 
   const handleEndStream = async () => {
     if (!window.confirm("Are you sure you want to end this stream?")) return;

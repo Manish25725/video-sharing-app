@@ -13,6 +13,7 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import { notifyStreamScheduled } from "./notification.controller.js";
 import { muteUserInStream, unmuteUserInStream } from "../live/moderation.js";
+import { clearChatHistory } from "../live/chatHistory.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -24,9 +25,8 @@ const HLS_HOST = process.env.HLS_HOST || "localhost";
 // HLS is now served by the Express API server, not NMS
 const HLS_PORT = process.env.PORT || 8000;
 
-const generateStreamKey = (userId) => {
-  const random = crypto.randomBytes(8).toString("hex");
-  return `${userId}_${random}`;
+const generateStreamKey = () => {
+  return crypto.randomBytes(16).toString("hex");
 };
 
 const hlsUrl = (key) => `http://${HLS_HOST}:${HLS_PORT}/live/${key}/index.m3u8`;
@@ -40,14 +40,7 @@ const goLive = asyncHandler(async (req, res) => {
   // If already live, return existing stream
   const existing = await Stream.findOne({ streamerId: req.user._id, isLive: true });
   if (existing) {
-    return res.status(200).json(
-      new ApiResponse(200, {
-        stream: existing,
-        rtmpUrl: rtmpUrl(),
-        hlsUrl: hlsUrl(existing.streamKey),
-        streamKey: existing.streamKey,
-      }, "You are already live")
-    );
+    throw new ApiError(400, "You already have an active stream. Please end it before starting a new one.");
   }
 
   // Clean up any stale/orphaned streams (key generated but OBS never connected)
@@ -63,7 +56,7 @@ const goLive = asyncHandler(async (req, res) => {
     if (uploaded?.url) thumbnailUrl = uploaded.url;
   }
 
-  const streamKey = generateStreamKey(String(req.user._id));
+    const streamKey = generateStreamKey();
   const stream = await Stream.create({
     title: title.trim(),
     description: description?.trim() || "",
@@ -93,6 +86,8 @@ const endStream = asyncHandler(async (req, res) => {
   stream.isLive = false;
   stream.endedAt = new Date();
   await stream.save();
+
+  await clearChatHistory(streamKey);
 
   if (global.io) {
     global.io.to(`stream:${streamKey}`).emit("stream-ended", { streamKey });
@@ -166,12 +161,14 @@ const scheduleStream = asyncHandler(async (req, res) => {
     if (uploaded?.url) thumbnailUrl = uploaded.url;
   }
 
+  const streamKey = generateStreamKey();
   const scheduled = await ScheduledStream.create({
     title: title.trim(),
     description: description?.trim() || "",
     thumbnailUrl,
     streamerId: req.user._id,
     scheduledAt: date,
+    streamKey,
   });
 
   const populated = await ScheduledStream.findById(scheduled._id)
@@ -186,7 +183,6 @@ const scheduleStream = asyncHandler(async (req, res) => {
 /* ─── Get Scheduled Streams ───────────────────────────────── */
 const getScheduledStreams = asyncHandler(async (req, res) => {
   const streams = await ScheduledStream.find({
-    scheduledAt: { $gte: new Date() },
     isCancelled: false,
   })
     .populate("streamerId", "fullName userName avatar")

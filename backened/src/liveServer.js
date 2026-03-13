@@ -4,6 +4,7 @@ import fs from "fs";
 import { fileURLToPath } from "url";
 import { spawn, execSync } from "child_process";
 import { Stream } from "./models/stream.model.js";
+import { clearChatHistory } from "./live/chatHistory.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -164,6 +165,7 @@ nms.on("donePublish", async (session) => {
   stopHls(streamKey);
 
   try {
+    await clearChatHistory(streamKey);
     await Stream.findOneAndUpdate(
       { streamKey },
       { isLive: false, endedAt: new Date() }

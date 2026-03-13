@@ -23,6 +23,11 @@ const scheduledStreamSchema = new Schema(
       required: true,
       index: true,
     },
+    streamKey: {
+      type: String,
+      unique: true,
+      sparse: true,
+    },
     scheduledAt: {
       type: Date,
       required: true,

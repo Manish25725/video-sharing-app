@@ -116,6 +116,35 @@ const LiveCard = ({ stream }) => (
   </Link>
 );
 
+const HomeScheduledTimer = ({ scheduledAt }) => {
+  const [timeLeft, setTimeLeft] = useState('');
+
+  useEffect(() => {
+    const update = () => {
+      const diff = new Date(scheduledAt) - Date.now();
+      if (diff <= 0) {
+        setTimeLeft('Starting soon!');
+        return;
+      }
+      const days = Math.floor(diff / 86_400_000);
+      const hours = Math.floor((diff % 86_400_000) / 3_600_000);
+      const mins = Math.floor((diff % 3_600_000) / 60_000);
+      const secs = Math.floor((diff % 60_000) / 1000);
+      
+      if (days > 0) setTimeLeft(`In ${days}d ${hours}h`);
+      else if (hours > 0) setTimeLeft(`In ${hours}h ${mins}m`);
+      else if (mins > 0) setTimeLeft(`In ${mins}m ${secs}s`);
+      else setTimeLeft(`In ${secs}s`);
+    };
+    
+    update();
+    const interval = setInterval(update, 1000);
+    return () => clearInterval(interval);
+  }, [scheduledAt]);
+
+  return <>{timeLeft}</>;
+};
+
 const Home = ({ onVideoSelect }) => {
   const navigate = useNavigate();
   const { user } = useAuth();

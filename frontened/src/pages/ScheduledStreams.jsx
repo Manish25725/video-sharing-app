@@ -1,9 +1,9 @@
-﻿import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useAuth } from "../contexts/AuthContext.jsx";
 import streamService from "../services/streamService.js";
 import { Link, useNavigate } from "react-router-dom";
 import {
-  Calendar, Clock, Plus, X, Radio, User, AlertTriangle, ImagePlus, Play
+  Calendar, Clock, Plus, X, Radio, User, AlertTriangle, ImagePlus, Play, Copy, CheckCircle
 } from "lucide-react";
 
 const formatDateTime = (iso) => {
@@ -20,9 +20,39 @@ const timeUntil = (iso) => {
   const days = Math.floor(diff / 86_400_000);
   const hours = Math.floor((diff % 86_400_000) / 3_600_000);
   const mins = Math.floor((diff % 3_600_000) / 60_000);
-  if (days > 0) return `In ${days}d ${hours}h`;
-  if (hours > 0) return `In ${hours}h ${mins}m`;
-  return `In ${mins} min`;
+  if (days > 0) return "In ${days}d ${hours}h";
+  if (hours > 0) return "In ${hours}h ${mins}m";
+  return "In ${mins} min";
+};
+
+const CountdownTimer = ({ scheduledAt, onTimeUp }) => {
+  const [timeLeft, setTimeLeft] = useState('');
+
+  useEffect(() => {
+    const update = () => {
+      const diff = new Date(scheduledAt) - Date.now();
+      if (diff <= 0) {
+        setTimeLeft('Time is up!');
+        if (onTimeUp) onTimeUp();
+        return;
+      }
+      const days = Math.floor(diff / 86_400_000);
+      const hours = Math.floor((diff % 86_400_000) / 3_600_000);
+      const mins = Math.floor((diff % 3_600_000) / 60_000);
+      const secs = Math.floor((diff % 60_000) / 1000);
+      
+      if (days > 0) setTimeLeft(`In ${days}d ${hours}h`);
+      else if (hours > 0) setTimeLeft(`In ${hours}h ${mins}m`);
+      else if (mins > 0) setTimeLeft(`In ${mins}m ${secs}s`);
+      else setTimeLeft(`In ${secs}s`);
+    };
+    
+    update();
+    const interval = setInterval(update, 1000);
+    return () => clearInterval(interval);
+  }, [scheduledAt, onTimeUp]);
+
+  return <>{timeLeft}</>;
 };
 
 /* â”€â”€ Stream Detail Modal (shown to subscribers when they click a card) â”€â”€ */
@@ -51,7 +81,7 @@ const StreamDetailModal = ({ stream, onClose }) => {
 
         <div className="p-5">
           <h2 className="text-base font-bold text-gray-900 leading-snug">{stream.title}</h2>
-
+          
           {/* Streamer */}
           <div className="flex items-center gap-2 mt-2">
             {streamer?.avatar ? (
@@ -86,10 +116,33 @@ const StreamDetailModal = ({ stream, onClose }) => {
 };
 
 /* â”€â”€ Stream Card â”€â”€ */
-const StreamCard = ({ stream, isOwn, onCancel }) => {
-  const streamer = stream.streamerId;
-  const name = streamer?.fullName || streamer?.userName || "Creator";
-  const [showDetail, setShowDetail] = useState(false);
+const StreamCard = ({ stream, isOwn, onCancel }) => {  const streamer = stream.streamerId;  const name = streamer?.fullName || streamer?.userName || "Creator";  const [showDetail, setShowDetail] = useState(false);  const [isTimeUp, setIsTimeUp] = useState(false);  const [streamKey, setStreamKey] = useState("");  const [rtmpUrl, setRtmpUrl] = useState("");  const [isLoadingKey, setIsLoadingKey] = useState(false);  const [copied, setCopied] = useState(false);  const [isLiveActive, setIsLiveActive] = useState(false);  const [streamEnded, setStreamEnded] = useState(false);  const [saving, setSaving] = useState(false);  const [savedVideoId, setSavedVideoId] = useState(null);  useEffect(() => {    /* Sockets */    const socket = window.io ? window.io : null;    if (!socket || !streamKey) return;    const onStreamStarted = (data) => { if (data.streamKey === streamKey) setIsLiveActive(true); };    const onStreamEnded = (data) => { if (data.streamKey === streamKey) { setIsLiveActive(false); setStreamEnded(true); } };    socket.on("stream-started", onStreamStarted);    socket.on("stream-ended", onStreamEnded);    return () => { socket.off("stream-started", onStreamStarted); socket.off("stream-ended", onStreamEnded); };  }, [streamKey]);  useEffect(() => { if (new Date(stream.scheduledAt) - Date.now() <= 0) setIsTimeUp(true); }, [stream.scheduledAt]);  const handleTimeUp = () => setIsTimeUp(true);  const handleSaveRecording = async (e) => {    e.stopPropagation(); setSaving(true);    try { const { data } = await streamService.saveRecording(streamKey); setSavedVideoId(data.videoId); alert("Saved!"); }    catch (err) { console.error(err); alert("Failed"); }    finally { setSaving(false); }  };
+const handleGetKey = async (e) => {
+    e.stopPropagation();
+    try {
+      setIsLoadingKey(true);
+      const fd = new FormData();
+      fd.append("title", stream.title);
+      fd.append("description", stream.description || "");
+      const res = await streamService.goLive(fd);
+      if (res.data) {
+        setStreamKey(res.data.streamKey);
+        setRtmpUrl(res.data.rtmpUrl);
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Failed to get stream key");
+    } finally {
+      setIsLoadingKey(false);
+    }
+  };
+
+  const copyKey = (e) => {
+    e.stopPropagation();
+    navigator.clipboard.writeText(streamKey);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
 
   return (
     <>
@@ -109,7 +162,7 @@ const StreamCard = ({ stream, isOwn, onCancel }) => {
             )}
             {/* Countdown badge */}
             <div className="absolute bottom-1.5 left-1.5 px-1.5 py-0.5 bg-black/70 rounded text-white text-[10px] font-semibold">
-              {timeUntil(stream.scheduledAt)}
+              <CountdownTimer scheduledAt={stream.scheduledAt} onTimeUp={handleTimeUp} />
             </div>
           </div>
 
@@ -132,34 +185,80 @@ const StreamCard = ({ stream, isOwn, onCancel }) => {
               )}
             </div>
 
-            <div className="flex items-center justify-between mt-2">
-              <span className="flex items-center gap-1 text-xs text-gray-500">
-                <Calendar className="w-3 h-3 text-indigo-400" />
-                {new Date(stream.scheduledAt).toLocaleString(undefined, {
-                  month: "short", day: "numeric", hour: "2-digit", minute: "2-digit"
-                })}
-              </span>
+            <div className="flex flex-col gap-2 mt-2">
+              <div className="flex items-center justify-between">
+                <span className="flex items-center gap-1 text-xs text-gray-500">
+                  <Calendar className="w-3 h-3 text-indigo-400" />
+                  {new Date(stream.scheduledAt).toLocaleString(undefined, {
+                    month: "short", day: "numeric", hour: "2-digit", minute: "2-digit"
+                  })}
+                </span>
 
-              <div className="flex items-center gap-1.5">
-                {isOwn && (
-                  <>
-                    <button onClick={(e) => { e.stopPropagation(); onCancel(stream._id); }}
-                      className="p-1 rounded-lg text-gray-400 hover:bg-red-50 hover:text-red-500 transition-colors"
-                      title="Cancel">
-                      <X className="w-3.5 h-3.5" />
-                    </button>
-                    <Link to="/go-live" onClick={(e) => e.stopPropagation()}
-                      className="flex items-center gap-1 px-2.5 py-1 bg-red-500 hover:bg-red-600 text-white rounded-lg text-xs font-semibold transition-colors">
-                      <Radio className="w-3 h-3" /> Go Live
-                    </Link>
-                  </>
-                )}
-                {!isOwn && (
-                  <span className="flex items-center gap-1 text-xs text-indigo-600 font-medium">
-                    <Play className="w-3 h-3 fill-current" /> Tap to view
-                  </span>
-                )}
+                <div className="flex items-center gap-1.5">
+                  {isOwn && (
+                    <>
+                      <button onClick={(e) => { e.stopPropagation(); onCancel(stream._id); }} 
+                        className="p-1 rounded-lg text-gray-400 hover:bg-red-50 hover:text-red-500 transition-colors" title="Cancel">
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                      
+                      {isTimeUp ? (
+                        !streamKey ? (
+                          <button onClick={handleGetKey} disabled={isLoadingKey}
+                            className="flex items-center gap-1 px-2.5 py-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-semibold transition-colors disabled:opacity-50">
+                            <Radio className="w-3 h-3" /> {isLoadingKey ? "Preparing..." : "Get Stream Key"}
+                          </button>
+                        ) : null
+                      ) : (
+                        <span className="text-xs font-semibold text-gray-500 bg-gray-100 px-2 py-1 rounded">Waiting...</span>
+                      )}
+                    </>
+                  )}
+                  {!isOwn && (
+                    <span className="flex items-center gap-1 text-xs text-indigo-600 font-medium">
+                      <Play className="w-3 h-3 fill-current" /> Tap to view
+                    </span>
+                  )}
+                </div>
               </div>
+              
+              {streamKey && (
+                <div onClick={e => e.stopPropagation()} className="mt-3 p-3 bg-indigo-50 rounded-xl border border-indigo-100">
+                  <p className="text-xs font-bold text-indigo-800 mb-1">OBS Connection Info</p>
+                  <p className="text-[10px] text-indigo-600 mb-2">Use this URL and Stream Key in your broadcasting software to start streaming.</p>
+                  
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between bg-white px-2 py-1.5 rounded border border-indigo-50">
+                      <div className="flex-1 min-w-0 pr-2">
+                        <span className="text-[10px] text-indigo-400 block font-semibold">Server URL</span>
+                        <code className="text-xs text-slate-800 truncate block">{rtmpUrl}</code>
+                      </div>
+                      <button onClick={(e) => {
+                        e.stopPropagation();
+                        navigator.clipboard.writeText(rtmpUrl);
+                      }} className="p-1 text-indigo-500 hover:bg-indigo-50 rounded transition-colors">
+                        <Copy className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                    
+                    <div className="flex items-center justify-between bg-white px-2 py-1.5 rounded border border-indigo-50">
+                      <div className="flex-1 min-w-0 pr-2">
+                        <span className="text-[10px] text-indigo-400 block font-semibold">Stream Key</span>
+                        <code className="text-xs text-slate-800 truncate block">{streamKey}</code>
+                      </div>
+                      <button onClick={copyKey} className="flex items-center gap-1 px-2 py-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded text-[10px] font-semibold shadow-sm transition-colors">
+                        {copied ? <CheckCircle className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                        {copied ? "Copied!" : "Copy Key"}
+                      </button>
+                    </div>
+                  </div>
+                  <div className="mt-3 flex justify-end">
+                     <Link to="/live" className="text-xs font-semibold text-indigo-600 hover:text-indigo-800 transition-colors flex items-center gap-1">
+                        Go to Live Streams →
+                     </Link>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -172,7 +271,7 @@ const StreamCard = ({ stream, isOwn, onCancel }) => {
   );
 };
 
-/* â”€â”€ Schedule Form Modal â”€â”€ */
+
 const ScheduleForm = ({ onScheduled, onClose }) => {
   const [form, setForm] = useState({ title: "", description: "", scheduledAt: "" });
   const [thumbnail, setThumbnail] = useState(null);
