@@ -40,6 +40,16 @@ export const authService = {
     }
   },
 
+  async googleAuth(token) {
+    try {
+      const response = await apiClient.post('/users/google-auth', { token });
+      return response;
+    } catch (error) {
+      console.error('Google Auth error:', error);
+      throw error;
+    }
+  },
+
   // Logout user
   async logout() {
     try {

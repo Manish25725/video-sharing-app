@@ -65,6 +65,23 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const handleGoogleAuth = async (token) => {
+    try {
+      setLoading(true);
+      const response = await authService.googleAuth(token);
+      if (response?.success) {
+        setUser(response.data.user);
+        setIsLoggedIn(true);
+        return { success: true, data: response.data };
+      }
+      return { success: false, error: response?.message || 'Google Auth failed' };
+    } catch (error) {
+      return { success: false, error: error.message || 'Google Auth failed' };
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleRegister = async (userData, avatarFile, coverImageFile) => {
     try {
       setLoading(true);
@@ -153,6 +170,7 @@ export const AuthProvider = ({ children }) => {
     isAdmin,
     setAdminStatus,
     login: handleLogin,
+    googleLogin: handleGoogleAuth,
     register: handleRegister,
     logout: handleLogout,
     adminLogout,
