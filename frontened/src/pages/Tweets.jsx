@@ -86,7 +86,8 @@ const Tweets = () => {
     setPollEndsAt('');
   };
 
-  const canSubmit = content.trim() || selectedImages.length > 0;
+  const canSubmitPoll = showPoll && pollQuestion.trim() && pollOptions.filter(o => o.trim()).length >= 2;
+  const canSubmit = content.trim() || selectedImages.length > 0 || canSubmitPoll;
 
   const handleSubmit = async () => {
     if (!canSubmit || submitting) return;

@@ -10,7 +10,7 @@ import { formatTimeAgo } from '../utils/formatters';
 /* ─── Avatar helper ─────────────────────────────────────────── */
 const Avatar = ({ src, name, size = 'md' }) => {
   const dim = size === 'sm' ? 'w-7 h-7 text-xs' : size === 'lg' ? 'w-11 h-11 text-base' : 'w-9 h-9 text-sm';
-  const colors = ['bg-violet-500','bg-blue-500','bg-emerald-500','bg-rose-500','bg-amber-500','bg-pink-500'];
+  const colors = ['bg-violet-500','bg-[#ec5b13]/100','bg-emerald-500','bg-rose-500','bg-amber-500','bg-pink-500'];
   const color = colors[(name || 'U').charCodeAt(0) % colors.length];
   return src ? (
     <img src={src} alt="" className={`${dim} rounded-full object-cover flex-shrink-0 ring-2 ring-white`} />
@@ -73,7 +73,7 @@ const ImageGrid = ({ images }) => {
                 <button
                   key={i}
                   onClick={e => { e.stopPropagation(); setLightbox(i); }}
-                  className={`w-2 h-2 rounded-full transition-colors ${i === lightbox ? 'bg-white' : 'bg-white/40'}`}
+                  className={`w-2 h-2 rounded-full transition-colors ${i === lightbox ? 'bg-transparent' : 'bg-transparent/40'}`}
                 />
               ))}
             </div>
@@ -86,11 +86,11 @@ const ImageGrid = ({ images }) => {
 
 /* ─── Poll widget ───────────────────────────────────────────── */
 const PollWidget = ({ poll, totalVotes, userVotedIndexes, showResults, canVote, onVote }) => (
-  <div className="my-3 rounded-2xl border border-gray-200 bg-gradient-to-br from-slate-50 to-blue-50/40 overflow-hidden">
+  <div className="my-3 rounded-2xl border border-[#412e24] bg-gradient-to-br from-[#1b120c] to-[#140c08] overflow-hidden">
     <div className="px-4 pt-4 pb-2">
       <div className="flex items-center gap-2 mb-3">
-        <BarChart2 className="w-4 h-4 text-blue-500" />
-        <p className="font-semibold text-gray-900 text-sm">{poll.question}</p>
+        <BarChart2 className="w-4 h-4 text-[#ec5b13]" />
+        <p className="font-semibold text-slate-100 text-sm">{poll.question}</p>
       </div>
       <div className="space-y-2">
         {poll.options?.map((option, i) => {
@@ -103,31 +103,31 @@ const PollWidget = ({ poll, totalVotes, userVotedIndexes, showResults, canVote, 
               onClick={() => canVote && onVote(i)}
               disabled={!canVote}
               className={`relative w-full text-left rounded-xl overflow-hidden transition-all duration-150
-                ${isSelected ? 'ring-2 ring-blue-500 ring-offset-1' : ''}
+                ${isSelected ? 'ring-2 ring-[#ec5b13] ring-offset-1' : ''}
                 ${canVote ? 'hover:shadow-sm active:scale-[0.99] cursor-pointer' : 'cursor-default'}
-                bg-white border ${isSelected ? 'border-blue-300' : 'border-gray-200'}
+                bg-transparent border ${isSelected ? 'border-[#ec5b13]/50' : 'border-[#412e24]'}
               `}
             >
               {/* Progress fill */}
               {showResults && (
                 <div
                   className={`absolute inset-y-0 left-0 rounded-xl transition-all duration-700 ease-out
-                    ${isSelected ? 'bg-blue-100' : 'bg-gray-100'}`}
+                    ${isSelected ? 'bg-[#ec5b13]/20' : 'bg-[#2a1b14]'}`}
                   style={{ width: `${pct}%` }}
                 />
               )}
               <div className="relative flex items-center justify-between px-3 py-2.5">
-                <span className="flex items-center gap-2 text-sm font-medium text-gray-800">
+                <span className="flex items-center gap-2 text-sm font-medium text-slate-200">
                   {isSelected
-                    ? <span className="w-4 h-4 rounded-full bg-blue-500 flex items-center justify-center flex-shrink-0">
+                    ? <span className="w-4 h-4 rounded-full bg-[#ec5b13]/100 flex items-center justify-center flex-shrink-0">
                         <Check className="w-2.5 h-2.5 text-white" />
                       </span>
-                    : <span className="w-4 h-4 rounded-full border-2 border-gray-300 flex-shrink-0" />
+                    : <span className="w-4 h-4 rounded-full border-2 border-[#412e24] flex-shrink-0" />
                   }
                   {option.text}
                 </span>
                 {showResults && (
-                  <span className={`text-xs font-bold ml-2 ${isSelected ? 'text-blue-600' : 'text-gray-500'}`}>
+                  <span className={`text-xs font-bold ml-2 ${isSelected ? 'text-[#ec5b13]' : 'text-slate-400'}`}>
                     {pct}%
                   </span>
                 )}
@@ -137,7 +137,7 @@ const PollWidget = ({ poll, totalVotes, userVotedIndexes, showResults, canVote, 
         })}
       </div>
     </div>
-    <div className="px-4 py-2 border-t border-gray-100 flex items-center gap-2 text-xs text-gray-400">
+    <div className="px-4 py-2 border-t border-[#412e24] flex items-center gap-2 text-xs text-slate-500">
       <span>{totalVotes} vote{totalVotes !== 1 ? 's' : ''}</span>
       {poll.endsAt && (
         <>
@@ -268,7 +268,7 @@ const TweetCard = ({ tweet, currentUser, onDeleted, onUpdated }) => {
   const showResults = pollEnded || hasVoted;
 
   return (
-    <article className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow duration-200 overflow-hidden">
+    <article className="rounded-2xl shadow-xl transition-all duration-200 overflow-hidden" style={{ background: "rgba(45,30,22,0.4)", backdropFilter: "blur(12px)", border: "1px solid rgba(236,91,19,0.1)" }}>
       <div className="p-5">
         {/* ── Header ── */}
         <div className="flex items-start justify-between mb-3">
@@ -279,10 +279,10 @@ const TweetCard = ({ tweet, currentUser, onDeleted, onUpdated }) => {
               size="lg"
             />
             <div>
-              <p className="font-semibold text-gray-900 text-sm leading-tight">
+              <p className="font-semibold text-slate-100 text-sm leading-tight">
                 {localTweet.owner?.fullName || localTweet.owner?.userName}
               </p>
-              <p className="text-xs text-gray-400 mt-0.5">
+              <p className="text-xs text-slate-500 mt-0.5">
                 @{localTweet.owner?.userName} · {formatTimeAgo(localTweet.createdAt)}
               </p>
             </div>
@@ -292,28 +292,28 @@ const TweetCard = ({ tweet, currentUser, onDeleted, onUpdated }) => {
             <div className="relative" ref={menuRef}>
               <button
                 onClick={() => setShowMenu(v => !v)}
-                className="p-1.5 text-gray-400 hover:text-gray-700 rounded-full hover:bg-gray-100 transition-colors"
+                className="p-1.5 text-slate-500 hover:text-slate-300 rounded-full hover:bg-[#2a1b14] transition-colors"
               >
                 <MoreVertical className="w-4 h-4" />
               </button>
               {showMenu && (
-                <div className="absolute right-0 mt-1.5 bg-white border border-gray-100 rounded-xl shadow-xl z-20 min-w-[190px] overflow-hidden">
+                <div className="absolute right-0 mt-1.5 bg-transparent border border-[#412e24] rounded-xl shadow-xl z-20 min-w-[190px] overflow-hidden">
                   <div className="py-1">
                     <button
                       onClick={openEdit}
-                      className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                      className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-slate-300 hover:bg-[#1b120c] transition-colors"
                     >
-                      <Edit3 className="w-4 h-4 text-gray-400" /> Edit tweet
+                      <Edit3 className="w-4 h-4 text-slate-500" /> Edit tweet
                     </button>
                     <button
                       onClick={handleToggleComments}
-                      className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                      className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-slate-300 hover:bg-[#1b120c] transition-colors"
                     >
                       {localTweet.commentsEnabled
-                        ? <><MessageCircleOff className="w-4 h-4 text-gray-400" /> Disable comments</>
-                        : <><MessageCircle className="w-4 h-4 text-gray-400" /> Enable comments</>}
+                        ? <><MessageCircleOff className="w-4 h-4 text-slate-500" /> Disable comments</>
+                        : <><MessageCircle className="w-4 h-4 text-slate-500" /> Enable comments</>}
                     </button>
-                    <div className="h-px bg-gray-100 my-1" />
+                    <div className="h-px bg-[#2a1b14] my-1" />
                     <button
                       onClick={handleDelete}
                       className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-500 hover:bg-red-50 transition-colors"
@@ -334,20 +334,20 @@ const TweetCard = ({ tweet, currentUser, onDeleted, onUpdated }) => {
               value={editContent}
               onChange={e => setEditContent(e.target.value)}
               autoFocus
-              className="w-full p-3 border border-blue-300 rounded-xl resize-none focus:outline-none focus:ring-2 focus:ring-blue-500/30 text-sm bg-blue-50/30"
+              className="w-full p-3 border border-[#ec5b13]/50 rounded-xl resize-none focus:outline-none focus:ring-2 focus:ring-[#ec5b13]/30 text-sm bg-[#ec5b13]/10/30"
               rows={3}
               maxLength={500}
             />
             <div className="flex gap-2 mt-2">
               <button
                 onClick={handleUpdate}
-                className="px-4 py-1.5 bg-blue-600 text-white text-sm font-medium rounded-full hover:bg-blue-700 transition-colors"
+                className="px-4 py-1.5 bg-[#ec5b13] text-white text-sm font-medium rounded-full hover:bg-[#d44d0d] transition-colors"
               >
                 Save
               </button>
               <button
                 onClick={() => setEditing(false)}
-                className="px-4 py-1.5 bg-gray-100 text-gray-600 text-sm font-medium rounded-full hover:bg-gray-200 transition-colors"
+                className="px-4 py-1.5 bg-[#2a1b14] text-slate-400 text-sm font-medium rounded-full hover:bg-gray-200 transition-colors"
               >
                 Cancel
               </button>
@@ -355,7 +355,7 @@ const TweetCard = ({ tweet, currentUser, onDeleted, onUpdated }) => {
           </div>
         ) : (
           localTweet.content && (
-            <p className="text-gray-800 text-[15px] leading-relaxed whitespace-pre-wrap mb-1">
+            <p className="text-slate-200 text-[15px] leading-relaxed whitespace-pre-wrap mb-1">
               {localTweet.content}
             </p>
           )
@@ -377,7 +377,7 @@ const TweetCard = ({ tweet, currentUser, onDeleted, onUpdated }) => {
         )}
 
         {/* ── Action bar ── */}
-        <div className="flex items-center gap-1 pt-3 mt-2 border-t border-gray-50">
+        <div className="flex items-center gap-1 pt-3 mt-2 border-t border-[#412e24]">
           {/* Like */}
           <button
             onClick={handleLike}
@@ -385,7 +385,7 @@ const TweetCard = ({ tweet, currentUser, onDeleted, onUpdated }) => {
             className={`group flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition-all duration-150
               ${localTweet.isLikedByUser
                 ? 'text-rose-600 bg-rose-50 hover:bg-rose-100'
-                : 'text-gray-500 hover:text-rose-500 hover:bg-rose-50'}
+                : 'text-slate-400 hover:text-rose-500 hover:bg-rose-50'}
               disabled:opacity-40`}
           >
             <Heart className={`w-4 h-4 transition-transform group-hover:scale-110 ${localTweet.isLikedByUser ? 'fill-current' : ''}`} />
@@ -396,7 +396,7 @@ const TweetCard = ({ tweet, currentUser, onDeleted, onUpdated }) => {
           <button
             onClick={handleCommentToggle}
             className={`group flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition-all duration-150
-              ${showComments ? 'text-blue-600 bg-blue-50' : 'text-gray-500 hover:text-blue-500 hover:bg-blue-50'}`}
+              ${showComments ? 'text-[#ec5b13] bg-[#ec5b13]/10' : 'text-slate-400 hover:text-[#ec5b13] hover:bg-[#ec5b13]/10'}`}
           >
             <MessageSquare className="w-4 h-4 transition-transform group-hover:scale-110" />
             <span>{localTweet.commentsCount || 0}</span>
@@ -404,7 +404,7 @@ const TweetCard = ({ tweet, currentUser, onDeleted, onUpdated }) => {
 
           {/* Comments disabled badge */}
           {!localTweet.commentsEnabled && (
-            <span className="ml-auto flex items-center gap-1 text-xs text-gray-400 bg-gray-50 border border-gray-200 rounded-full px-2.5 py-1">
+            <span className="ml-auto flex items-center gap-1 text-xs text-slate-500 bg-[#1b120c] border border-[#412e24] rounded-full px-2.5 py-1">
               <MessageCircleOff className="w-3 h-3" /> Comments off
             </span>
           )}
@@ -413,9 +413,9 @@ const TweetCard = ({ tweet, currentUser, onDeleted, onUpdated }) => {
 
       {/* ── Comments section ── */}
       {showComments && (
-        <div className="border-t border-gray-100 bg-gray-50/50 px-5 py-4">
+        <div className="border-t border-[#412e24] bg-transparent px-5 py-4">
           {!localTweet.commentsEnabled ? (
-            <div className="flex items-center gap-2 text-sm text-gray-400 py-1">
+            <div className="flex items-center gap-2 text-sm text-slate-500 py-1">
               <MessageCircleOff className="w-4 h-4" />
               <span>Comments are disabled for this tweet.</span>
             </div>
@@ -425,19 +425,19 @@ const TweetCard = ({ tweet, currentUser, onDeleted, onUpdated }) => {
               {currentUser && (
                 <div className="flex items-center gap-3">
                   <Avatar src={currentUser.avatar} name={currentUser.fullName || currentUser.userName} size="sm" />
-                  <div className="flex-1 flex items-center bg-white border border-gray-200 rounded-full pl-4 pr-2 py-1.5 gap-2 focus-within:border-blue-400 focus-within:ring-2 focus-within:ring-blue-100 transition-all">
+                  <div className="flex-1 flex items-center bg-transparent border border-[#412e24] rounded-full pl-4 pr-2 py-1.5 gap-2 focus-within:border-[#ec5b13] focus-within:ring-2 focus-within:ring-[#ec5b13]/20 transition-all">
                     <input
                       type="text"
                       value={commentInput}
                       onChange={e => setCommentInput(e.target.value)}
                       onKeyDown={e => e.key === 'Enter' && !e.shiftKey && handleAddComment()}
                       placeholder="Write a comment…"
-                      className="flex-1 bg-transparent text-sm outline-none text-gray-800 placeholder-gray-400"
+                      className="flex-1 bg-transparent text-sm outline-none text-slate-200 placeholder-gray-400"
                     />
                     <button
                       onClick={handleAddComment}
                       disabled={!commentInput.trim() || submittingComment}
-                      className="w-7 h-7 flex items-center justify-center rounded-full bg-blue-600 text-white disabled:opacity-40 disabled:bg-gray-300 hover:bg-blue-700 transition-colors flex-shrink-0"
+                      className="w-7 h-7 flex items-center justify-center rounded-full bg-[#ec5b13] text-white disabled:opacity-40 disabled:bg-gray-300 hover:bg-[#d44d0d] transition-colors flex-shrink-0"
                     >
                       {submittingComment
                         ? <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -449,20 +449,20 @@ const TweetCard = ({ tweet, currentUser, onDeleted, onUpdated }) => {
 
               {/* Comments list */}
               {comments.length === 0 ? (
-                <p className="text-sm text-gray-400 text-center py-2">No comments yet — be the first!</p>
+                <p className="text-sm text-slate-500 text-center py-2">No comments yet — be the first!</p>
               ) : (
                 <div className="space-y-3">
                   {comments.map(comment => {
-                    const owner = comment.ownerDetails || comment.owner || {};
+                    const owner = comment.ownerDetails || comment.userDetails || comment.owner || {};
                     const isCommentOwner = currentUser && (owner._id === currentUser._id || owner === currentUser._id);
                     return (
                       <div key={comment._id} className="flex items-start gap-2.5 group">
                         <Avatar src={owner.avatar} name={owner.fullName || owner.userName} size="sm" />
-                        <div className="flex-1 bg-white rounded-2xl rounded-tl-sm border border-gray-100 px-3.5 py-2.5 shadow-xs">
-                          <p className="text-xs font-semibold text-gray-900 mb-0.5">
+                        <div className="flex-1 bg-transparent rounded-2xl rounded-tl-sm border border-[#412e24] px-3.5 py-2.5 shadow-xs">
+                          <p className="text-xs font-semibold text-slate-100 mb-0.5">
                             {owner.fullName || owner.userName}
                           </p>
-                          <p className="text-sm text-gray-700 leading-relaxed">{comment.content}</p>
+                          <p className="text-sm text-slate-300 leading-relaxed">{comment.content}</p>
                         </div>
                         {isCommentOwner && (
                           <button

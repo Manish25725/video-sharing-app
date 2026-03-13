@@ -132,7 +132,16 @@ class ApiClient {
   // Setting it manually strips the boundary and breaks server-side parsing.
   async uploadFile(endpoint, formData, config = {}) {
     try {
-      const response = await this.axios.post(endpoint, formData, config);
+      // Set to 'multipart/form-data' explicitly to override the instance's 'application/json' default.
+      // Modern Axios automatically appends the correct boundary.
+      const customConfig = { 
+        ...config, 
+        headers: { 
+          ...config.headers, 
+          'Content-Type': 'multipart/form-data' 
+        } 
+      };
+      const response = await this.axios.post(endpoint, formData, customConfig);
       return response.data;
     } catch (error) {
       throw this.handleError(error);

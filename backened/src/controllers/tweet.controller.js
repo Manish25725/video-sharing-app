@@ -61,7 +61,11 @@ const createTweet = asyncHandler(async (req, res) => {
     const { content, pollQuestion, pollOptions, pollMultiple, pollEndsAt, commentsEnabled } = req.body;
 
     const hasImages = req.files && req.files.length > 0;
-    if((!content || content.trim()==="") && !hasImages) throw new ApiError(400,"Content or at least one image is required");
+    const hasPoll = pollQuestion && pollQuestion.trim() && pollOptions;
+    
+    if((!content || content.trim()==="") && !hasImages && !hasPoll) {
+        throw new ApiError(400,"Content, at least one image, or a poll is required");
+    }
 
     // Upload images
     const imageUrls = [];

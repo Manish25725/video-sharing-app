@@ -98,7 +98,7 @@ const getVideoComments = asyncHandler(async (req, res) => {
 
 
 const getTweetComments = asyncHandler(async (req, res) => {
-    const { TweetId } = req.params;
+    const { tweetId } = req.params;
     const { page = 1, limit = 10 } = req.query;
 
     if (!req.user) {
@@ -108,7 +108,7 @@ const getTweetComments = asyncHandler(async (req, res) => {
     const comments = await Comment.aggregate([
         {
             $match: {
-                tweet: new mongoose.Types.ObjectId(String(TweetId))
+                tweet: new mongoose.Types.ObjectId(String(tweetId))
             }
         },
         {
@@ -180,7 +180,7 @@ const addCommentOnTweet=asyncHandler( async(req,res) =>{
 
     if(!mongoose.Types.ObjectId.isValid(tweetId)) throw new ApiError(400,"Invalid tweetId");
 
-    const asd= await Comment.create({
+    const asd = await Comment.create({
         content : content,
         owner : req.user._id,
         tweet : tweetId
@@ -188,10 +188,15 @@ const addCommentOnTweet=asyncHandler( async(req,res) =>{
 
     if(! asd ) throw new ApiError(400,"Error while creating a comment on tweet");
 
+    const populatedComment = await Comment.findById(asd._id).populate({
+        path: "owner",
+        select: "fullName userName avatar _id"
+    });
+
     return res
     .status(201)
     .json(
-        new ApiResponse(201,asd,"Added a comment on tweet sucessfully")
+        new ApiResponse(201,populatedComment,"Added a comment on tweet sucessfully")
     )
     
 })
