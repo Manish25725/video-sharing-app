@@ -42,7 +42,7 @@ const StatusPill = ({ status }) => {
 };
 
 const EmptyState = ({ icon: Icon, title, subtitle, className = "" }) => (
-  <div className={`py-14 text-center ${className}`}>
+  <div className={`py-10 md:py-14 text-center ${className}`}>
     <Icon className="w-10 h-10 mx-auto mb-3 opacity-25" />
     <p className="font-medium text-sm">{title}</p>
     {subtitle && <p className="text-xs mt-1 opacity-70">{subtitle}</p>}

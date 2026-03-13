@@ -14,11 +14,12 @@ import { Link, useLocation } from "react-router-dom"
 import { useAuth } from "../contexts/AuthContext"
 
 /* Reusable nav link — centered when collapsed, labelled when expanded */
-const NavLink = ({ icon: Icon, label, path, currentPath, isOpen }) => {
+const NavLink = ({ icon: Icon, label, path, currentPath, isOpen, onClick }) => {
   const isActive = currentPath === path;
   return (
     <Link
       to={path}
+      onClick={onClick}
       title={!isOpen ? label : undefined}
       className={`flex items-center transition-all duration-200 rounded-xl ${
         isOpen ? "px-3 py-2.5 mx-2 gap-3" : "mx-auto w-10 h-10 justify-center"
@@ -47,10 +48,16 @@ const NavLink = ({ icon: Icon, label, path, currentPath, isOpen }) => {
   );
 };
 
-const Sidebar = ({ isOpen }) => {
+const Sidebar = ({ isOpen, setSidebarOpen }) => {
   const location = useLocation();
   const currentPath = location.pathname;
   const { user } = useAuth();
+  
+  const handleLinkClick = () => {
+    if (window.innerWidth < 768 && setSidebarOpen) {
+      setSidebarOpen(false);
+    }
+  };
 
   const menuItems = [
     { icon: Home,        label: "Home",     path: "/" },
@@ -71,12 +78,20 @@ const Sidebar = ({ isOpen }) => {
   ];
 
   return (
-    <aside
-      className={`border-r transition-all duration-300 flex flex-col flex-shrink-0 ${
-        isOpen ? "w-64" : "w-16"
-      }`}
-      style={{
-        background: "rgba(22,13,8,0.92)",
+    <>
+      {/* Mobile backdrop */}
+      {isOpen && (
+        <div 
+          className="fixed inset-0 bg-black/60 z-40 md:hidden transition-opacity"
+          onClick={() => setSidebarOpen && setSidebarOpen(false)}
+        />
+      )}
+      <aside
+        className={`border-r transition-transform duration-300 flex flex-col flex-shrink-0 fixed md:relative z-50 h-[calc(100vh-64px)] md:h-auto ${
+          isOpen ? "translate-x-0 w-64" : "-translate-x-full md:translate-x-0 md:w-16 w-64"
+        }`}
+        style={{
+          background: "rgba(22,13,8,0.95)",
         backdropFilter: "blur(16px)",
         WebkitBackdropFilter: "blur(16px)",
         borderColor: "rgba(236,91,19,0.12)",
@@ -93,14 +108,14 @@ const Sidebar = ({ isOpen }) => {
             <p className="px-3 mb-1 text-[10px] font-bold text-slate-600 uppercase tracking-widest">Discover</p>
           )}
           {menuItems.map((item) => (
-            <NavLink key={item.path} {...item} currentPath={currentPath} isOpen={isOpen} />
+            <NavLink key={item.path} {...item} currentPath={currentPath} isOpen={isOpen} onClick={handleLinkClick} />
           ))}
         </div>
 
         {/* Divider */}
         {isOpen
           ? <div className="mx-4 my-2 border-t" style={{ borderColor: "rgba(255,255,255,0.06)" }} />
-          : <div className="w-6 mx-auto my-2 border-t" style={{ borderColor: "rgba(255,255,255,0.06)" }} />
+          : <div className="w-6 mx-auto my-2 border-t hidden md:block" style={{ borderColor: "rgba(255,255,255,0.06)" }} />
         }
 
         {/* My Channel (logged-in only) */}
@@ -111,12 +126,12 @@ const Sidebar = ({ isOpen }) => {
                 <p className="px-3 mb-1 text-[10px] font-bold text-slate-600 uppercase tracking-widest">My Channel</p>
               )}
               {adminItems.map((item) => (
-                <NavLink key={item.path} {...item} currentPath={currentPath} isOpen={isOpen} />
+                <NavLink key={item.path} {...item} currentPath={currentPath} isOpen={isOpen} onClick={handleLinkClick} />
               ))}
             </div>
             {isOpen
               ? <div className="mx-4 my-2 border-t" style={{ borderColor: "rgba(255,255,255,0.06)" }} />
-              : <div className="w-6 mx-auto my-2 border-t" style={{ borderColor: "rgba(255,255,255,0.06)" }} />
+              : <div className="w-6 mx-auto my-2 border-t hidden md:block" style={{ borderColor: "rgba(255,255,255,0.06)" }} />
             }
           </>
         )}
@@ -127,7 +142,7 @@ const Sidebar = ({ isOpen }) => {
             <p className="px-3 mb-1 text-[10px] font-bold text-slate-600 uppercase tracking-widest">Library</p>
           )}
           {libraryItems.map((item) => (
-            <NavLink key={item.path} {...item} currentPath={currentPath} isOpen={isOpen} />
+            <NavLink key={item.path} {...item} currentPath={currentPath} isOpen={isOpen} onClick={handleLinkClick} />
           ))}
         </div>
       </div>
@@ -136,9 +151,10 @@ const Sidebar = ({ isOpen }) => {
       <div className="flex-shrink-0 border-t" style={{ borderColor: "rgba(255,255,255,0.07)" }}>
         <Link
           to="/settings"
+          onClick={handleLinkClick}
           title={!isOpen ? "Settings" : undefined}
           className={`flex items-center transition-all duration-200 rounded-xl ${
-            isOpen ? "px-3 py-3 mx-2 my-1 gap-3" : "mx-auto w-10 h-10 justify-center my-2"
+            isOpen ? "px-3 py-3 mx-2 my-1 gap-3" : "mx-auto w-10 h-10 justify-center my-2 hidden md:flex"
           }`}
           style={
             currentPath === "/settings"
@@ -163,6 +179,7 @@ const Sidebar = ({ isOpen }) => {
         </Link>
       </div>
     </aside>
+    </>
   );
 };
 

@@ -1,4 +1,4 @@
-﻿import { useState } from "react"
+﻿import { useState, useEffect } from "react"
 import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate, useLocation } from "react-router-dom"
 import AdminDashboard from "./pages/AdminDashboard"
 import AdminLogin from "./pages/AdminLogin"
@@ -43,9 +43,21 @@ function AppContent() {
   const { isLoggedIn, loading, user, isAdmin } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(window.innerWidth >= 768);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [showSubscriptionMenu, setShowSubscriptionMenu] = useState(false);
+
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth < 768) {
+        setSidebarOpen(false);
+      } else {
+        setSidebarOpen(true);
+      }
+    };
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   const handleVideoSelect = (videoId) => {
     // Navigate to the video player page
@@ -106,10 +118,10 @@ function AppContent() {
         setShowSubscriptionMenu={setShowSubscriptionMenu}
       />
 
-      <div className="flex flex-1 overflow-hidden">
-        <Sidebar isOpen={sidebarOpen} />
+      <div className="flex flex-1 overflow-hidden relative">
+        <Sidebar isOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
 
-        <main className="flex-1 overflow-y-auto">
+        <main className="flex-1 overflow-y-auto min-w-0">
           <Routes>
             <Route path="/" element={<Home onVideoSelect={handleVideoSelect} />} />
             <Route path="/search" element={<Search />} />

@@ -74,7 +74,7 @@ const TrendingVideos = ({ onVideoSelect }) => {
   // ──────────── LOADING ────────────
   if (loading) {
     return (
-      <div className="min-h-screen p-8" style={{ background: "#0a0a0a" }}>
+      <div className="min-h-screen p-4 md:p-8" style={{ background: "#0a0a0a" }}>
         <div className="max-w-7xl mx-auto">
           <div className="flex items-center gap-3 mb-10">
             <Flame className="w-8 h-8" style={{ color: "#ec5b13" }} />
@@ -103,7 +103,7 @@ const TrendingVideos = ({ onVideoSelect }) => {
   // ──────────── ERROR ────────────
   if (error) {
     return (
-      <div className="min-h-screen p-8 flex flex-col" style={{ background: "#0a0a0a" }}>
+      <div className="min-h-screen p-4 md:p-8 flex flex-col" style={{ background: "#0a0a0a" }}>
         <div className="max-w-7xl mx-auto w-full flex flex-col items-center justify-center py-32">
           <div className="w-20 h-20 rounded-2xl flex items-center justify-center mb-6"
             style={{ background: "rgba(239,68,68,0.1)" }}>
@@ -125,7 +125,7 @@ const TrendingVideos = ({ onVideoSelect }) => {
   const gridVideos = videos.slice(1);
 
   return (
-    <div className="min-h-screen p-8" style={{ background: "#0a0a0a" }}>
+    <div className="min-h-screen p-4 md:p-8" style={{ background: "#0a0a0a" }}>
       <div className="max-w-7xl mx-auto">
 
         {/* ── Title + Tabs ── */}

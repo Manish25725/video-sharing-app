@@ -98,7 +98,7 @@ const Subscriptions = ({ onVideoSelect }) => {
     <div className="min-h-screen flex flex-col" style={{ background: '#141414' }}>
 
       {/* â”€â”€ Scrollable content â”€â”€ */}
-      <div className="flex-1 overflow-y-auto px-8 py-6">
+      <div className="flex-1 overflow-y-auto px-4 sm:px-8 py-6">
 
         {/* Error banner */}
         {error && (

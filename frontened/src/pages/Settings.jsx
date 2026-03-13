@@ -462,7 +462,7 @@ const Settings = () => {
       {toast && <Toast msg={toast.msg} type={toast.type} onClose={() => setToast(null)} />}
 
       {/* â”€â”€ Content â”€â”€ */}
-      <div className="flex-1 overflow-y-auto p-8 max-w-5xl mx-auto w-full">
+      <div className="flex-1 overflow-y-auto p-4 md:p-8 max-w-5xl mx-auto w-full">
         {/* Title */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-slate-100 mb-2">Settings</h1>

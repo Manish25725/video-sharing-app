@@ -327,7 +327,7 @@ const Profile = ({ onVideoSelect }) => {
           <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, rgba(15, 9, 9, 1), rgba(15, 9, 9, 0.2), transparent)' }}></div>
         </div>
         
-        <div className="max-w-7xl mx-auto px-6 -mt-16 md:-mt-20 relative z-10">
+        <div className="max-w-7xl mx-auto px-4 md:px-6 -mt-16 md:-mt-20 relative z-10">
           <div className="flex flex-col md:flex-row items-end md:items-center gap-6">
             {/* Profile Avatar */}
             <div 
@@ -386,7 +386,7 @@ const Profile = ({ onVideoSelect }) => {
       </section>
 
       {/* Creator Tools Tabs */}
-      <section className="max-w-7xl mx-auto px-6 mt-8 w-full">
+      <section className="max-w-7xl mx-auto px-4 md:px-6 mt-8 w-full">
         <div className="flex border-b" style={{ borderColor: 'rgba(236,91,19,0.1)' }}>
           {[
             { id: "videos", label: "Videos" },

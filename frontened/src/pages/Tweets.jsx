@@ -148,11 +148,11 @@ const Tweets = () => {
     <div className="min-h-screen flex flex-col" style={{ background: '#141414' }}>
 
       {/* ── Content ── */}
-      <div className="max-w-4xl w-full mx-auto px-8 py-8 flex flex-col gap-8 flex-1">
+      <div className="max-w-4xl w-full mx-auto px-2 sm:px-4 md:px-8 py-4 md:py-8 flex flex-col gap-4 sm:gap-8 flex-1">
 
         {/* Composer */}
         <div
-          className="rounded-2xl p-6 shadow-2xl"
+          className="rounded-2xl p-3 sm:p-6 shadow-2xl"
           style={{
             background: 'rgba(45,30,22,0.4)',
             backdropFilter: 'blur(12px)',
@@ -160,14 +160,14 @@ const Tweets = () => {
             border: '1px solid rgba(236,91,19,0.1)',
           }}
         >
-          <div className="flex gap-4">
+          <div className="flex gap-3 sm:gap-4">
             {/* Avatar */}
-            <div className="w-12 h-12 rounded-full overflow-hidden flex-shrink-0">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full overflow-hidden flex-shrink-0">
               {user.avatar ? (
                 <img src={user.avatar} alt="" className="w-full h-full object-cover" />
               ) : (
                 <div
-                  className="w-full h-full flex items-center justify-center text-white font-bold text-lg"
+                  className="w-full h-full flex items-center justify-center text-white font-bold text-base sm:text-lg"
                   style={{ background: '#ec5b13' }}
                 >
                   {(user.fullName || user.userName || 'U').charAt(0).toUpperCase()}
@@ -335,7 +335,7 @@ const Tweets = () => {
                   <button
                     onClick={handleSubmit}
                     disabled={!canSubmit || submitting}
-                    className="flex items-center gap-2 px-8 py-2.5 text-white font-bold rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="flex items-center gap-2 px-4 sm:px-8 py-2 sm:py-2.5 text-white font-bold rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                     style={{ background: '#ec5b13', boxShadow: '0 4px 15px rgba(236,91,19,0.2)' }}
                   >
                     {submitting ? (

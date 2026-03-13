@@ -285,7 +285,7 @@ const Home = ({ onVideoSelect }) => {
 
       {/* ── Live Now Strip ── */}
       {liveStreams.length > 0 && (
-        <section className="px-6 lg:px-12 py-10">
+        <section className="px-4 sm:px-6 lg:px-12 py-10">
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-2">
               <span className="w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse" />
@@ -303,7 +303,7 @@ const Home = ({ onVideoSelect }) => {
 
       {/* ── Category Pills ── */}
       <section
-        className="px-6 lg:px-12 py-6 border-t border-b"
+        className="px-4 sm:px-6 lg:px-12 py-6 border-t border-b"
         style={{ borderColor: "rgba(236,91,19,0.08)" }}
       >
         <div className="flex flex-wrap gap-2.5">
@@ -330,7 +330,7 @@ const Home = ({ onVideoSelect }) => {
       </section>
 
       {/* ── Video Grid ── */}
-      <section className="px-6 lg:px-12 py-10">
+      <section className="px-4 sm:px-6 lg:px-12 py-10">
         <div className="flex items-center justify-between mb-7">
           <h3 className="text-2xl font-bold">
             {activeCategory === "All" ? "Recommended for You" : activeCategory}
@@ -378,7 +378,7 @@ const Home = ({ onVideoSelect }) => {
 
       {/* ── Upcoming Streams ── */}
       {scheduledStreams.length > 0 && (
-        <section className="px-6 lg:px-12 py-8 border-t" style={{ borderColor: "rgba(236,91,19,0.08)" }}>
+        <section className="px-4 sm:px-6 lg:px-12 py-8 border-t" style={{ borderColor: "rgba(236,91,19,0.08)" }}>
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-xl font-bold flex items-center gap-2">
               <svg className="w-5 h-5 text-violet-400" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
@@ -404,7 +404,7 @@ const Home = ({ onVideoSelect }) => {
 
       {/* ── Footer ── */}
       <footer
-        className="px-6 lg:px-12 py-12 mt-8 border-t"
+        className="px-4 sm:px-6 lg:px-12 py-12 mt-8 border-t"
         style={{
           background: "rgba(28,18,13,0.7)",
           backdropFilter: "blur(12px)",

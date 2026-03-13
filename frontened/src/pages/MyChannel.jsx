@@ -1113,7 +1113,7 @@ const MyChannel = () => {
               {/* Bar chart */}
               <div className="lg:col-span-2 p-6 rounded-2xl"
                 style={{ background: 'rgba(45,30,22,0.4)', border: '1px solid rgba(236,91,19,0.1)' }}>
-                <div className="flex items-center justify-between mb-8">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
                   <div>
                     <h3 className="text-xl font-bold text-white">Views Trend</h3>
                     <p className="text-sm" style={{ color: '#64748b' }}>Daily views across last 30 days</p>
@@ -1198,9 +1198,9 @@ const MyChannel = () => {
   }
 
   return (
-    <div className="min-h-screen p-6" style={{ background: '#141414' }}>
+    <div className="min-h-screen p-4 md:p-6" style={{ background: '#141414' }}>
       {/* Page header */}
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
         <h1 className="text-3xl font-black text-white">My Channel</h1>
         <Link
           to="/go-live"

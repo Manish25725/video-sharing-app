@@ -276,7 +276,7 @@ const TweetCard = ({ tweet, currentUser, onDeleted, onUpdated }) => {
 
   return (
     <article className="rounded-2xl shadow-xl transition-all duration-200 overflow-hidden" style={{ background: "rgba(45,30,22,0.4)", backdropFilter: "blur(12px)", border: "1px solid rgba(236,91,19,0.1)" }}>
-      <div className="p-5">
+      <div className="p-3 sm:p-5">
         {/* ── Header ── */}
         <div className="flex items-start justify-between mb-3">
           <div className="flex items-center gap-3">

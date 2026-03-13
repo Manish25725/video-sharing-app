@@ -158,7 +158,7 @@ const Report = ({ isDark = false }) => {
       </div>
 
       {/* Summary cards */}
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {[
           { label: "Pending", count: pendingCount, cls: "from-amber-500 to-orange-500", icon: Clock },
           { label: "Reviewed", count: reviewedCount, cls: "from-blue-500 to-indigo-500", icon: CheckCircle },

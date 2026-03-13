@@ -31,8 +31,8 @@ const LiveStreams = () => {
   }, []);
 
   return (
-    <div className="p-6">
-      <div className="flex items-center justify-between mb-6">
+    <div className="p-4 md:p-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 rounded-lg bg-red-100 flex items-center justify-center">
             <Radio className="w-4 h-4 text-red-600" />
