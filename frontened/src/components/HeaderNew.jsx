@@ -188,7 +188,7 @@ const Header = ({
         </div>
 
         {/* ── Center: Search — takes all available space ── */}
-        <div className="flex-1 flex justify-center px-4">
+        <div className="flex-1 min-w-0 flex justify-center px-2 sm:px-4">
           <div className="flex items-center w-full max-w-2xl h-11 rounded-full overflow-hidden transition-all duration-200"
             style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.09)" }}
             onFocusCapture={e => {
@@ -209,11 +209,12 @@ const Header = ({
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onKeyDown={handleSearchKeyDown}
-              className="flex-1 h-full pl-5 pr-3 bg-transparent text-sm text-slate-200 placeholder-slate-600 focus:outline-none"
+              className="flex-1 min-w-0 h-full pl-5 pr-3 bg-transparent text-sm text-slate-200 placeholder-slate-600 focus:outline-none"
             />
             {/* Voice search */}
-            <div className="flex-shrink-0 px-1">
-              <VoiceSearch onResult={handleVoiceResult} />
+            <div className="flex-shrink-0 h-full w-11 flex items-center justify-center border-l"
+              style={{ borderColor: "rgba(255,255,255,0.08)" }}>
+              <VoiceSearch onResult={handleVoiceResult} compact />
             </div>
             {/* Search button — orange pill */}
             <button
