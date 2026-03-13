@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import { videoService, transformVideosArray } from "../services/videoService";
 import { dashboardService } from "../services/dashboardService";
+import api from "../services/api";
 import { useAuth } from "../contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import Report from "./Report";
@@ -89,23 +90,68 @@ const AdminDashboard = () => {
   const fetchData = async () => {
     setDataLoading(true);
     try {
-      const [statsRes, videosRes] = await Promise.all([
-        dashboardService.getChannelStats(),
-        videoService.getAllVideos(1, 50, "", "createdAt", "desc"),
+      const [statsRes, usersRes, videosRes, commentsRes] = await Promise.all([
+        api.get("/admin/stats").catch(()=>null),
+        api.get("/admin/users?limit=50").catch(()=>null),
+        api.get("/admin/videos?limit=50").catch(()=>null),
+        api.get("/admin/comments?limit=50").catch(()=>null),
       ]);
-      if (statsRes?.success && statsRes.data) {
-        setStats((p) => ({
-          ...p,
-          totalViews: statsRes.data.totalViews ?? p.totalViews,
-          totalVideos: statsRes.data.totalVideos ?? p.totalVideos,
+
+      if (statsRes?.data?.data) {
+        setStats({
+          totalUsers: statsRes.data.data.totalUsers || 0,
+          totalVideos: statsRes.data.data.totalVideos || 0,
+          totalViews: statsRes.data.data.totalViews || 0,
+          totalReports: statsRes.data.data.totalReports || 0,
+          usersChange: 0, videosChange: 0, viewsChange: 0, reportsChange: 0,
+        });
+      }
+
+      if (usersRes?.data?.data?.users) {
+        setUsers(usersRes.data.data.users.map(u => ({
+          id: u._id,
+          name: u.fullName || 'User',
+          email: u.email,
+          role: "User",
+          videos: 0,
+          status: u.status || "Active",
+          joined: new Date(u.createdAt).toLocaleDateString(),
+          avatar: u.fullName ? u.fullName.charAt(0).toUpperCase() : 'U'
+        })));
+      }
+
+      if (videosRes?.data?.data?.videos) {
+        const v = videosRes.data.data.videos.map(vi => ({
+          id: vi._id,
+          title: vi.title,
+          thumbnail: vi.thumbnail,
+          views: vi.views,
+          publishedAt: vi.createdAt,
+          status: vi.isPublished ? "Published" : "Draft",
+          owner: vi.owner
+        }));
+        setRecentVideos(v.slice(0, 5));
+        setAllVideos(v);
+      }
+      
+      if (commentsRes?.data?.data?.comments) {
+        setComments(commentsRes.data.data.comments.map(c => {
+          const fn = c.owner?.fullName || 'Unknown';
+          return {
+            _id: c._id,
+            id: c._id,
+            user: fn,
+            avatar: fn.charAt(0).toUpperCase(),
+            comment: c.content,
+            video: c.video?.title || 'Unknown Video',
+            date: new Date(c.createdAt).toLocaleDateString(),
+            status: 'Published'
+          };
         }));
       }
-      if (videosRes?.success) {
-        const t = transformVideosArray(videosRes.data);
-        setRecentVideos(t.slice(0, 5));
-        setAllVideos(t);
-      }
-    } catch (_) {}
+    } catch (err) {
+      console.error(err);
+    }
     setDataLoading(false);
   };
 
@@ -361,7 +407,14 @@ const AdminDashboard = () => {
     const filtered = users.filter((u) => !userSearch.trim() ||
       u.name?.toLowerCase().includes(userSearch.toLowerCase()) ||
       u.email?.toLowerCase().includes(userSearch.toLowerCase()));
-    const banUser = (id) => setUsers((prev) => prev.map((u) => u.id === id ? { ...u, status: u.status === "Banned" ? "Active" : "Banned" } : u));
+    const banUser = async (id) => {
+      try {
+        const u = users.find(x => x.id === id);
+        const newStatus = u.status === "Banned" ? "Active" : "Banned";
+        await api.patch("/admin/users/" + id + "/status", { status: newStatus });
+        setUsers((prev) => prev.map((u) => u.id === id ? { ...u, status: newStatus } : u));
+      } catch(err) { console.error(err); }
+    };
     return (
       <div className="space-y-6">
         <div><h1 className={`text-2xl font-bold ${tp}`}>Users Management</h1><p className={`text-sm ${ts} mt-1`}>{users.length} total users</p></div>
@@ -414,6 +467,12 @@ const AdminDashboard = () => {
 
   /* videos */
   const VideosSection = () => {
+    const deleteVideo = async (id) => {
+      try {
+        await api.delete("/admin/videos/" + id);
+        setAllVideos(prev => prev.filter(vid => vid.id !== id));
+      } catch(err) { console.error(err); }
+    };
     const filtered = allVideos.filter((v) => !videoSearch.trim() || v.title?.toLowerCase().includes(videoSearch.toLowerCase()));
     const fmt = (s) => { if (!s) return "—"; const m = Math.floor(s / 60); const sc = Math.round(s % 60); return `${m}:${sc.toString().padStart(2, "0")}`; };
     return (
@@ -465,7 +524,7 @@ const AdminDashboard = () => {
                       <div className="flex items-center gap-1">
                         <button className="p-1.5 rounded-lg text-blue-500 hover:bg-blue-50 transition-colors"><Eye className="w-4 h-4"/></button>
                         <button className="p-1.5 rounded-lg text-amber-500 hover:bg-amber-50 transition-colors"><Edit className="w-4 h-4"/></button>
-                        <button className="p-1.5 rounded-lg text-red-500 hover:bg-red-50 transition-colors"><Trash2 className="w-4 h-4"/></button>
+                        <button onClick={() => deleteVideo(v.id)} className="p-1.5 rounded-lg text-red-500 hover:bg-red-50 transition-colors"><Trash2 className="w-4 h-4"/></button>
                       </div>
                     </td>
                   </tr>
@@ -479,8 +538,15 @@ const AdminDashboard = () => {
   };
 
   /* comments */
-  const CommentsSection = () => (
-    <div className="space-y-6">
+  const CommentsSection = () => {
+    const deleteComment = async (id) => {
+      try {
+        await api.delete("/admin/comments/" + id);
+        setComments(p => p.filter(x => x._id !== id));
+      } catch(e) { console.error(e); }
+    };
+    return (
+      <div className="space-y-6">
       <div><h1 className={`text-2xl font-bold ${tp}`}>Comments Moderation</h1><p className={`text-sm ${ts} mt-1`}>Review and moderate user comments</p></div>
       <div className={`${cardBg} border rounded-2xl shadow-sm overflow-hidden`}>
         <div className="overflow-x-auto">
@@ -501,17 +567,18 @@ const AdminDashboard = () => {
                   <td className="px-5 py-4">
                     <div className="flex items-center gap-1">
                       <button onClick={()=>setComments(p=>p.map(x=>x.id===c.id?{...x,status:"Approved"}:x))} className="p-1.5 rounded-lg text-emerald-500 hover:bg-emerald-50 transition-colors"><CheckCircle className="w-4 h-4"/></button>
-                      <button onClick={()=>setComments(p=>p.filter(x=>x.id!==c.id))} className="p-1.5 rounded-lg text-red-500 hover:bg-red-50 transition-colors"><Trash2 className="w-4 h-4"/></button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+<button onClick={() => deleteComment(c._id)} className="p-1.5 rounded-lg text-red-500 hover:bg-red-50 transition-colors"><Trash2 className="w-4 h-4"/></button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   /* analytics */
   const AnalyticsSection = () => (

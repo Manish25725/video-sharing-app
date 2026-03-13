@@ -18,6 +18,7 @@ import healthRouter from "./routes/health.route.js"
 import streamRouter from './routes/stream.route.js'
 import reportRouter from './routes/report.route.js'
 import feedbackRouter from './routes/feedback.route.js'
+import adminRouter from './routes/admin.routes.js'
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -58,6 +59,7 @@ app.use("/api/v1/health",healthRouter)
 app.use("/api/v1/streams",streamRouter)
 app.use("/api/v1/reports",reportRouter)
 app.use("/api/v1/feedback",feedbackRouter)
+app.use("/api/v1/admin", adminRouter)
 
 // Global error handler - must be last middleware
 // 1. Clean up any files multer wrote to disk before the error was thrown.
