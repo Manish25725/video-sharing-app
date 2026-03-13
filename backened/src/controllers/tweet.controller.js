@@ -1,4 +1,4 @@
-﻿import mongoose from "mongoose";
+import mongoose from "mongoose";
 import fs from "fs";
 import {Tweet} from "../models/tweet.model.js"
 import {Comment} from "../models/comment.model.js"
@@ -60,7 +60,8 @@ const createTweet = asyncHandler(async (req, res) => {
 
     const { content, pollQuestion, pollOptions, pollMultiple, pollEndsAt, commentsEnabled } = req.body;
 
-    if(!content || content.trim()==="") throw new ApiError(400,"Content should not be empty");
+    const hasImages = req.files && req.files.length > 0;
+    if((!content || content.trim()==="") && !hasImages) throw new ApiError(400,"Content or at least one image is required");
 
     // Upload images
     const imageUrls = [];
@@ -88,7 +89,7 @@ const createTweet = asyncHandler(async (req, res) => {
     }
 
     const tweet = await Tweet.create({
-        content: content.trim(),
+        content: content?.trim() || "",
         owner: req.user._id,
         images: imageUrls,
         ...(poll && { poll }),

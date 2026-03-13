@@ -127,12 +127,12 @@ class ApiClient {
   }
 
   // File upload (FormData)
+  // DO NOT set Content-Type manually — axios will auto-set
+  // 'multipart/form-data; boundary=...' when it detects a FormData body.
+  // Setting it manually strips the boundary and breaks server-side parsing.
   async uploadFile(endpoint, formData, config = {}) {
     try {
-      const response = await this.axios.post(endpoint, formData, {
-        ...config,
-        headers: { 'Content-Type': 'multipart/form-data', ...config.headers },
-      });
+      const response = await this.axios.post(endpoint, formData, config);
       return response.data;
     } catch (error) {
       throw this.handleError(error);

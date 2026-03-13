@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   MessageSquare, Image, BarChart2, X, Send, Plus,
   Search, Bell, MapPin, FileText, Users, TrendingUp, ThumbsUp, Edit3
@@ -91,7 +91,7 @@ const Tweets = () => {
   const handleSubmit = async () => {
     if (!canSubmit || submitting) return;
     const formData = new FormData();
-    formData.append('content', content.trim());
+    if (content.trim()) formData.append('content', content.trim());
     selectedImages.forEach(img => formData.append('images', img.file));
     if (showPoll && pollQuestion.trim()) {
       const validOptions = pollOptions.filter(o => o.trim());
