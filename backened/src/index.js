@@ -1,4 +1,4 @@
-ï»¿import { createServer } from 'http'
+import { createServer } from 'http'
 import { Server } from 'socket.io'
 import { createAdapter } from "@socket.io/redis-adapter"
 import dotenv from "dotenv"
@@ -21,13 +21,13 @@ const io = new Server(server, {
     }
 })
 
-// Attach Redis adapter â€” propagates room broadcasts across all Node.js instances.
+// Attach Redis adapter — propagates room broadcasts across all Node.js instances.
 // Falls back to single-server (in-memory) mode if Redis is not reachable.
 try {
     io.adapter(createAdapter(pub, sub))
     console.log("[socket.io] Redis adapter attached")
 } catch (err) {
-    console.warn("[socket.io] Redis adapter skipped â€” running in single-server mode:", err.message)
+    console.warn("[socket.io] Redis adapter skipped — running in single-server mode:", err.message)
 }
 
 // Make io available globally for other modules

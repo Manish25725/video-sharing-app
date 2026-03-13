@@ -67,7 +67,8 @@ export const AuthProvider = ({ children }) => {
 
   const handleGoogleAuth = async (token) => {
     try {
-      setLoading(true);
+      // Do NOT toggle global `loading` here — it unmounts the Login page
+      // (including GoogleLogin), causing the GSI client to re-initialize.
       const response = await authService.googleAuth(token);
       if (response?.success) {
         setUser(response.data.user);
@@ -77,8 +78,6 @@ export const AuthProvider = ({ children }) => {
       return { success: false, error: response?.message || 'Google Auth failed' };
     } catch (error) {
       return { success: false, error: error.message || 'Google Auth failed' };
-    } finally {
-      setLoading(false);
     }
   };
 

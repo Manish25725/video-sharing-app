@@ -1114,46 +1114,76 @@ const verifySignupOtp = asyncHandler(async (req, res) => {
 });
 
 const googleAuth = asyncHandler(async (req, res) => {
+    const { token } = req.body;
+    if (!token) throw new ApiError(400, "Token is required");
+
+    // ── 1. Verify the Google ID token ────────────────────────────────────────
+    let payload;
     try {
-        const { token } = req.body;
-        if (!token) {
-            throw new ApiError(400, "Token is required");
-        }
         const client = new OAuth2Client(process.env.VITE_GOOGLE_CLIENT_ID);
         const ticket = await client.verifyIdToken({ idToken: token });
-        const payload = ticket.getPayload();
-        const { email, name, picture } = payload;
-        
-        let user = await User.findOne({ email });
-        let accessToken, refreshToken;
-        
-        if (user) {
-            const tokens = await generateAccessAndRefreshToken(user._id);
-            accessToken = tokens.accessToken;
-            refreshToken = tokens.refreshToken;
-        } else {
-            user = await User.create({
-                email,
-                fullName: name,
-                avatar: picture,
-                password: crypto.randomBytes(16).toString("hex"),
-                userName: email.split("@")[0].toLowerCase() + Math.random().toString(36).slice(2,8),
-                isEmailVerified: true
-            });
-            const tokens = await generateAccessAndRefreshToken(user._id);
-            accessToken = tokens.accessToken;
-            refreshToken = tokens.refreshToken;
-        }
-
-        const cookieOptions = getCookieOptions();
-        return res
-            .status(200)
-            .cookie("accessToken", accessToken, cookieOptions)
-            .cookie("refreshToken", refreshToken, cookieOptions)
-            .json(new ApiResponse(200, { user, accessToken, refreshToken }, "Google authentication successful"));
-    } catch (error) {
-        throw new ApiError(400, error.message || "Google authentication failed");
+        payload = ticket.getPayload();
+    } catch {
+        throw new ApiError(401, "Invalid Google token");
     }
+
+    const { email, name, picture } = payload;
+
+    // ── 2. Default images ─────────────────────────────────────────────────────
+    // Avatar  : Google profile picture (already a CDN URL — always valid)
+    // Cover   : DiceBear "shapes" — deterministic per name, served from a stable CDN
+    const encodedName  = encodeURIComponent(name);
+    const defaultAvatar     = picture || `https://api.dicebear.com/8.x/initials/svg?seed=${encodedName}&backgroundColor=1a1a2e&textColor=ec5b13`;
+    const defaultCoverImage = `https://api.dicebear.com/8.x/shapes/svg?seed=${encodedName}&backgroundColor=0a0a0a,1a1a2e,120a06&backgroundType=gradientLinear`;
+
+    // ── 3. Find-or-create user ────────────────────────────────────────────────
+    let user = await User.findOne({ email: email.toLowerCase() });
+    let isNewUser = false;
+
+    if (!user) {
+        // Generate a unique userName: first part of email + 6 random chars
+        const baseUserName  = email.split("@")[0].toLowerCase().replace(/[^a-z0-9]/g, "");
+        const suffix        = Math.random().toString(36).slice(2, 8);
+        const userName      = (baseUserName + suffix).slice(0, 30);
+
+        user = await User.create({
+            email:           email.toLowerCase(),
+            fullName:        name,
+            userName,
+            avatar:          defaultAvatar,
+            coverImage:      defaultCoverImage,
+            password:        crypto.randomBytes(16).toString("hex"), // unusable random pw for OAuth users
+            isEmailVerified: true,
+        });
+        isNewUser = true;
+    }
+
+    // ── 4. Generate tokens — rollback user creation if this fails ─────────────
+    let accessToken, refreshToken;
+    try {
+        const tokens  = await generateAccessAndRefreshToken(user);
+        accessToken   = tokens.accessToken;
+        refreshToken  = tokens.refreshToken;
+    } catch (err) {
+        // Keep DB consistent: remove the just-created user so they can retry
+        if (isNewUser) await User.findByIdAndDelete(user._id);
+        throw new ApiError(500, "Failed to generate authentication tokens");
+    }
+
+    // ── 5. Return response ────────────────────────────────────────────────────
+    // Strip sensitive fields before sending to client
+    const safeUser = await User.findById(user._id).select("-password -refreshToken -sessions");
+
+    const cookieOptions = getCookieOptions();
+    return res
+        .status(isNewUser ? 201 : 200)
+        .cookie("accessToken",  accessToken,  cookieOptions)
+        .cookie("refreshToken", refreshToken, cookieOptions)
+        .json(new ApiResponse(
+            isNewUser ? 201 : 200,
+            { user: safeUser, accessToken, refreshToken },
+            isNewUser ? "Google account created successfully" : "Google authentication successful"
+        ));
 });
 
 export {registerUser,
