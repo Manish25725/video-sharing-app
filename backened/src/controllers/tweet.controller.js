@@ -230,13 +230,7 @@ const votePoll = asyncHandler(async (req, res) => {
     tweet.markModified("poll");
     await tweet.save();
 
-    const sanitized = tweet.poll.options.map((opt) => ({
-        text: opt.text,
-        voteCount: opt.votes.length,
-        votedByUser: opt.votes.some(v => String(v) === String(userId))
-    }));
-
-    return res.status(200).json(new ApiResponse(200, { options: sanitized }, "Vote recorded"));
+    return res.status(200).json(new ApiResponse(200, { options: tweet.poll.options }, "Vote recorded"));
 });
 
 

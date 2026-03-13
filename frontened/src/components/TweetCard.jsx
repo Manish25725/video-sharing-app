@@ -85,69 +85,76 @@ const ImageGrid = ({ images }) => {
 };
 
 /* ─── Poll widget ───────────────────────────────────────────── */
-const PollWidget = ({ poll, totalVotes, userVotedIndexes, showResults, canVote, onVote }) => (
-  <div className="my-3 rounded-2xl border border-[#412e24] bg-gradient-to-br from-[#1b120c] to-[#140c08] overflow-hidden">
-    <div className="px-4 pt-4 pb-2">
-      <div className="flex items-center gap-2 mb-3">
-        <BarChart2 className="w-4 h-4 text-[#ec5b13]" />
-        <p className="font-semibold text-slate-100 text-sm">{poll.question}</p>
-      </div>
-      <div className="space-y-2">
-        {poll.options?.map((option, i) => {
-          const votes = option.votes?.length || 0;
-          const pct = totalVotes > 0 ? Math.round((votes / totalVotes) * 100) : 0;
-          const isSelected = userVotedIndexes.includes(i);
-          return (
-            <button
-              key={i}
-              onClick={() => canVote && onVote(i)}
-              disabled={!canVote}
-              className={`relative w-full text-left rounded-xl overflow-hidden transition-all duration-150
-                ${isSelected ? 'ring-2 ring-[#ec5b13] ring-offset-1' : ''}
-                ${canVote ? 'hover:shadow-sm active:scale-[0.99] cursor-pointer' : 'cursor-default'}
-                bg-transparent border ${isSelected ? 'border-[#ec5b13]/50' : 'border-[#412e24]'}
-              `}
-            >
-              {/* Progress fill */}
-              {showResults && (
-                <div
-                  className={`absolute inset-y-0 left-0 rounded-xl transition-all duration-700 ease-out
-                    ${isSelected ? 'bg-[#ec5b13]/20' : 'bg-[#2a1b14]'}`}
-                  style={{ width: `${pct}%` }}
-                />
-              )}
-              <div className="relative flex items-center justify-between px-3 py-2.5">
-                <span className="flex items-center gap-2 text-sm font-medium text-slate-200">
-                  {isSelected
-                    ? <span className="w-4 h-4 rounded-full bg-[#ec5b13]/100 flex items-center justify-center flex-shrink-0">
-                        <Check className="w-2.5 h-2.5 text-white" />
-                      </span>
-                    : <span className="w-4 h-4 rounded-full border-2 border-[#412e24] flex-shrink-0" />
-                  }
-                  {option.text}
-                </span>
+const PollWidget = ({ poll, totalVotes, userVotedIndexes, showResults, canVote, onVote }) => {
+  const isMultiple = poll.multipleChoice;
+  return (
+    <div className="my-3 rounded-2xl border border-[rgba(236,91,19,0.1)] bg-[rgba(45,30,22,0.6)] overflow-hidden shadow-inner">
+      <div className="px-4 pt-4 pb-3">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <BarChart2 className="w-4 h-4 text-[#ec5b13]" />
+            <p className="font-bold text-slate-100 text-[15px]">{poll.question}</p>
+          </div>
+          {isMultiple && (
+            <span className="text-[10px] uppercase font-bold tracking-wider text-slate-400 bg-black/40 px-2 py-1 rounded-md">Multiple Choice</span>
+          )}
+        </div>
+        <div className="space-y-2.5">
+          {poll.options?.map((option, i) => {
+            const votes = option.votes?.length || 0;
+            const pct = totalVotes > 0 ? Math.round((votes / totalVotes) * 100) : 0;
+            const isSelected = userVotedIndexes.includes(i);
+            return (
+              <button
+                key={i}
+                onClick={() => canVote && onVote(i)}
+                disabled={!canVote}
+                className={`group relative w-full text-left rounded-xl overflow-hidden transition-all duration-200 border
+                  ${canVote ? 'cursor-pointer hover:border-[#ec5b13]/60' : 'cursor-default'}
+                  ${isSelected ? 'border-[#ec5b13] bg-[#ec5b13]/10' : 'border-[#412e24] bg-transparent'}
+                `}
+              >
+                {/* Progress fill */}
                 {showResults && (
-                  <span className={`text-xs font-bold ml-2 ${isSelected ? 'text-[#ec5b13]' : 'text-slate-400'}`}>
-                    {pct}%
-                  </span>
+                  <div
+                    className={`absolute inset-y-0 left-0 transition-all duration-700 ease-out
+                      ${isSelected ? 'bg-[#ec5b13]/30' : 'bg-[#412e24]/60'}`}
+                    style={{ width: `${pct}%` }}
+                  />
                 )}
-              </div>
-            </button>
-          );
-        })}
+                <div className="relative flex items-center justify-between px-4 py-3 z-10">
+                  <span className="flex items-center gap-3 text-[14px] font-medium text-slate-200">
+                    <span className={`w-4 h-4 flex items-center justify-center flex-shrink-0 transition-colors
+                      ${isMultiple ? 'rounded-md' : 'rounded-full'}
+                      ${isSelected ? 'bg-[#ec5b13] border-none' : 'border border-slate-500 group-hover:border-[#ec5b13]'}
+                    `}>
+                      {isSelected && <Check className="w-3 h-3 text-white" strokeWidth={3} />}
+                    </span>
+                    {option.text}
+                  </span>
+                  {showResults && (
+                    <span className={`text-sm font-bold ml-3 ${isSelected ? 'text-[#ec5b13]' : 'text-slate-400'}`}>
+                      {pct}%
+                    </span>
+                  )}
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+      <div className="px-4 py-2.5 bg-black/20 border-t border-[#412e24] flex items-center gap-2 text-xs font-medium text-slate-400">
+        <span>{totalVotes} vote{totalVotes !== 1 ? 's' : ''}</span>
+        {poll.endsAt && (
+          <>
+            <span>·</span>
+            <span>{new Date(poll.endsAt) < new Date() ? '🔒 Poll ended' : `Ends ${formatTimeAgo(poll.endsAt)}`}</span>
+          </>
+        )}
       </div>
     </div>
-    <div className="px-4 py-2 border-t border-[#412e24] flex items-center gap-2 text-xs text-slate-500">
-      <span>{totalVotes} vote{totalVotes !== 1 ? 's' : ''}</span>
-      {poll.endsAt && (
-        <>
-          <span>·</span>
-          <span>{new Date(poll.endsAt) < new Date() ? '🔒 Poll ended' : `Ends ${formatTimeAgo(poll.endsAt)}`}</span>
-        </>
-      )}
-    </div>
-  </div>
-);
+  );
+};
 
 /* ─── Main TweetCard ────────────────────────────────────────── */
 const TweetCard = ({ tweet, currentUser, onDeleted, onUpdated }) => {
@@ -371,7 +378,7 @@ const TweetCard = ({ tweet, currentUser, onDeleted, onUpdated }) => {
             totalVotes={totalVotes}
             userVotedIndexes={userVotedIndexes}
             showResults={showResults}
-            canVote={!showResults && !pollEnded && !!currentUser}
+            canVote={!pollEnded && !!currentUser}
             onVote={handleVote}
           />
         )}

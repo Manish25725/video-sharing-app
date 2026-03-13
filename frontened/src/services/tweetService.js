@@ -74,7 +74,7 @@ export const tweetService = {
 
   async getTweetComments(tweetId, page = 1, limit = 10) {
     try {
-      const response = await apiClient.get(`/comments/get-tweet-comment/${tweetId}?page=${page}&limit=${limit}`);
+      const response = await apiClient.get(`/comment/get-tweet-comment/${tweetId}?page=${page}&limit=${limit}`);
       return response;
     } catch (error) {
       console.error('Get tweet comments error:', error);
@@ -84,7 +84,7 @@ export const tweetService = {
 
   async addComment(tweetId, content) {
     try {
-      const response = await apiClient.post(`/comments/add-comment-tweet/${tweetId}`, { content });
+      const response = await apiClient.post(`/comment/add-comment-tweet/${tweetId}`, { content });
       return response;
     } catch (error) {
       console.error('Add tweet comment error:', error);
@@ -94,7 +94,7 @@ export const tweetService = {
 
   async deleteComment(commentId) {
     try {
-      const response = await apiClient.delete(`/comments/delete-comment/${commentId}`);
+      const response = await apiClient.delete(`/comment/delete-comment/${commentId}`);
       return response;
     } catch (error) {
       console.error('Delete tweet comment error:', error);
