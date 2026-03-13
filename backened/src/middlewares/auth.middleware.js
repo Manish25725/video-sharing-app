@@ -35,3 +35,12 @@ export const optionalAuth = asyncHandler(async (req, _, next) => {
     }
     next();
 });
+
+export const verifyAdmin = asyncHandler(async (req, res, next) => {
+    const adminKey = req.header("x-admin-key");
+    if (adminKey && adminKey === (process.env.ADMIN_KEY || 'playvibe_admin_2025')) {
+        req.isAdmin = true;
+        return next();
+    }
+    throw new ApiError(401, "Admin unauthorized");
+});

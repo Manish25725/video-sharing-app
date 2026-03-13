@@ -8,19 +8,11 @@ import {
     getAllCommentsAdmin,
     deleteCommentAdmin
 } from "../controllers/admin.controller.js";
-import { verifyJWT } from "../middlewares/auth.middleware.js";
+import { verifyAdmin } from "../middlewares/auth.middleware.js";
 
 const router = Router();
 
-router.use(verifyJWT);
-
-// Replace this with actual admin role checking middleware if exists,
-// for now, we'll check if it's admin role implicitly here via a quick middleware
-router.use((req, res, next) => {
-    // Assuming user model has `role` or similar, or this routes are protected differently
-    // For now, passing through
-    next();
-});
+router.use(verifyAdmin);
 
 router.route("/stats").get(getGlobalStats);
 
