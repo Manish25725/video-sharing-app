@@ -11,7 +11,6 @@ const WatchHistory = () => {
   const [watchHistory, setWatchHistory] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-  const [miniPlayer, setMiniPlayer] = useState(null);
   const [toast, setToast] = useState({ show: false, message: '', type: '' });
 
   useEffect(() => {
@@ -45,7 +44,6 @@ const WatchHistory = () => {
         }));
         historyVideos.sort((a, b) => new Date(b.watchedAt) - new Date(a.watchedAt));
         setWatchHistory(historyVideos);
-        setMiniPlayer(historyVideos[0] || null);
       } else {
         setWatchHistory([]);
       }
@@ -68,7 +66,6 @@ const WatchHistory = () => {
 
   const handleClearHistory = () => {
     setWatchHistory([]);
-    setMiniPlayer(null);
     showToast('Watch history cleared', 'success');
   };
 
@@ -148,7 +145,7 @@ const WatchHistory = () => {
   }
 
   return (
-    <div style={{ background: '#141414' }} className="min-h-screen relative">
+    <div style={{ background: '#141414' }} className="min-h-screen relative overflow-x-hidden">
       {/* Ambient background blob */}
       <div
         className="absolute top-0 right-0 w-96 h-96 rounded-full pointer-events-none -mr-48 -mt-48"
@@ -157,7 +154,7 @@ const WatchHistory = () => {
 
       {/* Header */}
       {/* Content */}
-      <div className="px-8 pb-28">
+      <div className="px-8 pb-12">
         {filteredHistory.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-24">
             <div className="w-20 h-20 rounded-full flex items-center justify-center mb-6" style={{ background: 'rgba(236,91,19,0.1)' }}>
@@ -272,54 +269,6 @@ const WatchHistory = () => {
           </div>
         )}
       </div>
-
-      {/* Floating Mini Player */}
-      {miniPlayer && (
-        <div
-          className="fixed bottom-8 right-8 z-20 w-80 p-4 rounded-3xl shadow-2xl border cursor-pointer"
-          style={{
-            background: 'rgba(44,28,21,0.75)',
-            backdropFilter: 'blur(12px)',
-            borderColor: 'rgba(236,91,19,0.2)',
-          }}
-        >
-          <div className="flex gap-4">
-            <div
-              className="w-24 h-16 rounded-xl overflow-hidden flex-shrink-0"
-              style={{ background: 'rgba(26,16,8,0.9)' }}
-            >
-              <img
-                src={miniPlayer.thumbnail}
-                alt={miniPlayer.title}
-                className="w-full h-full object-cover"
-                onError={e => { e.target.style.display = 'none'; }}
-              />
-            </div>
-            <div className="flex-1 overflow-hidden">
-              <p className="text-xs font-bold truncate text-slate-100">{miniPlayer.title}</p>
-              <p className="text-xs text-slate-400 mt-0.5">{miniPlayer.owner.fullName}</p>
-              <div className="mt-2 h-1 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.1)' }}>
-                <div className="h-full rounded-full w-2/3" style={{ background: '#ec5b13' }} />
-              </div>
-            </div>
-            <div className="flex flex-col justify-between items-end">
-              <button
-                onClick={e => { e.stopPropagation(); setMiniPlayer(null); }}
-                className="text-slate-400 hover:text-slate-200 transition-colors"
-              >
-                <X className="w-4 h-4" />
-              </button>
-              <button
-                onClick={() => handleVideoClick(miniPlayer.id)}
-                style={{ color: '#ec5b13' }}
-                className="hover:opacity-80 transition-opacity"
-              >
-                <Play className="w-5 h-5" />
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Toast */}
       {toast.show && (

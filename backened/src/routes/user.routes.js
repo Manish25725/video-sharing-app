@@ -1,5 +1,5 @@
 import {Router} from "express"
-import { changeCurrentPassword, getCurrentUser, getUserChannelProfile, getWatchHistory, getWatchLater, getWatchLaterIds, addToWatchLater, removeFromWatchLater, loginUser, logoutUser, registerUser, updateDetails, updateUserAvatar, updateUserCoverImage,addToWatchHistory, toggleNotifyOnPost, toggleNotifyOnVideo, toggleNotifyOnComment, toggleNotifyOnMention, toggleNotifyOnEmail, addAccount, switchAccount, getSavedAccounts, removeAccount, updateLanguage, getActiveSessions, revokeOtherSessions, updatePreferences, verifyEmail, resendVerificationEmail, forgotPassword, resetPassword, sendSignupOtp, verifySignupOtp } from "../controllers/user.controller.js";
+import { changeCurrentPassword, getCurrentUser, getUserChannelProfile, getWatchHistory, getWatchLater, getWatchLaterIds, addToWatchLater, removeFromWatchLater, loginUser, logoutUser, registerUser, updateDetails, updateUserAvatar, updateUserCoverImage,addToWatchHistory, toggleNotifyOnPost, toggleNotifyOnVideo, toggleNotifyOnComment, toggleNotifyOnMention, toggleNotifyOnEmail, addAccount, switchAccount, getSavedAccounts, removeAccount, updateLanguage, getActiveSessions, revokeOtherSessions, updatePreferences, verifyEmail, resendVerificationEmail, forgotPassword, resetPassword, sendSignupOtp, verifySignupOtp, googleAuth } from "../controllers/user.controller.js";
 import {upload} from "../middlewares/multer.middleware.js"
 import { optionalAuth, verifyJWT } from "../middlewares/auth.middleware.js";
 import { refreshAccessToken } from "../controllers/user.controller.js";
@@ -22,6 +22,7 @@ router.route("/register").post(
 
 
 router.route("/login").post(loginUser);
+router.route("/google-auth").post(googleAuth);
 //Secured routes
 router.route("/logout").post(verifyJWT,logoutUser)
 router.route("/refresh-token").post(refreshAccessToken);

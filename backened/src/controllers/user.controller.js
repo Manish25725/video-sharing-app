@@ -12,6 +12,7 @@ import { sendEmail } from "../utils/email.js"
 import { verifyEmailTemplate } from "../emails/verifyEmailTemplate.js"
 import { resetPasswordTemplate } from "../emails/resetPasswordTemplate.js"
 import { isEmailRateLimited } from "../utils/emailRateLimit.js"
+import { OAuth2Client } from "google-auth-library"
 
 
 const parseDevice = (ua = "") => {
@@ -1112,9 +1113,53 @@ const verifySignupOtp = asyncHandler(async (req, res) => {
     return res.status(200).json(new ApiResponse(200, {}, "Email verified"));
 });
 
+const googleAuth = asyncHandler(async (req, res) => {
+    try {
+        const { token } = req.body;
+        if (!token) {
+            throw new ApiError(400, "Token is required");
+        }
+        const client = new OAuth2Client(process.env.VITE_GOOGLE_CLIENT_ID);
+        const ticket = await client.verifyIdToken({ idToken: token });
+        const payload = ticket.getPayload();
+        const { email, name, picture } = payload;
+        
+        let user = await User.findOne({ email });
+        let accessToken, refreshToken;
+        
+        if (user) {
+            const tokens = await generateAccessAndRefreshToken(user._id);
+            accessToken = tokens.accessToken;
+            refreshToken = tokens.refreshToken;
+        } else {
+            user = await User.create({
+                email,
+                fullName: name,
+                avatar: picture,
+                password: crypto.randomBytes(16).toString("hex"),
+                userName: email.split("@")[0].toLowerCase() + Math.random().toString(36).slice(2,8),
+                isEmailVerified: true
+            });
+            const tokens = await generateAccessAndRefreshToken(user._id);
+            accessToken = tokens.accessToken;
+            refreshToken = tokens.refreshToken;
+        }
+
+        const cookieOptions = getCookieOptions();
+        return res
+            .status(200)
+            .cookie("accessToken", accessToken, cookieOptions)
+            .cookie("refreshToken", refreshToken, cookieOptions)
+            .json(new ApiResponse(200, { user, accessToken, refreshToken }, "Google authentication successful"));
+    } catch (error) {
+        throw new ApiError(400, error.message || "Google authentication failed");
+    }
+});
+
 export {registerUser,
     sendSignupOtp,
     verifySignupOtp,
+    googleAuth,
     loginUser,
     logoutUser,
     refreshAccessToken,
