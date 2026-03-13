@@ -30,7 +30,6 @@ try {
     process.on("SIGTERM", async () => { await subtitleQueue?.close(); });
     process.on("SIGINT",  async () => { await subtitleQueue?.close(); });
 
-    console.log(`[queue] Subtitle queue initialised (Redis: ${redisConnection.host}:${redisConnection.port})`);
 } catch (err) {
     console.warn("[queue] Redis unavailable — subtitle queue disabled:", err.message);
 }

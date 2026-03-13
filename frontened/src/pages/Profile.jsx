@@ -155,7 +155,6 @@ const Profile = ({ onVideoSelect }) => {
           return;
         }
         
-        console.log("Fetching profile for ID:", profileId);
         const userResponse = await authService.getUserProfile(profileId);
         
         if (userResponse.success && userResponse.data) {

@@ -30,14 +30,14 @@ const AddToPlaylistModal = ({ isOpen, onClose, videoId, videoTitle }) => {
     try {
       setLoading(true);
       const response = await playlistService.getUserPlaylists(user._id);
-      console.log('Playlist response:', response); // Debug log
+       // Debug log
       if (response.success && response.data) {
         // Transform the data to ensure proper id field
         const transformedPlaylists = response.data.map(playlist => ({
           ...playlist,
           id: playlist._id || playlist.id
         }));
-        console.log('Transformed playlists:', transformedPlaylists); // Debug log
+         // Debug log
         setPlaylists(transformedPlaylists);
       } else {
         setPlaylists([]);
@@ -63,7 +63,7 @@ const AddToPlaylistModal = ({ isOpen, onClose, videoId, videoTitle }) => {
       };
 
       const response = await playlistService.createPlaylist(playlistData);
-      console.log('Create playlist response:', response); // Debug log
+       // Debug log
 
       if (response.success) {
         showToast('Playlist created successfully!', 'success');
@@ -85,7 +85,7 @@ const AddToPlaylistModal = ({ isOpen, onClose, videoId, videoTitle }) => {
   const handleAddToPlaylist = async (playlistId) => {
     try {
       setAddingToPlaylist(playlistId);
-      console.log('Adding to playlist:', { playlistId, videoId }); // Debug log
+       // Debug log
       
       // Handle Watch Later specially
       if (playlistId === 'watch-later') {

@@ -233,13 +233,8 @@ const VideoPlayer = () => {
     try {
       setLoading(true)
       const response = await videoService.getVideoById(videoId)
-      console.log('Video data response:', response)
       if (response && response.data) {
-        console.log('Video createdAt:', response.data.createdAt, typeof response.data.createdAt)
         setVideo(response.data)
-        console.log('Video owner:', response.data.owner)
-        console.log('Current user:', user)
-        console.log('Is own video:', user?._id === response.data.owner?._id)
         // Check subscription status if user is logged in and video has owner
         if (user && response.data.owner?._id) {
           checkSubscriptionStatus(response.data.owner._id)
@@ -269,13 +264,11 @@ const VideoPlayer = () => {
   const incrementViewCount = async () => {
     // Only increment view count once per video session and prevent concurrent calls
     if (hasViewBeenCounted || isIncrementingView) {
-      console.log('View already counted or currently being counted for this session');
       return;
     }
 
     try {
       setIsIncrementingView(true); // Prevent concurrent calls
-      console.log('Incrementing view count for video:', videoId);
       
       const response = await videoService.incrementViews(videoId)
       
@@ -288,13 +281,11 @@ const VideoPlayer = () => {
           views: response.data?.views || (prev.views || 0) + 1
         }))
         
-        console.log('View count incremented successfully');
 
         // Add to watch history if user is logged in
         if (user) {
           try {
             const re=await watchHistoryService.addToWatchHistory(videoId);
-            console.log('Video added to watch history',re);
           } catch (historyError) {
             console.error('Error adding to watch history:', historyError);
             // Don't fail the entire operation if watch history fails
@@ -480,7 +471,6 @@ const VideoPlayer = () => {
 
     // Prevent multiple clicks
     if (commentActionsLoading.has(commentId)) {
-      console.log('Action already in progress for comment:', commentId)
       return
     }
 
@@ -488,10 +478,8 @@ const VideoPlayer = () => {
       // Add to loading set
       setCommentActionsLoading(prev => new Set(prev).add(commentId))
       
-      console.log('Attempting to like comment:', commentId)
 
       const response = await likeService.toggleCommentLike(commentId)
-      console.log('Like response:', response)
       
       if (response && response.success) {
         // Simply refresh the comments to get the updated state from backend
@@ -520,7 +508,6 @@ const VideoPlayer = () => {
 
     // Prevent multiple clicks
     if (commentActionsLoading.has(commentId)) {
-      console.log('Action already in progress for comment:', commentId)
       return
     }
 
@@ -528,10 +515,8 @@ const VideoPlayer = () => {
       // Add to loading set
       setCommentActionsLoading(prev => new Set(prev).add(commentId))
       
-      console.log('Attempting to dislike comment:', commentId)
 
       const response = await dislikeService.toggleCommentDislike(commentId)
-      console.log('Dislike response:', response)
       
       if (response && response.success) {
         // Simply refresh the comments to get the updated state from backend
@@ -601,25 +586,13 @@ const VideoPlayer = () => {
 
   const fetchComments = async () => {
     try {
-      console.log('🔍 Fetching comments for video:', videoId)
       setCommentsLoading(true)
       const response = await commentService.getVideoComments(videoId)
-      console.log('📥 Comments fetch response:', response)
       
       if (response && response.data) {
         const transformedComments = transformCommentsArray(response.data)
-        console.log('🔄 Transformed comments:', {
-          count: transformedComments.length,
-          firstComment: transformedComments[0] ? {
-            id: transformedComments[0].id,
-            content: transformedComments[0].content?.substring(0, 50) + '...',
-            user: transformedComments[0].user?.name
-          } : null
-        })
         setComments(transformedComments)
-        console.log('✅ Comments state updated')
       } else {
-        console.log('❌ No comment data in response')
         setComments([])
       }
     } catch (err) {
@@ -634,7 +607,6 @@ const VideoPlayer = () => {
     try {
       const isSubscribed = await subscriptionService.isSubscribedToChannel(channelId);
       setIsSubscribed(isSubscribed);
-      console.log('Subscription status:', isSubscribed);
     } catch (err) {
       console.error("Error checking subscription:", err);
       setIsSubscribed(false);
@@ -707,7 +679,6 @@ const VideoPlayer = () => {
 
     try {
       const response = await subscriptionService.toggleSubscription(video.owner._id)
-      console.log('Toggle subscription response:', response)
       if (response && response.success) {
         const newSubscriptionStatus = !isSubscribed
         setIsSubscribed(newSubscriptionStatus)
@@ -733,41 +704,28 @@ const VideoPlayer = () => {
 
   const handleCommentSubmit = async (e) => {
     e.preventDefault()
-    console.log('💬 Comment submission started')
     
     if (!user) {
-      console.log('❌ User not authenticated')
       alert("Please login to comment")
       return
     }
     
     if (!newComment.trim()) {
-      console.log('❌ Empty comment')
       return
     }
 
-    console.log('📝 Submitting comment:', {
-      videoId,
-      content: newComment.trim(),
-      user: { id: user._id, name: user.fullName || user.userName }
-    })
 
     try {
       const response = await commentService.addComment(videoId, newComment.trim())
-      console.log('📨 Comment service response:', response)
       
       if (response && response.success) {
-        console.log('✅ Comment added successfully')
         setNewComment("")
         
         // Refresh comments from server to get the new comment with proper formatting
-        console.log('🔄 Refreshing comments from server...')
         await fetchComments();
       } else if (response) {
-        console.log('❌ Server returned error:', response.message)
         alert('Failed to add comment: ' + (response.message || 'Unknown error'))
       } else {
-        console.log('❌ No response from server')
         alert('Failed to add comment: No response from server')
       }
     } catch (err) {
@@ -806,7 +764,6 @@ const VideoPlayer = () => {
     )
   }
 
-  console.log('Rendering video player with:', { video, user, videoId });
 
   return (
     <div className="min-h-screen" style={{ background: '#141414' }}>

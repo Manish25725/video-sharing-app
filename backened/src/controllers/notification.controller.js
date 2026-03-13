@@ -105,9 +105,7 @@ const createAndSendNotification = async ({ recipient, sender, type, message, vid
         // Update isSent status if successfully sent to online user
         if (isUserOnline) {
             await Notification.findByIdAndUpdate(notification._id, { isSent: true });
-            console.log(`✅ Real-time notification sent to user:${recipient}`);
         } else {
-            console.log(`💾 Notification stored for offline user:${recipient}`);
         }
 
         return notification;
@@ -379,7 +377,6 @@ const dismissNotification = asyncHandler(async (req, res) => {
                 notificationId: notificationId
             });
             
-            console.log(`🗑️ Online dismissal: Notification ${notificationId} deleted immediately`);
             
             return res
                 .status(200)
@@ -394,7 +391,6 @@ const dismissNotification = asyncHandler(async (req, res) => {
                 { new: true }
             );
             
-            console.log(`💾 Offline dismissal: Notification ${notificationId} marked as dismissed`);
             
             return res
                 .status(200)
@@ -440,7 +436,6 @@ const storeActiveNotifications = asyncHandler(async (req, res) => {
                 );
             }
             
-            console.log(`💾 Stored ${notificationsToStore.length} active notifications for offline user ${req.user._id}`);
         }
 
         return res
@@ -477,7 +472,6 @@ const markNotificationAsRead = asyncHandler(async (req, res) => {
             throw new ApiError(404, "Notification not found");
         }
 
-        console.log(`🗑️ Notification deleted after being read:`, notificationId);
         
         // Send real-time update to user that notification was read/deleted
         if (global.io) {
@@ -509,7 +503,6 @@ const markAllNotificationsAsRead = asyncHandler(async (req, res) => {
             recipient: req.user._id
         });
 
-        console.log(`🗑️ Deleted ${result.deletedCount} notifications for user:`, req.user._id);
         
         // Send real-time update to user that all notifications were deleted
         if (global.io) {

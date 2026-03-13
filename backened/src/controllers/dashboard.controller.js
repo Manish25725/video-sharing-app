@@ -65,15 +65,20 @@ const getChannelStats = asyncHandler(async (req, res) => {
   ]);
 
 
-  if(!videoStats){
-    throw new ApiError(400,"Error while fetching details")
+  if (!videoStats) {
+    throw new ApiError(400, "Error while fetching details");
   }
 
-  data.totalVideos = videoStats[0].totalVideos;
-  data.totalViews = videoStats[0].totalViews;
-  data.totalLikes=videoStats[0].totalLikes
-  data.totalSubscribers=videoStats[0].totalSubscribers
-
+  if (videoStats.length > 0) {
+    data.totalVideos = videoStats[0].totalVideos || 0;
+    data.totalViews = videoStats[0].totalViews || 0;
+    data.totalLikes = videoStats[0].totalLikes || 0;
+    data.totalSubscribers = videoStats[0].totalSubscribers || 0;
+  } else {
+    // If no videos, we still need to fetch subscriber count separately
+    const subCount = await Subscription.countDocuments({ channel: req.user._id });
+    data.totalSubscribers = subCount;
+  }
 
   return res
   .status(200)

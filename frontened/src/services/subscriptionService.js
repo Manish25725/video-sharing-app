@@ -5,9 +5,7 @@ export const subscriptionService = {
   // Check if user is subscribed to a channel
   async isSubscribedToChannel(channelId) {
     try {
-      console.log('Checking subscription for channel:', channelId);
       const response = await apiClient.get(`/subscription/check-subscription/${channelId}`);
-      console.log('Subscription check response:', response);
       
       return response.data?.isSubscribed || false;
     } catch (error) {
@@ -19,9 +17,7 @@ export const subscriptionService = {
   // Toggle subscription to a channel
   async toggleSubscription(channelId) {
     try {
-      console.log('Toggling subscription for channel:', channelId);
       const response = await apiClient.post(`/subscription/toggle-subscribe/${channelId}`);
-      console.log('Toggle subscription response:', response);
       
       return response;
     } catch (error) {

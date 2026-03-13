@@ -43,7 +43,5 @@ if (sIdx !== -1 && eIdx !== -1) {
   let before = code.substring(0, sIdx);
   let after = '{streamKey && (' + code.substring(eIdx + 15);
   fs.writeFileSync('ScheduledStreams.jsx', before + newStr + after);
-  console.log('Successfully patched UI!');
 } else {
-  console.log('Error finding string blocks.', sIdx, eIdx);
 }

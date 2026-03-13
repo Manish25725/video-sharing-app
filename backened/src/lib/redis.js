@@ -38,7 +38,7 @@ const sub = pub.duplicate();    // identical config, separate TCP connection
 
 pub.on("error",   (err) => console.error("[redis:pub]", err.message));
 sub.on("error",   (err) => console.error("[redis:sub]", err.message));
-pub.on("connect", ()    => console.log("[redis] pub client connected"));
-sub.on("connect", ()    => console.log("[redis] sub client connected"));
+pub.on("connect", ()    => {});
+sub.on("connect", ()    => {});
 
 export { pub, sub };

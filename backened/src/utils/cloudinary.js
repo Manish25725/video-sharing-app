@@ -12,39 +12,31 @@ const uploadOnCloudinary = async (localFilePath) =>{
 
     try{
         if(!localFilePath) {
-            console.log("No local file path provided to Cloudinary upload");
             return null;
         }
         
-        console.log("Attempting to upload file to Cloudinary:", localFilePath);
         
         // Check if file exists before upload
         if(!fs.existsSync(localFilePath)) {
-            console.log("File does not exist at path:", localFilePath);
             return null;
         }
         
         const response = await cloudinary.uploader.upload_large(localFilePath, { resource_type: "auto", chunk_size: 20000000 });
-        console.log("Cloudinary upload successful:", response.url);
 
         // Check if file exists before trying to delete it
         if(fs.existsSync(localFilePath) && !localFilePath.includes('recordings')) {
             fs.unlinkSync(localFilePath);
-            console.log("Temporary file deleted:", localFilePath);
         }
         return response;
     }
 
     catch(error){
-        console.log("Cloudinary upload error:", error);
         // Check if file exists before trying to delete it on error
         // Important: never delete stream video recordings on error so we can retry!
         if(localFilePath && fs.existsSync(localFilePath) && !localFilePath.includes('recordings')) {
             try {
                 fs.unlinkSync(localFilePath);
-                console.log("Temporary file deleted after error:", localFilePath);
             } catch (deleteError) {
-                console.log("Error deleting temporary file:", deleteError);
             }
         }
         return null;
@@ -87,7 +79,6 @@ const uploadSubtitleToCloudinary = async (localFilePath) => {
         if (fs.existsSync(localFilePath)) fs.unlinkSync(localFilePath);
         return response;
     } catch (error) {
-        console.log("Cloudinary subtitle upload error:", error);
         if (localFilePath && fs.existsSync(localFilePath)) {
             try { fs.unlinkSync(localFilePath); } catch {}
         }

@@ -54,7 +54,6 @@ const CategoryVideos = ({ onVideoSelect }) => {
 
         if (response.success) {
           const transformedVideos = transformVideosArray(response.data);
-          console.log(`${categoryDisplayName} videos:`, transformedVideos);
           setVideos(transformedVideos);
           setTotalPages(Math.ceil(transformedVideos.length / 20) || 1);
         } else {

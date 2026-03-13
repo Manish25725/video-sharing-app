@@ -61,7 +61,6 @@ const PlaylistEditModal = ({ isOpen, onClose, videoId, videoTitle }) => {
 
     try {
       setRemovingFromPlaylist(playlistId);
-      console.log('Removing from creator playlist:', { playlistId, videoId }); 
       
       const response = await playlistService.removeVideoFromPlaylist(playlistId, videoId);
 

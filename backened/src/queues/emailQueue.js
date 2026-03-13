@@ -26,7 +26,6 @@ try {
     process.on("SIGTERM", async () => { await emailQueue?.close(); });
     process.on("SIGINT",  async () => { await emailQueue?.close(); });
 
-    console.log("[queue] Email queue initialised");
 } catch (err) {
     console.warn("[queue] Email queue disabled — Redis unavailable:", err.message);
 }

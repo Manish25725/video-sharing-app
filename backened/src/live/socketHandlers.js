@@ -33,7 +33,6 @@ import { containsBannedWord, isUserMuted }                   from "./moderation.
  */
 export function registerSocketHandlers(io) {
     io.on("connection", (socket) => {
-        console.log("[socket] connected:", socket.id);
 
         // ── Personal notification room ────────────────────────
         // The subtitle worker and notification controller use this to
@@ -168,7 +167,6 @@ export function registerSocketHandlers(io) {
         // socket._streamKey is set by join-stream and cleared by leave-stream.
         // If the browser closes without explicitly leaving, we clean up here.
         socket.on("disconnect", async () => {
-            console.log("[socket] disconnected:", socket.id);
             const streamKey = socket._streamKey;
             if (!streamKey) return;
 

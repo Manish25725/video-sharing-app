@@ -21,13 +21,12 @@ const io = new Server(server, {
     }
 })
 
-// Attach Redis adapter — propagates room broadcasts across all Node.js instances.
+// Attach Redis adapter ï¿½ propagates room broadcasts across all Node.js instances.
 // Falls back to single-server (in-memory) mode if Redis is not reachable.
 try {
     io.adapter(createAdapter(pub, sub))
-    console.log("[socket.io] Redis adapter attached")
 } catch (err) {
-    console.warn("[socket.io] Redis adapter skipped — running in single-server mode:", err.message)
+    console.warn("[socket.io] Redis adapter skipped ï¿½ running in single-server mode:", err.message)
 }
 
 // Make io available globally for other modules
@@ -51,14 +50,10 @@ connectDB()
     });
 
     server.listen(PORT, () => {
-        console.log(`Server is running at port ${PORT}`);
         // Start RTMP/HLS streaming server
         nms.run();
-        console.log(`[NMS] RTMP server on port ${process.env.RTMP_PORT || 1935}`);
-        console.log(`[NMS] HLS  server on port ${process.env.HLS_PORT  || 8001}`);
     });
 })
 .catch((error)=>{
-    console.log("MONGODB connection failed!!!!", error);
     process.exit(1);
 })

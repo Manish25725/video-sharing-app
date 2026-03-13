@@ -3,7 +3,6 @@ const downloadService = {
   // Download video with progress tracking
   async downloadVideoWithProgress(videoUrl, filename, onProgress = null) {
     try {
-      console.log('Starting download:', { videoUrl, filename });
       
       // Create XMLHttpRequest for progress tracking
       return new Promise((resolve, reject) => {

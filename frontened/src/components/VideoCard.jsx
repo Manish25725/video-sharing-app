@@ -57,7 +57,6 @@ const VideoCard = ({ video, onVideoSelect }) => {
         if (response && response.data) {
           const watchLaterIds = response.data;
           const isInList = watchLaterIds.includes(videoId);
-          console.log(`Video ${videoId} in watch later:`, isInList);
           setIsInWatchLater(isInList);
         } else {
           setIsInWatchLater(false);
@@ -158,18 +157,15 @@ const VideoCard = ({ video, onVideoSelect }) => {
         return;
       }
 
-      console.log('Attempting to toggle watch later for video:', videoId);
 
       if (isInWatchLater) {
         // Remove from watch later
         const response = await watchLaterService.removeFromWatchLater(videoId);
-        console.log('Remove response:', response);
         showToast('Video removed from Watch Later!', 'success');
         setIsInWatchLater(false);
       } else {
         // Add to watch later
         const response = await watchLaterService.addToWatchLater(videoId);
-        console.log('Add response:', response);
         showToast('Video added to Watch Later!', 'success');
         setIsInWatchLater(true);
       }
@@ -187,13 +183,11 @@ const VideoCard = ({ video, onVideoSelect }) => {
       
       // If video is already in watch later, update the state to reflect this
       if (errorMessage.includes('already in watch later')) {
-        console.log('Video already in watch later, updating state');
         setIsInWatchLater(true);
         showToast('Video is already in Watch Later', 'info');
       } 
       // If video is not found in watch later (when trying to remove), update state
       else if (errorMessage.includes('not found in watch later')) {
-        console.log('Video not in watch later, updating state');
         setIsInWatchLater(false);
         showToast('Video was not in Watch Later', 'info');
       }

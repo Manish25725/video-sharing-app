@@ -66,7 +66,6 @@ const registerUser= asyncHandler(async (req,res)=>{
     }
 
     const {fullName,email,userName,password}=req.body;
-    console.log("email",email);
 
     if(
         [fullName,userName,password,email].some((field)=>( field?.trim() === ""))
@@ -85,9 +84,6 @@ const registerUser= asyncHandler(async (req,res)=>{
     const avatarLocalPath=req.files?.avatar[0]?.path;
     const coverImageLocalPath=req.files?.coverImage[0]?.path;
 
-    console.log("Files received:", req.files);
-    console.log("Avatar local path:", avatarLocalPath);
-    console.log("Cover image local path:", coverImageLocalPath);
 
     if(!avatarLocalPath){
         throw new ApiError(400,"Avatar file is required");
@@ -100,8 +96,6 @@ const registerUser= asyncHandler(async (req,res)=>{
     const avatar=await uploadOnCloudinary(avatarLocalPath);
     const coverImage=await uploadOnCloudinary(coverImageLocalPath);
 
-    console.log("Avatar upload result:", avatar);
-    console.log("Cover image upload result:", coverImage);
 
     if(!avatar?.url){
         throw new ApiError(400,"Avatar file is required");
@@ -514,7 +508,6 @@ const getWatchLater=asyncHandler(async(req,res)=>{
         select: "title description thumbnail duration views createdAt"
     });
 
-    console.log("Found watch later videos:", req.user.watchLater.length);
 
     return res
     .status(200)
@@ -971,7 +964,7 @@ const resendVerificationEmail = asyncHandler(async (req, res) => {
     await pub.setex(`otp:verify:${userId}`, 600, otp);
 
     const isDev = process.env.NODE_ENV !== "production";
-    if (isDev) console.log(`\n[DEV] Resend-verification OTP for ${user.email}: ${otp}\n`);
+    if (isDev) 
 
     sendEmail({
         to:      user.email,
@@ -1010,7 +1003,6 @@ const forgotPassword = asyncHandler(async (req, res) => {
 
         const isDev = process.env.NODE_ENV !== "production";
         if (isDev) {
-            console.log(`\n[DEV] Password reset link for ${user.email}:\n${resetUrl}\n`);
             devResetUrl = resetUrl;
         }
 
@@ -1080,7 +1072,7 @@ const sendSignupOtp = asyncHandler(async (req, res) => {
     await pub.setex(`otp:signup:${normalised}`, 600, otp);
 
     const isDev = process.env.NODE_ENV !== "production";
-    if (isDev) console.log(`\n[DEV] Signup OTP for ${normalised}: ${otp}\n`);
+    if (isDev) 
 
     sendEmail({
         to:      normalised,

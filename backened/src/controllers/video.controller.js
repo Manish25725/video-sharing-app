@@ -276,7 +276,6 @@ const publishVideo = asyncHandler(async (req, res) => {
 
     const videoLocalPath=req.files?.video[0]?.path;
     const thumbnailPath=req.files?.thumbnail[0]?.path;
-    console.log(videoLocalPath);
     if(!videoLocalPath){
         throw new ApiError(400,"Video path invalid");
     }
@@ -446,7 +445,6 @@ const updateVideo = asyncHandler(async (req, res) => {
             throw new ApiResponse(400,"Error wile uploading thumbnail");
         }
         updateData.thumbnail=re.url;
-        console.log(re.url);
 
         //deleting previous thumbnail file from cloudinary if want to update thumbnail
         const vid=await Video.findById(videoId);
@@ -566,7 +564,6 @@ const getVideoStats = asyncHandler(async (req, res) => {
 
     // Get user ID if authenticated, otherwise null
     const userId = req.user ? req.user._id : null;
-    console.log("Getting video stats for videoId:", videoId, "userId:", userId);
 
     // Get video with like count and user's like status
     const videoStats = await Video.aggregate([
@@ -618,7 +615,6 @@ const getVideoStats = asyncHandler(async (req, res) => {
         throw new ApiError(404, "Video not found");
     }
 
-    console.log("Video stats result:", videoStats[0]);
 
     return res
         .status(200)

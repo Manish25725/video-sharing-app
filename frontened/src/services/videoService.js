@@ -196,7 +196,6 @@ export const videoService = {
       const response = await apiClient.get(`/videos/get-trending-videos${queryParams}`);
       return response;
     } catch (error) {
-      console.log("get trending video error", error);
       return { success: false, data: [] };
     }
   },
@@ -216,13 +215,6 @@ export const videoService = {
 export const transformVideoData = (backendVideo) => {
   if (!backendVideo) return null;
 
-  console.log('transformVideoData input:', {
-    _id: backendVideo._id,
-    title: backendVideo.title,
-    createdAt: backendVideo.createdAt,
-    uploadDate: backendVideo.uploadDate,
-    createdAtType: typeof backendVideo.createdAt
-  });
 
 
   // Use createdAt as the primary date source, fallback to uploadDate
@@ -249,12 +241,6 @@ export const transformVideoData = (backendVideo) => {
     isPublished: backendVideo.isPublished,
   };
 
-  console.log('transformVideoData output:', {
-    id: result.id,
-    title: result.title,
-    uploadTime: result.uploadTime,
-    uploadTimeType: typeof result.uploadTime
-  });
 
   return result;
 };

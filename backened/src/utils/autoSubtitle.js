@@ -123,7 +123,6 @@ function cleanupFiles(files = [], directory = null) {
  * @param {string} dest  absolute path to write to
  */
 async function downloadVideo(url, dest) {
-    console.log(`[subtitle] Downloading video…`);
     const writer = fs.createWriteStream(dest);
     const { data: stream } = await axios.get(url, {
         responseType: "stream",
@@ -139,7 +138,6 @@ async function downloadVideo(url, dest) {
     if (fileSize < 1024) {
         throw new Error(`Downloaded file is too small (${fileSize} bytes) — the video URL may be invalid or require authentication.`);
     }
-    console.log(`[subtitle] Download complete — ${mb} MB`);
 }
 
 // ─── Step 2: extract audio ────────────────────────────────────────────────────
@@ -182,7 +180,6 @@ async function extractAudio(videoPath, audioPath) {
     // Fail fast with a clear message before invoking FFmpeg
     await assertHasAudio(videoPath);
 
-    console.log("[subtitle] Extracting audio with FFmpeg…");
     await runFfmpeg(FFMPEG, [
         "-y",
         "-loglevel", "error",   // suppress banner; only real errors are printed
@@ -195,7 +192,6 @@ async function extractAudio(videoPath, audioPath) {
         audioPath,
     ]);
     const mb = (fs.statSync(audioPath).size / 1_048_576).toFixed(1);
-    console.log(`[subtitle] Audio extracted — ${mb} MB`);
 }
 
 // ─── Step 3: split audio ──────────────────────────────────────────────────────
@@ -214,7 +210,6 @@ async function splitAudio(audioPath, chunksDir) {
     fs.mkdirSync(chunksDir, { recursive: true });
     const pattern = path.join(chunksDir, "chunk_%03d.mp3");
 
-    console.log(`[subtitle] Splitting audio into ${CHUNK_SECONDS}s segments…`);
     await runFfmpeg(FFMPEG, [
         "-y",
         "-loglevel", "error",   // suppress banner
@@ -250,7 +245,6 @@ async function splitAudio(audioPath, chunksDir) {
         })
     );
 
-    console.log(`[subtitle] ${chunks.length} chunk(s) ready.`);
     return chunks;
 }
 
@@ -268,7 +262,6 @@ async function splitAudio(audioPath, chunksDir) {
  */
 async function transcribeChunk(chunkPath, language, groq, attempt = 1) {
     const mb = (fs.statSync(chunkPath).size / 1_048_576).toFixed(1);
-    console.log(`[subtitle] Transcribing ${path.basename(chunkPath)} (${mb} MB, attempt ${attempt})…`);
 
     try {
         const result = await groq.audio.transcriptions.create({
@@ -442,11 +435,9 @@ export async function autoGenerateSubtitle(videoUrl, language = "en", onProgress
 
         // ── 7. Upload to Cloudinary ───────────────────────────────────────
         await onProgress?.(5, "Uploading subtitles to cloud…");
-        console.log("[subtitle] Uploading merged VTT to Cloudinary…");
         const uploaded = await uploadSubtitleToCloudinary(vttPath);
         if (!uploaded?.url) throw new Error("Cloudinary VTT upload failed.");
 
-        console.log("[subtitle] Complete —", uploaded.url);
         return { url: uploaded.url, language, label: languageLabel(language) };
 
     } finally {

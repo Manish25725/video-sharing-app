@@ -6,5 +6,4 @@ code = code.replace(/className="space-y-3"/g, 'className="grid grid-cols-1 sm:gr
 code = code.replace(/className="max-w-2xl mx-auto"/g, 'className="max-w-7xl mx-auto"');
 
 fs.writeFileSync('ScheduledStreams.jsx', code);
-console.log('done grid replace');
 

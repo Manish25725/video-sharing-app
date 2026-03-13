@@ -98,7 +98,6 @@ const NotificationBell = () => {
         
         try {
             await notificationService.dismissNotification(notificationId);
-            console.log('Notification dismissed successfully:', notificationId);
             
             // If offline, remove from UI immediately
             if (!isOnline) {

@@ -26,7 +26,6 @@ try {
                     subject: "Verify your email",
                     html: verifyEmailTemplate({ otp: data.otp, userName: data.userName }),
                 });
-                console.log(`[email worker] Verification email sent to ${to}`);
 
             } else if (type === "reset") {
                 await sendEmail({
@@ -34,7 +33,6 @@ try {
                     subject: "Reset your password",
                     html: resetPasswordTemplate({ resetUrl: data.resetUrl, userName: data.userName }),
                 });
-                console.log(`[email worker] Password reset email sent to ${to}`);
 
             } else {
                 console.warn(`[email worker] Unknown email type "${type}" — skipped`);
@@ -60,7 +58,6 @@ try {
     process.on("SIGTERM", async () => { await emailWorker?.close(); });
     process.on("SIGINT",  async () => { await emailWorker?.close(); });
 
-    console.log("[email worker] Worker started.");
 } catch (err) {
     console.warn("[email worker] Disabled — Redis unavailable:", err.message);
 }

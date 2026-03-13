@@ -5,8 +5,6 @@ const watchLaterService = {
   getWatchLaterVideos: async () => {
     try {
       const response = await api.get('/users/watch-later');
-      console.log('Watch later service full response:', response);
-      console.log('Watch later service response.data:', response.data);
       // Response structure: { statuscode, data, message, success }
       // We want to return response.data which contains the videos array
       return {
@@ -23,8 +21,6 @@ const watchLaterService = {
   getWatchLaterIds: async () => {
     try {
       const response = await api.get('/users/watch-later-ids');
-      console.log('Watch later IDs service full response:', response);
-      console.log('Watch later IDs service response.data:', response.data);
       return {
         success: response.success || true,
         data: response.data || []
@@ -38,9 +34,7 @@ const watchLaterService = {
   // Add video to watch later
   addToWatchLater: async (videoId) => {
     try {
-      console.log('Adding video to watch later:', videoId);
       const response = await api.post(`/users/watch-later/${videoId}`);
-      console.log('Add to watch later response:', response);
       return response;
     } catch (error) {
       console.error('Error adding video to watch later:', error);
@@ -52,9 +46,7 @@ const watchLaterService = {
   // Remove video from watch later
   removeFromWatchLater: async (videoId) => {
     try {
-      console.log('Removing video from watch later:', videoId);
       const response = await api.delete(`/users/watch-later/${videoId}`);
-      console.log('Remove from watch later response:', response);
       return response;
     } catch (error) {
       console.error('Error removing video from watch later:', error);

@@ -21,7 +21,7 @@ export const playlistService = {
         endpoint = `/playlist/get-user-playlists/${userId}`;
       }
       const response = await apiClient.get(endpoint);
-      console.log('Raw playlist service response:', response); // Debug log
+       // Debug log
       return response;
     } catch (error) {
       console.error('Get user playlists error:', error);
@@ -37,7 +37,7 @@ export const playlistService = {
         endpoint = `/playlist/get-creator-playlists/${userId}`;
       }
       const response = await apiClient.get(endpoint);
-      console.log('Raw creator playlist service response:', response); // Debug log
+       // Debug log
       return response;
     } catch (error) {
       console.error('Get creator playlists error:', error);
@@ -59,7 +59,7 @@ export const playlistService = {
   // Add video to playlist
   async addVideoToPlaylist(playlistId, videoId) {
     try {
-      console.log('Adding video to playlist:', { playlistId, videoId }); // Debug log
+       // Debug log
       if (!playlistId || playlistId === 'undefined') {
         throw new Error('Invalid playlist ID');
       }
@@ -77,7 +77,7 @@ export const playlistService = {
   // Remove video from playlist
   async removeVideoFromPlaylist(playlistId, videoId) {
     try {
-      console.log('Removing video from playlist:', { playlistId, videoId }); // Debug log
+       // Debug log
       if (!playlistId || playlistId === 'undefined') {
         throw new Error('Invalid playlist ID');
       }

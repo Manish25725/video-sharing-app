@@ -18,7 +18,6 @@ class SocketService {
         });
 
         this.socket.on('connect', () => {
-            console.log('Connected to server:', this.socket.id);
             this.isConnected = true;
             
             // Join user's notification room
@@ -28,7 +27,6 @@ class SocketService {
         });
 
         this.socket.on('disconnect', () => {
-            console.log('Disconnected from server');
             this.isConnected = false;
         });
 

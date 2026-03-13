@@ -39,7 +39,6 @@ export const AuthProvider = ({ children }) => {
         const savedRes = await authService.getSavedAccounts();
         if (savedRes?.success) setSavedAccounts(savedRes.data || []);
       } catch (error) {
-        console.log('Auth initialization failed:', error.message);
       } finally {
         setLoading(false);
       }

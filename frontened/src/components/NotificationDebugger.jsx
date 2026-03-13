@@ -7,12 +7,10 @@ const NotificationDebugger = () => {
     useEffect(() => {
         const runTests = async () => {
             try {
-                console.log('🔍 Running notification debug tests...');
                 
                 // Test unread count
                 try {
                     const unreadResponse = await notificationService.getUnreadCount();
-                    console.log('📊 Unread count response:', unreadResponse);
                     setDebugInfo(prev => ({ ...prev, unreadCount: unreadResponse }));
                 } catch (error) {
                     console.error('❌ Unread count error:', error);
@@ -22,7 +20,6 @@ const NotificationDebugger = () => {
                 // Test get notifications
                 try {
                     const notificationsResponse = await notificationService.getNotifications(1, 5);
-                    console.log('📋 Notifications response:', notificationsResponse);
                     setDebugInfo(prev => ({ ...prev, notifications: notificationsResponse }));
                 } catch (error) {
                     console.error('❌ Notifications error:', error);

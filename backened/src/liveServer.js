@@ -28,7 +28,6 @@ if (!ffmpegAvailable) {
   console.warn("[NMS] FFmpeg not found — HLS transcoding disabled.");
   console.warn("[NMS] Install FFmpeg and set FFMPEG_PATH in .env to enable HLS.");
 } else {
-  console.log("[NMS] FFmpeg detected — HLS transcoding enabled.");
 }
 
 // Track running FFmpeg processes keyed by streamKey
@@ -107,14 +106,12 @@ function startHls(streamKey) {
   });
 
   proc.on("exit", async (code) => {
-    console.log(`[FFmpeg:${streamKey}] exited with code ${code}`);
     ffmpegProcesses.delete(streamKey);
     
     // Auto-save logic
     try {
       const stream = await Stream.findOne({ streamKey });
       if (stream && stream.autoSave && !stream.savedVideoId) {
-        console.log(`[AutoSave] Starting upload for ${streamKey}`);
         const recPath = path.join(mediaRoot, "recordings", `${streamKey}.mp4`);
         if (fs.existsSync(recPath)) {
           const uploaded = await uploadOnCloudinary(recPath);
@@ -134,7 +131,6 @@ function startHls(streamKey) {
             });
             stream.savedVideoId = video._id;
             await stream.save();
-            console.log(`[AutoSave] Successfully saved video ${video._id} for stream ${streamKey}`);
           }
         }
       }
@@ -143,7 +139,7 @@ function startHls(streamKey) {
     }
   });
 
-  console.log(`[NMS] HLS + MP4 recording started for: ${streamKey}`);  console.log(`[NMS] Recording path: ${path.join(mediaRoot, "recordings", streamKey + ".mp4")}`);
+    
 }
 
 // ── Stop HLS transcoding ────────────────────────────────────
@@ -152,7 +148,6 @@ function stopHls(streamKey) {
   if (proc) {
     proc.kill("SIGTERM");
     ffmpegProcesses.delete(streamKey);
-    console.log(`[NMS] HLS transcoding stopped for: ${streamKey}`);
   }
 }
 
@@ -174,7 +169,6 @@ nms.on("prePublish", async (session) => {
 nms.on("postPublish", async (session) => {
   const streamKey = session.streamPath?.split("/").pop();
   if (!streamKey) return;
-  console.log(`[NMS] Stream started: ${streamKey}`);
 
   // Give RTMP a moment to stabilise before FFmpeg connects
   setTimeout(() => startHls(streamKey), 1500);
@@ -195,7 +189,6 @@ nms.on("postPublish", async (session) => {
 nms.on("donePublish", async (session) => {
   const streamKey = session.streamPath?.split("/").pop();
   if (!streamKey) return;
-  console.log(`[NMS] Stream ended: ${streamKey}`);
 
   stopHls(streamKey);
 

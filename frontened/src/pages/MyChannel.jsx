@@ -104,7 +104,6 @@ const MyChannel = () => {
       
       // Use dashboard service to get user's channel videos
       const response = await dashboardService.getChannelVideos()
-      console.log("Dashboard videos response:", response)
       
       if (response.success !== false && response.data) {
         // Transform the data if it's an array
@@ -146,7 +145,6 @@ const MyChannel = () => {
           })
         )
         
-        console.log("Transformed videos:", transformedVideos)
         setVideos(transformedVideos)
       } else {
         setError("Failed to load videos")
@@ -163,7 +161,6 @@ const MyChannel = () => {
     try {
       setAnalyticsLoading(true)
       const response = await dashboardService.getChannelStats()
-      console.log("Analytics response:", response)
       
       if (response.success !== false && response.data) {
         setAnalyticsData({

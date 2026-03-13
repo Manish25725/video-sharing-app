@@ -110,7 +110,7 @@ const addVideoToPlaylist = asyncHandler(async (req, res) => {
 
     const playlist=await Playlist.findById(playlistId);
 
-    //console.log(playlist)
+    //
 
     if(!playlist){
         throw new ApiError(400,"Playlist not found")
@@ -160,7 +160,7 @@ const removeVideoFromPlaylist = asyncHandler(async (req, res) => {
         throw new ApiError(403,"You don't have permission to modify this playlist")
     }
 
-    //console.log(playlist)
+    //
 
     if(playlist.videos.some(id => id.toString() === videoId)){
         playlist.videos.pull(videoId)

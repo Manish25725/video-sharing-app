@@ -10,7 +10,6 @@ try {
         "subtitle-generation",
         async (job) => {
             const { videoId, videoFileUrl, language, ownerId } = job.data;
-            console.log(`[subtitle worker] Starting job ${job.id} (videoId: ${videoId}, lang: ${language})`);
 
             // 1. Run the chunked transcription pipeline.
             //    onProgress reports live step updates stored in the BullMQ job.
@@ -19,7 +18,6 @@ try {
                 language,
                 async (step, message) => {
                     await job.updateProgress({ step, message });
-                    console.log(`[subtitle worker] job ${job.id} step ${step}: ${message}`);
                 }
             );
 
@@ -43,7 +41,6 @@ try {
                 });
             }
 
-            console.log(`[subtitle worker] Completed job ${job.id} (videoId: ${videoId})`);
             return { subtitles: video.subtitles };
         },
         {
@@ -58,7 +55,6 @@ try {
     });
 
     subtitleWorker.on("completed", (job) => {
-        console.log(`[subtitle worker] Job ${job.id} COMPLETED`);
     });
 
     subtitleWorker.on("error", (err) => {
@@ -72,7 +68,6 @@ try {
     process.on("SIGTERM", async () => { await subtitleWorker?.close(); });
     process.on("SIGINT",  async () => { await subtitleWorker?.close(); });
 
-    console.log("[subtitle worker] Worker started.");
 } catch (err) {
     console.warn("[subtitle worker] Redis unavailable — worker disabled:", err.message);
 }
