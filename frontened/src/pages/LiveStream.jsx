@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import Hls from "hls.js";
 import streamService, { getHlsUrl } from "../services/streamService.js";
 import socketService from "../services/socketService.js";
@@ -104,9 +104,9 @@ const HlsPlayer = ({ url, isLive }) => {
 /* ─── Main LiveStream page ─────────────────────────────────── */
 const LiveStream = () => {
   const { streamKey } = useParams();
-  const { user } = useAuth();
-
-  const [streamInfo, setStreamInfo] = useState(null);
+  const { user } = useAuth();    const navigate = useNavigate();
+    const [isEnding, setIsEnding] = useState(false);    const [isSaving, setIsSaving] = useState(false);
+    const [savedVideoId, setSavedVideoId] = useState(null);  const [streamInfo, setStreamInfo] = useState(null);
   const [hlsUrl, setHlsUrl] = useState("");
   const [viewerCount, setViewerCount] = useState(0);
   const [isLive, setIsLive] = useState(false);
@@ -209,17 +209,52 @@ const LiveStream = () => {
     );
   }
 
-  const streamer = streamInfo?.streamerId;
-  const streamerName = streamer?.fullName || streamer?.userName || "Streamer";
+    const handleSaveRecording = async () => {
+    setIsSaving(true);
+    try {
+        const { data } = await streamService.saveRecording(streamKey);
+        setSavedVideoId(data.videoId);
+    } catch (err) {
+        console.error(err);
+        alert('Failed to save recording.');
+    } finally {
+        setIsSaving(false);
+    }
+};
 
-  return (
+const handleEndStream = async () => {
+      if (!window.confirm("Are you sure you want to end this stream?")) return;
+      setIsEnding(true);
+      try {
+        await streamService.endStream(streamKey);
+        setIsLive(false);
+        navigate('/dashboard');
+      } catch (err) {
+        console.error(err);
+        setIsEnding(false);
+      }
+    };
+
+    const streamer = streamInfo?.streamerId;
+    const streamerName = streamer?.fullName || streamer?.userName || 'Streamer';
+
+    return (
     <div className="min-h-screen bg-gray-950">
       {/* Back nav */}
       <div className="bg-gray-900 border-b border-gray-800 px-4 py-2 flex items-center gap-3">
         <Link to="/" className="text-gray-400 hover:text-white transition-colors">
           <ChevronLeft className="w-5 h-5" />
         </Link>
-        <span className="text-gray-200 text-sm font-medium truncate flex-1">{streamInfo?.title}</span>
+        <span className="text-gray-200 text-sm font-medium truncate flex-1">{streamInfo?.title}</span>          
+          {user?._id === streamer?._id && !isLive && !savedVideoId && (<button onClick={handleSaveRecording} disabled={isSaving} className='bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold px-3 py-1.5 rounded-md mx-2'>{isSaving ? 'Saving...' : 'Save Recording'}</button>)}{savedVideoId && (<Link to={'/watch/' + savedVideoId} className='bg-green-600 hover:bg-green-700 text-white text-xs font-bold px-3 py-1.5 rounded-md mx-2'>View VOD</Link>)}{user?._id === streamer?._id && isLive && (
+            <button
+              onClick={handleEndStream}
+              disabled={isEnding}
+              className="bg-red-600 hover:bg-red-700 text-white text-xs font-bold px-3 py-1.5 rounded-md transition-colors disabled:opacity-50"
+            >
+              {isEnding ? "Ending..." : "End Stream"}
+            </button>
+          )}
         {isLive ? (
           <span className="flex items-center gap-1.5 bg-red-600 text-white text-xs font-bold px-2.5 py-1 rounded-md">
             <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" /> LIVE

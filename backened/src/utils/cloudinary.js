@@ -24,11 +24,11 @@ const uploadOnCloudinary = async (localFilePath) =>{
             return null;
         }
         
-        const response=await cloudinary.uploader.upload(localFilePath,{resource_type:"auto"});
+        const response = await cloudinary.uploader.upload_large(localFilePath, { resource_type: "auto", chunk_size: 20000000 });
         console.log("Cloudinary upload successful:", response.url);
-        
+
         // Check if file exists before trying to delete it
-        if(fs.existsSync(localFilePath)) {
+        if(fs.existsSync(localFilePath) && !localFilePath.includes('recordings')) {
             fs.unlinkSync(localFilePath);
             console.log("Temporary file deleted:", localFilePath);
         }
@@ -38,7 +38,8 @@ const uploadOnCloudinary = async (localFilePath) =>{
     catch(error){
         console.log("Cloudinary upload error:", error);
         // Check if file exists before trying to delete it on error
-        if(localFilePath && fs.existsSync(localFilePath)) {
+        // Important: never delete stream video recordings on error so we can retry!
+        if(localFilePath && fs.existsSync(localFilePath) && !localFilePath.includes('recordings')) {
             try {
                 fs.unlinkSync(localFilePath);
                 console.log("Temporary file deleted after error:", localFilePath);

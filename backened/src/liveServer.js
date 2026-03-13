@@ -77,7 +77,8 @@ function startHls(streamKey) {
 
   // Dual FFmpeg output: HLS segments for live viewers + full MP4 saved as VOD
   const args = [
-    "-re",
+      "-y",
+      "-re",
     "-i", rtmpUrl,
     // ── HLS (live viewers) ──────────────────────────────────
     "-c:v", "copy",

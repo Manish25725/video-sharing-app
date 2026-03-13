@@ -10,6 +10,21 @@ const ForgotPassword = () => {
   const [error, setError]     = useState("");
   const [devResetUrl, setDevResetUrl] = useState("");
 
+  const handleResend = async () => {
+    setError("");
+    setLoading(true);
+    try {
+      const res = await api.post("/users/forgot-password", { email });
+      if (res?.resetUrl) setDevResetUrl(res.resetUrl);
+      alert("Reset link resent to your email.");
+    } catch (err) {
+      setError(err?.message || "Something went wrong. Please try again.");
+      setSent(false); // Go back to form to show error properly if needed
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
@@ -59,10 +74,11 @@ const ForgotPassword = () => {
               <p className="text-xs text-gray-400 mb-6">
                 Didn't receive it? Check your spam folder, or{" "}
                 <button
-                  onClick={() => { setSent(false); setError(""); }}
-                  className="text-indigo-600 hover:underline font-medium"
+                  onClick={handleResend}
+                  disabled={loading}
+                  className="text-indigo-600 hover:underline font-medium disabled:opacity-50"
                 >
-                  try again
+                  {loading ? "sending..." : "try again"}
                 </button>.
               </p>
               <Link

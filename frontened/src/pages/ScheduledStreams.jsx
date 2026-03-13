@@ -130,8 +130,7 @@ const handleGetKey = async (e) => {
       setIsLoadingKey(true);
       const fd = new FormData();
       fd.append("title", stream.title);
-      fd.append("description", stream.description || "");
-      if (stream.streamKey) fd.append("streamKey", stream.streamKey);
+      fd.append("description", stream.description || "");        fd.append("saveRecording", String(stream.autoSave === true));      if (stream.streamKey) fd.append("streamKey", stream.streamKey);
       const res = await streamService.goLive(fd);
       if (res.data) {
         setStreamKey(res.data.streamKey);
@@ -158,9 +157,9 @@ const handleGetKey = async (e) => {
         onClick={() => !isOwn && setShowDetail(true)}
         className={`bg-[#121212] rounded-2xl border border-gray-800 shadow-sm overflow-hidden hover:shadow-md transition-shadow ${!isOwn ? "cursor-pointer" : ""}`}
       >
-        <div className="flex gap-0">
+        <div className="flex flex-col">
           {/* Thumbnail column */}
-          <div className="relative w-36 flex-shrink-0 bg-gray-800">
+          <div className="relative w-full aspect-video bg-gray-800 max-h-56">
             {stream.thumbnailUrl ? (
               <img src={stream.thumbnailUrl} alt={stream.title} className="w-full h-full object-cover" />
             ) : (
@@ -175,25 +174,25 @@ const handleGetKey = async (e) => {
           </div>
 
           {/* Info column */}
-          <div className="flex-1 min-w-0 p-4 flex flex-col justify-between">
+          <div className="flex-1 min-w-0 p-4 flex flex-col gap-3">
             <div>
-              <p className="font-semibold text-gray-100 text-sm leading-snug line-clamp-2">{stream.title}</p>
-              <div className="flex items-center gap-1.5 mt-1">
+              <p className="font-semibold text-gray-100 text-lg leading-snug line-clamp-2">{stream.title}</p>
+              <div className="flex items-center gap-1.5 mt-2">
                 {streamer?.avatar ? (
-                  <img src={streamer.avatar} alt={name} className="w-4 h-4 rounded-full object-cover" />
+                  <img src={streamer.avatar} alt={name} className="w-5 h-5 rounded-full object-cover" />
                 ) : (
-                  <div className="w-4 h-4 rounded-full bg-indigo-100 flex items-center justify-center flex-shrink-0">
-                    <User className="w-2.5 h-2.5 text-indigo-500" />
+                  <div className="w-5 h-5 rounded-full bg-indigo-100 flex items-center justify-center flex-shrink-0">
+                    <User className="w-3 h-3 text-indigo-500" />
                   </div>
                 )}
-                <span className="text-xs text-gray-500 truncate">{name}</span>
+                <span className="text-sm text-gray-400 truncate">{name}</span>
               </div>
               {stream.description && (
-                <p className="text-xs text-gray-500 mt-1 line-clamp-1">{stream.description}</p>
+                <p className="text-sm text-gray-500 mt-2 line-clamp-2">{stream.description}</p>
               )}
             </div>
 
-            <div className="flex flex-col gap-2 mt-2">
+            <div className="flex flex-col gap-3 mt-1">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <span className="flex items-center gap-1 text-xs text-gray-500 whitespace-nowrap">
                     <Calendar className="w-3 h-3 text-indigo-400" />
@@ -275,6 +274,7 @@ const handleGetKey = async (e) => {
 
 const ScheduleForm = ({ onScheduled, onClose }) => {
   const [form, setForm] = useState({ title: "", description: "", scheduledAt: "" });
+  const [autoSave, setAutoSave] = useState(false);
   const [thumbnail, setThumbnail] = useState(null);
   const [thumbnailPreview, setThumbnailPreview] = useState("");
   const thumbnailRef = useRef(null);
@@ -314,8 +314,7 @@ const ScheduleForm = ({ onScheduled, onClose }) => {
       const fd = new FormData();
       fd.append("title", form.title.trim());
       fd.append("description", form.description.trim());
-      fd.append("scheduledAt", new Date(form.scheduledAt).toISOString());
-      if (thumbnail) fd.append("thumbnail", thumbnail);
+      fd.append("scheduledAt", new Date(form.scheduledAt).toISOString());        fd.append("autoSave", String(autoSave));      if (thumbnail) fd.append("thumbnail", thumbnail);
 
       const { data } = await streamService.scheduleStream(fd);
       onScheduled(data);
@@ -394,7 +393,17 @@ const ScheduleForm = ({ onScheduled, onClose }) => {
             <input type="datetime-local" value={form.scheduledAt} min={minDatetime} onChange={set("scheduledAt")} required
               className="w-full px-3.5 py-2.5 border border-gray-800 rounded-xl text-sm bg-[#0f0f0f] focus:bg-[#121212] focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500/200 transition-all" />
           </div>
-
+            {/* Auto Save Toggle */}
+            <div className="mb-6 flex items-center justify-between p-3.5 bg-indigo-500/10 border border-indigo-500/20 rounded-xl">
+              <div>
+                <p className="text-sm font-semibold text-indigo-300">Save Stream as Video</p>
+                <p className="text-xs text-indigo-400/70 mt-0.5">Automatically publish this stream to your channel after it ends</p>
+              </div>
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input type="checkbox" checked={autoSave} onChange={(e) => setAutoSave(e.target.checked)} className="sr-only peer" />
+                <div className="w-11 h-6 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+              </label>
+            </div>
           <button type="submit" disabled={loading}
             className="w-full py-2.5 flex items-center justify-center gap-2 bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white rounded-xl text-sm font-semibold shadow-sm transition-all disabled:opacity-60">
             {loading

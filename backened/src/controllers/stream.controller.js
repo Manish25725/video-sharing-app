@@ -169,7 +169,7 @@ const getMyStream = asyncHandler(async (req, res) => {
 
 /* ─── Schedule Stream ─────────────────────────────────────── */
 const scheduleStream = asyncHandler(async (req, res) => {
-  const { title, description, scheduledAt } = req.body;
+  const { title, description, scheduledAt, autoSave } = req.body;
   if (!title?.trim() || !scheduledAt) {
     throw new ApiError(400, "Title and scheduled time are required");
   }
@@ -194,6 +194,7 @@ const scheduleStream = asyncHandler(async (req, res) => {
     streamerId: req.user._id,
     scheduledAt: date,
     streamKey,
+    autoSave: autoSave === 'true' || autoSave === true,
   });
 
   // Create a corresponding offline Stream so users can chat immediately
@@ -206,6 +207,7 @@ const scheduleStream = asyncHandler(async (req, res) => {
     isLive: false,
     isScheduled: true,
     scheduledAt: date,
+    autoSave: autoSave === 'true' || autoSave === true,
   });
 
   const populated = await ScheduledStream.findById(scheduled._id)

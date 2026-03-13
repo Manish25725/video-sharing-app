@@ -33,6 +33,10 @@ const scheduledStreamSchema = new Schema(
       required: true,
       index: true,
     },
+    autoSave: {
+      type: Boolean,
+      default: false,
+    },
     isCancelled: {
       type: Boolean,
       default: false,
