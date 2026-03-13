@@ -196,7 +196,7 @@ const ProfileTab = ({ user, updateUser }) => {
               icon={(props) => <span {...props} style={{ marginLeft: 4 }}>@</span>}
             />
           </Field>
-          <Field label="Bio" hint={`${bio.length}/300 characters`}>
+          <Field label="Bio" hint={bio.length + "/300 characters"}>
             <textarea
               rows={4}
               value={bio}
