@@ -94,15 +94,15 @@ const Report = ({ isDark = false }) => {
   }, []);
 
   const dm = isDark;
-  const cardBg = dm ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200";
+  const cardBg = dm ? "bg-[#1c120d] border-white/10" : "bg-white border-gray-200";
   const textPrimary = dm ? "text-white" : "text-gray-900";
   const textSecondary = dm ? "text-gray-400" : "text-gray-500";
   const inputCls = dm
-    ? "bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-indigo-400"
+    ? "bg-[#1c120d] border-white/10 text-white placeholder-gray-400 focus:border-primary"
     : "bg-white border-gray-300 text-gray-900 placeholder-gray-400 focus:border-indigo-500";
-  const rowHover = dm ? "hover:bg-gray-750 bg-gray-800" : "hover:bg-gray-50 bg-white";
+  const rowHover = dm ? "hover:bg-[#291a13] bg-[#1c120d]" : "hover:bg-gray-50 bg-white";
   const divider = dm ? "divide-gray-700" : "divide-gray-100";
-  const thCls = dm ? "bg-gray-750 text-gray-400 border-gray-700" : "bg-gray-50 text-gray-500 border-gray-200";
+  const thCls = dm ? "bg-[#291a13] text-gray-400 border-white/10" : "bg-gray-50 text-gray-500 border-gray-200";
 
   const filtered = reports.filter((r) => {
     const matchSearch =
@@ -335,7 +335,7 @@ const Report = ({ isDark = false }) => {
                             <MoreVertical className="w-4 h-4" />
                           </button>
                           {openMenu === report.id && (
-                            <div className={`absolute right-0 top-8 z-50 w-40 ${dm ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"} border rounded-xl shadow-lg py-1`}>
+                            <div className={`absolute right-0 top-8 z-50 w-40 ${dm ? "bg-[#1c120d] border-white/10" : "bg-white border-gray-200"} border rounded-xl shadow-lg py-1`}>
                               <button
                                 onClick={() => { setOpenMenu(null); }}
                                 className={`w-full flex items-center gap-2 px-4 py-2 text-sm ${textPrimary} hover:bg-red-50 hover:text-red-600 transition-colors`}
@@ -356,7 +356,7 @@ const Report = ({ isDark = false }) => {
 
         {/* Pagination */}
         {totalPages > 1 && (
-          <div className={`px-5 py-4 border-t ${dm ? "border-gray-700" : "border-gray-100"} flex items-center justify-between`}>
+          <div className={`px-5 py-4 border-t ${dm ? "border-white/10" : "border-gray-100"} flex items-center justify-between`}>
             <p className={`text-sm ${textSecondary}`}>
               Showing {((page - 1) * PAGE_SIZE) + 1}–{Math.min(page * PAGE_SIZE, filtered.length)} of {filtered.length} reports
             </p>
@@ -364,7 +364,7 @@ const Report = ({ isDark = false }) => {
               <button
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
                 disabled={page === 1}
-                className={`p-2 rounded-lg border transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${dm ? "border-gray-600 text-gray-300 hover:bg-gray-700" : "border-gray-200 text-gray-600 hover:bg-gray-50"}`}
+                className={`p-2 rounded-lg border transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${dm ? "border-white/10 text-gray-300 hover:bg-[#1c120d]" : "border-gray-200 text-gray-600 hover:bg-gray-50"}`}
               >
                 <ChevronLeft className="w-4 h-4" />
               </button>
@@ -374,9 +374,9 @@ const Report = ({ isDark = false }) => {
                   onClick={() => setPage(p)}
                   className={`w-8 h-8 rounded-lg text-sm font-medium transition-colors ${
                     p === page
-                      ? "bg-indigo-600 text-white"
+                      ? "bg-primary text-white"
                       : dm
-                      ? "text-gray-300 hover:bg-gray-700"
+                      ? "text-gray-300 hover:bg-[#1c120d]"
                       : "text-gray-600 hover:bg-gray-100"
                   }`}
                 >
@@ -386,7 +386,7 @@ const Report = ({ isDark = false }) => {
               <button
                 onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                 disabled={page === totalPages}
-                className={`p-2 rounded-lg border transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${dm ? "border-gray-600 text-gray-300 hover:bg-gray-700" : "border-gray-200 text-gray-600 hover:bg-gray-50"}`}
+                className={`p-2 rounded-lg border transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${dm ? "border-white/10 text-gray-300 hover:bg-[#1c120d]" : "border-gray-200 text-gray-600 hover:bg-gray-50"}`}
               >
                 <ChevronRight className="w-4 h-4" />
               </button>

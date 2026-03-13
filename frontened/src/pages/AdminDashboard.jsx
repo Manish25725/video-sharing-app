@@ -13,7 +13,7 @@ import { useNavigate } from "react-router-dom";
 import Report from "./Report";
 
 /* reusable micro-components */
-const Avatar = ({ initials, size = "md", gradient = "from-indigo-500 to-purple-600" }) => {
+const Avatar = ({ initials, size = "md", gradient = "from-primary to-accent-purple" }) => {
   const sz = { sm: "w-7 h-7 text-xs", md: "w-9 h-9 text-sm", lg: "w-11 h-11 text-base" }[size];
   return (
     <div className={`${sz} rounded-full bg-gradient-to-br ${gradient} flex items-center justify-center text-white font-bold flex-shrink-0`}>
@@ -56,7 +56,7 @@ const AdminDashboard = () => {
 
   const [activeSection, setActiveSection] = useState("overview");
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const [isDark, setIsDark] = useState(false);
+  const [isDark, setIsDark] = useState(true);
   const [topSearch, setTopSearch] = useState("");
   const [showNotifications, setShowNotifications] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
@@ -110,18 +110,18 @@ const AdminDashboard = () => {
   };
 
   const d = isDark;
-  const bg        = d ? "bg-gray-950" : "bg-slate-50";
-  const cardBg    = d ? "bg-gray-900 border-gray-800" : "bg-white border-gray-200";
-  const sidebarBg = "bg-slate-900";
-  const navbarBg  = d ? "bg-gray-900 border-gray-800" : "bg-white border-gray-200";
+  const bg        = d ? "bg-[#0a0a0a]" : "bg-slate-50";
+  const cardBg    = d ? "bg-[#1c120d] border-white/10" : "bg-white border-gray-200";
+  const sidebarBg = "bg-[#120a06]";
+  const navbarBg  = d ? "bg-[#1c120d] border-white/10" : "bg-white border-gray-200";
   const tp        = d ? "text-white" : "text-gray-900";
   const ts        = d ? "text-gray-400" : "text-gray-500";
   const inputCls  = d
-    ? "bg-gray-800 border-gray-700 text-white placeholder-gray-500 focus:border-indigo-400"
-    : "bg-gray-50 border-gray-200 text-gray-900 placeholder-gray-400 focus:border-indigo-500";
+    ? "bg-[#291a13] border-gray-700 text-white placeholder-gray-500 focus:border-primary"
+    : "bg-gray-50 border-gray-200 text-gray-900 placeholder-gray-400 focus:border-primary";
   const divider   = d ? "divide-gray-800" : "divide-gray-100";
-  const thBg      = d ? "bg-gray-800 text-gray-400" : "bg-gray-50 text-gray-500";
-  const rowHover  = d ? "hover:bg-gray-800/60" : "hover:bg-slate-50";
+  const thBg      = d ? "bg-[#291a13] text-gray-400" : "bg-gray-50 text-gray-500";
+  const rowHover  = d ? "hover:bg-[#291a13]/60" : "hover:bg-slate-50";
 
   const navItems = [
     { id: "overview",  icon: LayoutDashboard, label: "Dashboard" },
@@ -136,8 +136,8 @@ const AdminDashboard = () => {
   /* sidebar */
   const SidebarNav = () => (
     <aside className={`${sidebarBg} fixed left-0 top-0 h-full z-50 flex flex-col transition-all duration-300 ${sidebarCollapsed ? "w-16" : "w-64"}`}>
-      <div className={`flex items-center ${sidebarCollapsed ? "justify-center" : "px-6"} h-16 border-b border-slate-800 flex-shrink-0`}>
-        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-fuchsia-600 flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
+      <div className={`flex items-center ${sidebarCollapsed ? "justify-center" : "px-6"} h-16 border-b border-white/10 flex-shrink-0`}>
+        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-accent-purple flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
           PV
         </div>
         {!sidebarCollapsed && <span className="ml-3 text-white font-bold text-lg">Admin Panel</span>}
@@ -148,9 +148,9 @@ const AdminDashboard = () => {
           return (
             <button key={id} onClick={() => setActiveSection(id)} title={sidebarCollapsed ? label : undefined}
               className={`w-full flex items-center ${sidebarCollapsed ? "justify-center px-0" : "px-5"} py-3 text-sm font-medium transition-all relative ${
-                active ? "text-white bg-indigo-600/20 border-r-2 border-indigo-500" : "text-slate-400 hover:text-white hover:bg-slate-800"
+                active ? "text-white bg-primary/20 border-r-2 border-indigo-500" : "text-slate-400 hover:text-white hover:bg-slate-800"
               }`}>
-              <Icon className={`w-5 h-5 flex-shrink-0 ${active ? "text-indigo-400" : ""}`} />
+              <Icon className={`w-5 h-5 flex-shrink-0 ${active ? "text-primary" : ""}`} />
               {!sidebarCollapsed && <span className="ml-3">{label}</span>}
               {!sidebarCollapsed && badge > 0 && (
                 <span className="ml-auto bg-red-500 text-white text-xs rounded-full px-1.5 py-0.5 leading-none font-bold">{badge}</span>
@@ -162,7 +162,7 @@ const AdminDashboard = () => {
           );
         })}
       </nav>
-      <div className="border-t border-slate-800 py-3">
+      <div className="border-t border-white/10 py-3">
         <button onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
           className={`w-full flex items-center ${sidebarCollapsed ? "justify-center" : "px-5"} py-2.5 text-slate-400 hover:text-white hover:bg-slate-800 transition-colors text-sm`}>
           {sidebarCollapsed ? <ChevronRight className="w-5 h-5" /> : <><ChevronLeft className="w-5 h-5" /><span className="ml-3">Collapse</span></>}
@@ -182,20 +182,20 @@ const AdminDashboard = () => {
       <div className="relative flex-1 max-w-md">
         <Search className={`absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 ${ts}`} />
         <input type="text" placeholder="Search..." value={topSearch} onChange={(e) => setTopSearch(e.target.value)}
-          className={`w-full pl-9 pr-4 py-2 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 ${inputCls}`} />
+          className={`w-full pl-9 pr-4 py-2 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 ${inputCls}`} />
       </div>
       <div className="flex items-center gap-1 ml-auto">
         <button onClick={() => setIsDark(!isDark)}
-          className={`p-2 rounded-xl transition-colors ${d ? "text-yellow-400 hover:bg-gray-800" : "text-gray-500 hover:bg-gray-100"}`}>
+          className={`p-2 rounded-xl transition-colors ${d ? "text-yellow-400 hover:bg-[#291a13]" : "text-gray-500 hover:bg-gray-100"}`}>
           {isDark ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
         </button>
         <div ref={notifRef} className="relative">
           <button onClick={() => setShowNotifications(!showNotifications)}
-            className={`p-2 rounded-xl transition-colors ${d ? "text-gray-400 hover:bg-gray-800" : "text-gray-500 hover:bg-gray-100"}`}>
+            className={`p-2 rounded-xl transition-colors ${d ? "text-gray-400 hover:bg-[#291a13]" : "text-gray-500 hover:bg-gray-100"}`}>
             <Bell className="w-5 h-5" />
           </button>
           {showNotifications && (
-            <div className={`absolute right-0 top-12 w-72 ${d ? "bg-gray-900 border-gray-700" : "bg-white border-gray-200"} border rounded-2xl shadow-2xl z-50 overflow-hidden`}>
+            <div className={`absolute right-0 top-12 w-72 ${d ? "bg-[#1c120d] border-gray-700" : "bg-white border-gray-200"} border rounded-2xl shadow-2xl z-50 overflow-hidden`}>
               <div className={`px-4 py-3 border-b ${d ? "border-gray-700" : "border-gray-100"}`}>
                 <h3 className={`font-semibold text-sm ${tp}`}>Notifications</h3>
               </div>
@@ -208,20 +208,20 @@ const AdminDashboard = () => {
         </div>
         <div ref={profileRef} className="relative">
           <button onClick={() => setShowProfile(!showProfile)}
-            className={`flex items-center gap-2 px-2 py-1.5 rounded-xl transition-colors ${d ? "hover:bg-gray-800" : "hover:bg-gray-100"}`}>
-            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-fuchsia-600 flex items-center justify-center text-white text-xs font-bold">
+            className={`flex items-center gap-2 px-2 py-1.5 rounded-xl transition-colors ${d ? "hover:bg-[#291a13]" : "hover:bg-gray-100"}`}>
+            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary to-accent-purple flex items-center justify-center text-white text-xs font-bold">
               {user?.fullName?.slice(0, 2).toUpperCase() || "AD"}
             </div>
             <span className={`text-sm font-semibold hidden sm:block ${tp}`}>{user?.fullName?.split(" ")[0] || "Admin"}</span>
           </button>
           {showProfile && (
-            <div className={`absolute right-0 top-12 w-48 ${d ? "bg-gray-900 border-gray-700" : "bg-white border-gray-200"} border rounded-2xl shadow-2xl z-50 py-1 overflow-hidden`}>
+            <div className={`absolute right-0 top-12 w-48 ${d ? "bg-[#1c120d] border-gray-700" : "bg-white border-gray-200"} border rounded-2xl shadow-2xl z-50 py-1 overflow-hidden`}>
               <div className={`px-4 py-3 border-b ${d ? "border-gray-700" : "border-gray-100"}`}>
                 <p className={`font-semibold text-sm ${tp}`}>{user?.fullName || "Admin User"}</p>
                 <p className={`text-xs ${ts}`}>{user?.email || ""}</p>
               </div>
               <button className={`w-full flex items-center gap-2 px-4 py-2.5 text-sm ${tp} ${rowHover} transition-colors`}>
-                <Shield className="w-4 h-4 text-indigo-500" /> Admin Settings
+                <Shield className="w-4 h-4 text-primary" /> Admin Settings
               </button>
               <button onClick={() => { adminLogout(); navigate("/admin-login"); }}
                 className={`w-full flex items-center gap-2 px-4 py-2.5 text-sm text-red-500 ${rowHover} transition-colors`}>
@@ -239,9 +239,9 @@ const AdminDashboard = () => {
     <div className={`${cardBg} border rounded-2xl p-6 shadow-sm hover:shadow-lg transition-all duration-200`}>
       {dataLoading ? (
         <div className="space-y-3 animate-pulse">
-          <div className={`h-3 w-24 rounded ${d ? "bg-gray-800" : "bg-gray-100"}`} />
-          <div className={`h-8 w-20 rounded ${d ? "bg-gray-800" : "bg-gray-100"}`} />
-          <div className={`h-3 w-16 rounded ${d ? "bg-gray-800" : "bg-gray-100"}`} />
+          <div className={`h-3 w-24 rounded ${d ? "bg-[#291a13]" : "bg-gray-100"}`} />
+          <div className={`h-8 w-20 rounded ${d ? "bg-[#291a13]" : "bg-gray-100"}`} />
+          <div className={`h-3 w-16 rounded ${d ? "bg-[#291a13]" : "bg-gray-100"}`} />
         </div>
       ) : (
         <>
@@ -271,7 +271,7 @@ const AdminDashboard = () => {
           <p className={`text-sm ${ts} mt-1`}>Welcome back, {user?.fullName?.split(" ")[0] || "Admin"}.</p>
         </div>
         <button onClick={fetchData}
-          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium border transition-colors flex-shrink-0 ${d ? "border-gray-700 text-gray-300 hover:bg-gray-800" : "border-gray-200 text-gray-600 hover:bg-gray-50"}`}>
+          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium border transition-colors flex-shrink-0 ${d ? "border-gray-700 text-gray-300 hover:bg-[#291a13]" : "border-gray-200 text-gray-600 hover:bg-gray-50"}`}>
           <RefreshCw className={`w-4 h-4 ${dataLoading ? "animate-spin" : ""}`} />
           {dataLoading ? "Loading..." : "Refresh"}
         </button>
@@ -297,14 +297,14 @@ const AdminDashboard = () => {
       </div>
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
         <div className={`xl:col-span-2 ${cardBg} border rounded-2xl shadow-sm`}>
-          <div className={`flex items-center justify-between px-6 py-4 border-b ${d ? "border-gray-800" : "border-gray-100"}`}>
+          <div className={`flex items-center justify-between px-6 py-4 border-b ${d ? "border-white/10" : "border-gray-100"}`}>
             <h2 className={`font-semibold ${tp}`}>Recent Videos</h2>
             <button onClick={() => setActiveSection("videos")} className="text-xs text-indigo-600 font-medium hover:underline">View all</button>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full min-w-[400px]">
               <thead>
-                <tr className={`border-b ${d ? "border-gray-800" : "border-gray-100"}`}>
+                <tr className={`border-b ${d ? "border-white/10" : "border-gray-100"}`}>
                   {["Video", "Views", "Status", "Date"].map((h) => (
                     <th key={h} className={`text-left px-5 py-3 text-xs font-semibold uppercase tracking-wider ${ts}`}>{h}</th>
                   ))}
@@ -316,7 +316,7 @@ const AdminDashboard = () => {
                     <tr key={i}>
                       {[160, 60, 70, 70].map((w, j) => (
                         <td key={j} className="px-5 py-4">
-                          <div className={`h-4 rounded animate-pulse ${d ? "bg-gray-800" : "bg-gray-100"}`} style={{ width: `${w}px` }} />
+                          <div className={`h-4 rounded animate-pulse ${d ? "bg-[#291a13]" : "bg-gray-100"}`} style={{ width: `${w}px` }} />
                         </td>
                       ))}
                     </tr>
@@ -346,7 +346,7 @@ const AdminDashboard = () => {
           </div>
         </div>
         <div className={`${cardBg} border rounded-2xl shadow-sm`}>
-          <div className={`flex items-center justify-between px-5 py-4 border-b ${d ? "border-gray-800" : "border-gray-100"}`}>
+          <div className={`flex items-center justify-between px-5 py-4 border-b ${d ? "border-white/10" : "border-gray-100"}`}>
             <h2 className={`font-semibold ${tp}`}>Recent Reports</h2>
             <button onClick={() => setActiveSection("reports")} className="text-xs text-indigo-600 font-medium hover:underline">View all</button>
           </div>
@@ -366,11 +366,11 @@ const AdminDashboard = () => {
       <div className="space-y-6">
         <div><h1 className={`text-2xl font-bold ${tp}`}>Users Management</h1><p className={`text-sm ${ts} mt-1`}>{users.length} total users</p></div>
         <div className={`${cardBg} border rounded-2xl shadow-sm`}>
-          <div className={`px-5 py-4 border-b ${d ? "border-gray-800" : "border-gray-100"}`}>
+          <div className={`px-5 py-4 border-b ${d ? "border-white/10" : "border-gray-100"}`}>
             <div className="relative max-w-sm">
               <Search className={`absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 ${ts}`} />
               <input type="text" placeholder="Search users..." value={userSearch} onChange={(e) => setUserSearch(e.target.value)}
-                className={`w-full pl-10 pr-4 py-2 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 ${inputCls}`} />
+                className={`w-full pl-10 pr-4 py-2 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 ${inputCls}`} />
             </div>
           </div>
           <div className="overflow-x-auto">
@@ -420,11 +420,11 @@ const AdminDashboard = () => {
       <div className="space-y-6">
         <div><h1 className={`text-2xl font-bold ${tp}`}>Videos Management</h1><p className={`text-sm ${ts} mt-1`}>{allVideos.length} videos on platform</p></div>
         <div className={`${cardBg} border rounded-2xl shadow-sm`}>
-          <div className={`px-5 py-4 border-b ${d ? "border-gray-800" : "border-gray-100"}`}>
+          <div className={`px-5 py-4 border-b ${d ? "border-white/10" : "border-gray-100"}`}>
             <div className="relative max-w-sm">
               <Search className={`absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 ${ts}`} />
               <input type="text" placeholder="Search videos..." value={videoSearch} onChange={(e) => setVideoSearch(e.target.value)}
-                className={`w-full pl-10 pr-4 py-2 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 ${inputCls}`} />
+                className={`w-full pl-10 pr-4 py-2 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 ${inputCls}`} />
             </div>
           </div>
           <div className="overflow-x-auto">
@@ -436,7 +436,7 @@ const AdminDashboard = () => {
                     <tr key={i}>
                       {[200,50,60,70,80,60].map((w, j) => (
                         <td key={j} className="px-5 py-4">
-                          <div className={`h-4 rounded animate-pulse ${d ? "bg-gray-800" : "bg-gray-100"}`} style={{ width: `${w}px` }} />
+                          <div className={`h-4 rounded animate-pulse ${d ? "bg-[#291a13]" : "bg-gray-100"}`} style={{ width: `${w}px` }} />
                         </td>
                       ))}
                     </tr>
@@ -527,8 +527,8 @@ const AdminDashboard = () => {
           <div key={label} className={`${cardBg} border rounded-2xl p-5 shadow-sm`}>
             {dataLoading ? (
               <div className="space-y-2 animate-pulse">
-                <div className={`h-3 w-20 rounded ${d ? "bg-gray-800" : "bg-gray-100"}`} />
-                <div className={`h-6 w-16 rounded ${d ? "bg-gray-800" : "bg-gray-100"}`} />
+                <div className={`h-3 w-20 rounded ${d ? "bg-[#291a13]" : "bg-gray-100"}`} />
+                <div className={`h-6 w-16 rounded ${d ? "bg-[#291a13]" : "bg-gray-100"}`} />
               </div>
             ) : (
               <div className="flex items-center gap-3">
@@ -554,25 +554,25 @@ const AdminDashboard = () => {
       <div className="space-y-6">
         <div><h1 className={`text-2xl font-bold ${tp}`}>Platform Settings</h1><p className={`text-sm ${ts} mt-1`}>Configure global platform preferences</p></div>
         <div className={`${cardBg} border rounded-2xl p-6 shadow-sm space-y-5`}>
-          <h2 className={`font-semibold ${tp} border-b ${d?"border-gray-800":"border-gray-100"} pb-3`}>General</h2>
+          <h2 className={`font-semibold ${tp} border-b ${d?"border-white/10":"border-gray-100"} pb-3`}>General</h2>
           {[{ label: "Site Name", key: "siteName", type: "text" }, { label: "Admin Contact Email", key: "contactEmail", type: "email" }, { label: "Max Upload Size (MB)", key: "maxUploadMb", type: "number" }].map(({ label, key, type }) => (
             <div key={key} className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-center">
               <label className={`text-sm font-medium ${tp}`}>{label}</label>
               <input type={type} value={form[key]} onChange={(e) => setForm(p => ({...p,[key]:e.target.value}))}
-                className={`col-span-2 border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 ${inputCls}`} />
+                className={`col-span-2 border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 ${inputCls}`} />
             </div>
           ))}
           {[{ label: "Allow New Registrations", key: "allowRegistrations" }, { label: "Require Email Verification", key: "requireEmailVerification" }, { label: "Auto-moderate Comments (AI)", key: "autoModerate" }].map(({ label, key }) => (
             <div key={key} className="flex items-center justify-between py-1">
               <label className={`text-sm font-medium ${tp}`}>{label}</label>
               <button onClick={() => setForm(p => ({...p,[key]:!p[key]}))}
-                className={`relative w-11 h-6 rounded-full transition-colors duration-200 ${form[key]?"bg-indigo-600":d?"bg-gray-700":"bg-gray-200"}`}>
+                className={`relative w-11 h-6 rounded-full transition-colors duration-200 ${form[key]?"bg-primary":d?"bg-gray-700":"bg-gray-200"}`}>
                 <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform duration-200 ${form[key]?"translate-x-5":""}`} />
               </button>
             </div>
           ))}
           <div className="pt-2">
-            <button className="px-6 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-semibold hover:bg-indigo-700 transition-colors shadow-sm">Save Changes</button>
+            <button className="px-6 py-2.5 bg-primary text-white rounded-xl text-sm font-semibold hover:bg-[#d94e0f] transition-colors shadow-sm">Save Changes</button>
           </div>
         </div>
       </div>

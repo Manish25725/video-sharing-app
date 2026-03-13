@@ -81,7 +81,7 @@ function AppContent() {
   }
 
   // Not logged in — show auth + signup flow
-  if (!isLoggedIn) {
+  if (!isLoggedIn && !location.pathname.startsWith('/admin-dashboard')) {
     return (
       <SignupProvider>
         <Routes>

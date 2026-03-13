@@ -337,6 +337,15 @@ const Signup = () => {
                 Log in
               </Link>
             </p>
+
+            <p className="text-center text-sm mt-4" style={{ color: "#64748b" }}>
+              Are you an admin?{" "}
+              <Link to="/admin-login" className="font-bold transition-colors" style={{ color: "#ec5b13" }}
+                onMouseEnter={e => (e.target.style.textDecoration = "underline")}
+                onMouseLeave={e => (e.target.style.textDecoration = "none")}>
+                Admin Login
+              </Link>
+            </p>
           </div>
 
           {/* Legal */}
