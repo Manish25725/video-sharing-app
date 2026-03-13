@@ -405,7 +405,7 @@ const GoLive = () => {
                         className="w-5 h-5 rounded border-gray-700 text-[#ec5b13] focus:ring-[#ec5b13] bg-[#1a1410] focus:ring-offset-[#1a1410]"
                       />
                       <div className="flex flex-col">
-                        <span className="text-sm font-medium text-gray-200">Save recording to Cloudinary</span>
+                          <span className="text-sm font-medium text-gray-200">Save this live stream</span>
                         <span className="text-[11px] text-gray-500">Automatically publish this stream as a VOD when it ends</span>
                       </div>
                     </label>

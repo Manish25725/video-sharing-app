@@ -194,15 +194,15 @@ const handleGetKey = async (e) => {
             </div>
 
             <div className="flex flex-col gap-2 mt-2">
-              <div className="flex items-center justify-between">
-                <span className="flex items-center gap-1 text-xs text-gray-500">
-                  <Calendar className="w-3 h-3 text-indigo-400" />
-                  {new Date(stream.scheduledAt).toLocaleString(undefined, {
-                    month: "short", day: "numeric", hour: "2-digit", minute: "2-digit"
-                  })}
-                </span>
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <span className="flex items-center gap-1 text-xs text-gray-500 whitespace-nowrap">
+                    <Calendar className="w-3 h-3 text-indigo-400" />
+                    {new Date(stream.scheduledAt).toLocaleString(undefined, {
+                      month: "short", day: "numeric", hour: "2-digit", minute: "2-digit"
+                    })}
+                  </span>
 
-                <div className="flex items-center gap-1.5">
+                  <div className="flex flex-wrap items-center gap-1.5 mt-1 sm:mt-0">
                   {isOwn && (
                     <>
                       <button onClick={(e) => { e.stopPropagation(); onCancel(stream._id); }} 
