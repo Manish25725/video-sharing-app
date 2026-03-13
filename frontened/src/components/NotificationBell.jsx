@@ -215,6 +215,15 @@ const NotificationBell = () => {
                     textAccent: '#fda4af',
                     label: 'Live event',
                 };
+            case 'stream_cancelled':
+                return {
+                    border: 'border-slate-500/70',
+                    dot: '#94a3b8',
+                    iconBg: 'bg-slate-600',
+                    previewBg: 'rgba(148,163,184,0.08)',
+                    textAccent: '#cbd5e1',
+                    label: 'Stream Cancelled',
+                };
             default:
                 return {
                     border: 'border-white/10',
@@ -229,7 +238,7 @@ const NotificationBell = () => {
 
     const getNotificationTarget = (notification) => {
         if (notification.content?.video?._id) return `/video/${notification.content.video._id}`;
-        if (notification.type === 'stream_scheduled' || notification.content?.scheduledStream?._id) return '/scheduled-streams';
+        if (notification.type === 'stream_scheduled' || notification.type === 'stream_cancelled' || notification.content?.scheduledStream?._id) return '/scheduled-streams';
         if (notification.content?.tweet?._id) return '/tweets';
         return null;
     };
@@ -337,6 +346,7 @@ const NotificationBell = () => {
                                                     {notification.type === 'video_upload' && <PlayIcon className="w-3 h-3 text-white" />}
                                                     {notification.type === 'tweet_post' && <MessageCircle className="w-3 h-3 text-white" />}
                                                     {notification.type === 'stream_scheduled' && <Radio className="w-3 h-3 text-white" />}
+                                                    {notification.type === 'stream_cancelled' && <X className="w-3 h-3 text-white" />}
                                                 </div>
                                             </div>
 

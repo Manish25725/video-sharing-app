@@ -75,6 +75,7 @@ const GoLive = () => {
   const [category, setCategory] = useState("");
   const [thumbnail, setThumbnail] = useState(null);       // File object
   const [thumbnailPreview, setThumbnailPreview] = useState(""); // Object URL
+  const [saveRecording, setSaveRecording] = useState(true);
   const thumbnailInputRef = useRef(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -126,8 +127,7 @@ const GoLive = () => {
       formData.append("title", title.trim());
       formData.append("description", description.trim());
       if (category) formData.append("category", category);
-      if (thumbnail) formData.append("thumbnail", thumbnail);
-      const { data } = await streamService.goLive(formData);
+      if (thumbnail) formData.append("thumbnail", thumbnail);        formData.append("saveRecording", saveRecording);      const { data } = await streamService.goLive(formData);
       setStreamData(data);
       setStep("live");
     } catch (err) {
@@ -396,8 +396,20 @@ const GoLive = () => {
                     </button>
                   )}
                   <input ref={thumbnailInputRef} type="file" accept="image/*" onChange={handleThumbnailChange} className="hidden" />
-                </div>
-
+                </div>                  <div className="flex flex-col gap-1 px-1 py-1">
+                    <label className="flex items-center gap-3 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={saveRecording}
+                        onChange={(e) => setSaveRecording(e.target.checked)}
+                        className="w-5 h-5 rounded border-gray-700 text-[#ec5b13] focus:ring-[#ec5b13] bg-[#1a1410] focus:ring-offset-[#1a1410]"
+                      />
+                      <div className="flex flex-col">
+                        <span className="text-sm font-medium text-gray-200">Save recording to Cloudinary</span>
+                        <span className="text-[11px] text-gray-500">Automatically publish this stream as a VOD when it ends</span>
+                      </div>
+                    </label>
+                  </div>
                 <div className="p-6 rounded-2xl text-white space-y-6" style={{ background: "linear-gradient(135deg, #ec5b13 0%, #c2410c 100%)", boxShadow: "0 18px 40px rgba(236,91,19,0.25)" }}>
                   <div className="space-y-1">
                     <h3 className="text-xl font-black">Ready to go?</h3>

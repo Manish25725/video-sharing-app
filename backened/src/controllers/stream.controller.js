@@ -5,13 +5,14 @@ import { fileURLToPath } from "url";
 import mongoose from "mongoose";
 import { Stream } from "../models/stream.model.js";
 import { ScheduledStream } from "../models/scheduledStream.model.js";
+import { Subscription } from "../models/subscription.model.js";
 import { Message } from "../models/message.model.js";
 import { Video } from "../models/video.model.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/Apiresponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
-import { notifyStreamScheduled } from "./notification.controller.js";
+import { notifyStreamScheduled, notifyStreamCancelled } from "./notification.controller.js";
 import { muteUserInStream, unmuteUserInStream } from "../live/moderation.js";
 import { clearChatHistory } from "../live/chatHistory.js";
 
@@ -34,8 +35,7 @@ const rtmpUrl = () => `rtmp://${RTMP_HOST}/live`;
 
 /* ─── Go Live ─────────────────────────────────────────────── */
 const goLive = asyncHandler(async (req, res) => {
-  const { title, description, category } = req.body;
-  if (!title?.trim()) throw new ApiError(400, "Stream title is required");
+    const { title, description, category, streamKey: providedStreamKey, saveRecording } = req.body;
 
   // If already live, return existing stream
   const existing = await Stream.findOne({ streamerId: req.user._id, isLive: true });
@@ -44,8 +44,9 @@ const goLive = asyncHandler(async (req, res) => {
   }
 
   // Clean up any stale/orphaned streams (key generated but OBS never connected)
+  // Ignore scheduled streams so we don't end their waiting rooms
   await Stream.updateMany(
-    { streamerId: req.user._id, isLive: false, endedAt: { $exists: false } },
+    { streamerId: req.user._id, isLive: false, isScheduled: { $ne: true }, endedAt: { $exists: false } },
     { $set: { endedAt: new Date() } }
   );
 
@@ -56,16 +57,40 @@ const goLive = asyncHandler(async (req, res) => {
     if (uploaded?.url) thumbnailUrl = uploaded.url;
   }
 
-    const streamKey = generateStreamKey();
-  const stream = await Stream.create({
-    title: title.trim(),
-    description: description?.trim() || "",
-    category: category?.trim() || "",
-    thumbnailUrl,
-    streamKey,
-    streamerId: req.user._id,
-    isLive: false,
-  });
+  let stream;
+  let streamKey = providedStreamKey;
+
+  if (streamKey) {
+    // If we're starting a scheduled stream
+    stream = await Stream.findOne({ streamKey, streamerId: req.user._id });
+    if (!stream) throw new ApiError(404, "Scheduled stream not found");
+    
+    stream.title = title.trim();
+    stream.description = description?.trim() || "";
+    stream.category = category?.trim() || stream.category || "";
+    if (thumbnailUrl) stream.thumbnailUrl = thumbnailUrl;      if (saveRecording !== undefined) {
+          stream.autoSave = saveRecording === 'true' || saveRecording === true;
+      }    stream.isLive = false;
+    stream.isScheduled = false; // No longer highly protected from orphan cleaner, it's the active intent now
+    // endedAt might have been set if an old cleanup ran, ensure it's cleared
+    stream.endedAt = undefined;
+    await stream.save();
+
+    // Do NOT mark ScheduledStream as cancelled yet, so it stays visible in their dashboard 
+    // until they actually go live or explicitly cancel it.
+  } else {
+    streamKey = generateStreamKey();
+    stream = await Stream.create({
+      title: title.trim(),
+      description: description?.trim() || "",
+      category: category?.trim() || "",
+      thumbnailUrl,
+      streamKey,
+      streamerId: req.user._id,
+      isLive: false,
+        autoSave: saveRecording === 'true' || saveRecording === true,
+    });
+  }
 
   return res.status(201).json(
     new ApiResponse(201, {
@@ -171,6 +196,18 @@ const scheduleStream = asyncHandler(async (req, res) => {
     streamKey,
   });
 
+  // Create a corresponding offline Stream so users can chat immediately
+  await Stream.create({
+    title: title.trim(),
+    description: description?.trim() || "",
+    thumbnailUrl,
+    streamKey,
+    streamerId: req.user._id,
+    isLive: false,
+    isScheduled: true,
+    scheduledAt: date,
+  });
+
   const populated = await ScheduledStream.findById(scheduled._id)
     .populate("streamerId", "fullName userName avatar");
 
@@ -182,13 +219,37 @@ const scheduleStream = asyncHandler(async (req, res) => {
 
 /* ─── Get Scheduled Streams ───────────────────────────────── */
 const getScheduledStreams = asyncHandler(async (req, res) => {
-  const streams = await ScheduledStream.find({
-    isCancelled: false,
-  })
+  let streamerIds = null;
+  if (req.user) {
+    const subscriptions = await Subscription.find({ subscriber: req.user._id }).select("channel");
+    streamerIds = subscriptions.map((sub) => sub.channel);
+    streamerIds.push(req.user._id);
+  }
+
+  const query = { isCancelled: false };
+  if (streamerIds) {
+    query.streamerId = { $in: streamerIds };
+  }
+
+  let scheduledStreams = await ScheduledStream.find(query)
     .populate("streamerId", "fullName userName avatar")
     .sort({ scheduledAt: 1 });
 
-  return res.status(200).json(new ApiResponse(200, streams, "Scheduled streams fetched"));
+  // Filter out scheduled streams if they match the streamKey, or (title + streamerId) of an active/ended stream 
+  // This cleans up old scheduled items when user goes live directly.
+  const usedStreams = await Stream.find({
+    $or: [{ isLive: true }, { endedAt: { $exists: true } }]
+  }).select("streamKey title streamerId");
+
+  scheduledStreams = scheduledStreams.filter((scheduled) => {
+    return !usedStreams.some((used) => {
+      const matchKey = used.streamKey && scheduled.streamKey && used.streamKey === scheduled.streamKey;
+      const matchTitle = used.title === scheduled.title && String(used.streamerId) === String(scheduled.streamerId?._id || scheduled.streamerId);
+      return matchKey || matchTitle;
+    });
+  });
+
+  return res.status(200).json(new ApiResponse(200, scheduledStreams, "Scheduled streams fetched"));
 });
 
 /* ─── Cancel Scheduled Stream ─────────────────────────────── */
@@ -201,6 +262,9 @@ const cancelScheduledStream = asyncHandler(async (req, res) => {
 
   scheduled.isCancelled = true;
   await scheduled.save();
+
+  // Notify subscribers
+  notifyStreamCancelled(req.user._id, scheduled.title, scheduled._id).catch(() => {});
 
   return res.status(200).json(new ApiResponse(200, scheduled, "Scheduled stream cancelled"));
 });

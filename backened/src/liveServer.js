@@ -5,6 +5,8 @@ import { fileURLToPath } from "url";
 import { spawn, execSync } from "child_process";
 import { Stream } from "./models/stream.model.js";
 import { clearChatHistory } from "./live/chatHistory.js";
+import { Video } from "./models/video.model.js";
+import { uploadOnCloudinary } from "./utils/cloudinary.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -103,9 +105,41 @@ function startHls(streamKey) {
     }
   });
 
-  proc.on("exit", (code) => {
+  proc.on("exit", async (code) => {
     console.log(`[FFmpeg:${streamKey}] exited with code ${code}`);
     ffmpegProcesses.delete(streamKey);
+    
+    // Auto-save logic
+    try {
+      const stream = await Stream.findOne({ streamKey });
+      if (stream && stream.autoSave && !stream.savedVideoId) {
+        console.log(`[AutoSave] Starting upload for ${streamKey}`);
+        const recPath = path.join(mediaRoot, "recordings", `${streamKey}.mp4`);
+        if (fs.existsSync(recPath)) {
+          const uploaded = await uploadOnCloudinary(recPath);
+          if (uploaded?.url) {
+            const thumbnailUrl = stream.thumbnailUrl || uploaded.url.replace("/upload/", "/upload/so_0/").replace(/\.[^.]+$/, ".jpg");
+            const video = await Video.create({
+              videoFile: uploaded.url,
+              thumbnail: thumbnailUrl,
+              title: stream.title || "Live Stream Recording",
+              description: stream.description || "",
+              duration: uploaded.duration || 0,
+              views: 0,
+              isPublished: true,
+              videoType: "livestream",
+              owner: stream.streamerId,
+              streamKey,
+            });
+            stream.savedVideoId = video._id;
+            await stream.save();
+            console.log(`[AutoSave] Successfully saved video ${video._id} for stream ${streamKey}`);
+          }
+        }
+      }
+    } catch (err) {
+      console.error(`[AutoSave] Error saving stream ${streamKey}:`, err);
+    }
   });
 
   console.log(`[NMS] HLS + MP4 recording started for: ${streamKey}`);  console.log(`[NMS] Recording path: ${path.join(mediaRoot, "recordings", streamKey + ".mp4")}`);

@@ -24,7 +24,7 @@ const router = Router();
 // ── Public routes (specific paths before parameterized) ────────
 router.route("/live").get(getLiveStreams);
 router.route("/recorded").get(getRecordedStreams);
-router.route("/scheduled").get(getScheduledStreams);
+router.route("/scheduled").get(verifyJWT, getScheduledStreams);
 
 // ── Protected routes ───────────────────────────────────────────
 router.route("/go-live").post(verifyJWT, upload.single("thumbnail"), imageFilter, goLive);

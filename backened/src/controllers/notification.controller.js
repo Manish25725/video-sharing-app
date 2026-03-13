@@ -122,7 +122,8 @@ const generateMessage = (type, senderName, contentTitle = '') => {
     const messages = {
         'video_upload': `${senderName} uploaded a new video "${contentTitle}"`,
         'tweet_post': `${senderName} posted a new tweet`,
-        'stream_scheduled': `${senderName} scheduled a live stream: "${contentTitle}"`
+        'stream_scheduled': `${senderName} scheduled a live stream: "${contentTitle}"`,
+        'stream_cancelled': `${senderName} cancelled the scheduled live stream: "${contentTitle}"`
     };
 
     return messages[type] || `${senderName} performed an action`;
@@ -253,6 +254,46 @@ const notifyStreamScheduled = async (streamerId, streamTitle, scheduledStreamId)
         return notifications;
     } catch (error) {
         console.error('Error sending stream scheduled notifications:', error);
+        return null;
+    }
+};
+
+const notifyStreamCancelled = async (streamerId, streamTitle, scheduledStreamId) => {
+    try {
+        const sender = await getSenderInfo(streamerId);
+        if (!sender) return null;
+
+        const subscriptions = await Subscription.find({
+            channel: streamerId,
+            notificationsEnabled: true
+        }).select('subscriber').lean();
+
+        if (!subscriptions.length) return [];
+
+        const subscriberIds = subscriptions.map(s => s.subscriber);
+
+        const eligibleUsers = await User.find({
+            _id: { $in: subscriberIds },
+            notifyOnStream: true
+        }).select('_id').lean();
+
+        const message = generateMessage('stream_cancelled', sender.fullName || sender.userName, streamTitle);
+
+        const notifications = [];
+        for (const u of eligibleUsers) {
+            const notification = await createAndSendNotification({
+                recipient: u._id,
+                sender: streamerId,
+                type: 'stream_cancelled',
+                message,
+                scheduledStream: scheduledStreamId
+            });
+            if (notification) notifications.push(notification);
+        }
+
+        return notifications;
+    } catch (error) {
+        console.error('Error sending stream cancelled notifications:', error);
         return null;
     }
 };
@@ -623,5 +664,6 @@ export {
     postUploadNotify,
     notifyVideoUpload,
     notifyTweetPost,
-    notifyStreamScheduled
+    notifyStreamScheduled,
+    notifyStreamCancelled
 };

@@ -21,7 +21,8 @@ const notificationSchema = new Schema({
         enum: [
             'video_upload',
             'tweet_post',
-            'stream_scheduled'
+            'stream_scheduled',
+            'stream_cancelled'
         ],
         required: true
     },

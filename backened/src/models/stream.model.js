@@ -40,6 +40,17 @@ const streamSchema = new Schema(
       default: 0,
       min: 0,
     },
+    isScheduled: {
+      type: Boolean,
+      default: false,
+    },
+    autoSave: {
+      type: Boolean,
+      default: false,
+    },
+    scheduledAt: {
+      type: Date,
+    },
     thumbnailUrl: {
       type: String,
       default: "",
