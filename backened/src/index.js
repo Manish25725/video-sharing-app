@@ -14,9 +14,20 @@ import { registerSocketHandlers } from './live/socketHandlers.js'
 
 // Create HTTP server and Socket.io instance
 const server = createServer(app)
+
+const allowedOrigins = (process.env.ALLOWED_ORIGINS || "http://localhost:3000,http://localhost:3001,http://localhost:3002,http://localhost:5173")
+    .split(",").map(o => o.trim());
+
 const io = new Server(server, {
     cors: {
-        origin: ["http://localhost:3000", "http://localhost:3001", "http://localhost:3002", "http://localhost:5173"],
+        origin: function(origin, callback) {
+            if (!origin) return callback(null, true);
+            if (allowedOrigins.indexOf(origin) !== -1 || origin.endsWith('.onrender.com') || allowedOrigins.includes('*')) {
+                callback(null, true);
+            } else {
+                callback(new Error(`Origin ${origin} not allowed by CORS`));
+            }
+        },
         credentials: true
     }
 })

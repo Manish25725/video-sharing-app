@@ -25,13 +25,22 @@ const __dirname = path.dirname(__filename);
 
 const app=express();
 
-const allowedOrigins = (process.env.ALLOWED_ORIGINS ||
-    "http://localhost:3000,http://localhost:3001,http://localhost:3002,http://localhost:5173")
+const allowedOrigins = (process.env.ALLOWED_ORIGINS || "http://localhost:3000,http://localhost:3001,http://localhost:3002,http://localhost:5173")
     .split(",").map(o => o.trim());
 
 app.use(cors({
-    origin: allowedOrigins,
-    credentials:true 
+    origin: function(origin, callback) {
+        // Allow requests with no origin (like mobile apps or curl requests)
+        if (!origin) return callback(null, true);
+        
+        // Auto-allow any deployed Render frontend, or explicitly configured origins
+        if (allowedOrigins.indexOf(origin) !== -1 || origin.endsWith('.onrender.com') || allowedOrigins.includes('*')) {
+            callback(null, true);
+        } else {
+            callback(new Error(`Origin ${origin} not allowed by CORS`));
+        }
+    },
+    credentials:true
 }));
 
 app.use(express.json({limit:"16kb"}));
