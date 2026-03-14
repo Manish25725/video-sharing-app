@@ -321,13 +321,13 @@ const AdminDashboard = () => {
   /* overview */
   const OverviewSection = () => (
     <div className="space-y-6">
-      <div className="flex items-start justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
         <div>
-          <h1 className={`text-2xl font-bold ${tp}`}>Dashboard Overview</h1>
+          <h1 className={`text-2xl md:text-3xl font-bold ${tp}`}>Dashboard Overview</h1>
           <p className={`text-sm ${ts} mt-1`}>Welcome back, {user?.fullName?.split(" ")[0] || "Admin"}.</p>
         </div>
         <button onClick={fetchData}
-          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium border transition-colors flex-shrink-0 ${d ? "border-gray-700 text-gray-300 hover:bg-[#291a13]" : "border-gray-200 text-gray-600 hover:bg-gray-50"}`}>
+          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium border transition-colors w-full sm:w-auto justify-center flex-shrink-0 ${d ? "border-gray-700 text-gray-300 hover:bg-[#291a13]" : "border-gray-200 text-gray-600 hover:bg-gray-50"}`}>
           <RefreshCw className={`w-4 h-4 ${dataLoading ? "animate-spin" : ""}`} />
           {dataLoading ? "Loading..." : "Refresh"}
         </button>
@@ -338,7 +338,7 @@ const AdminDashboard = () => {
         <StatCard title="Total Views"  value={stats.totalViews}   change={stats.viewsChange}   icon={Eye}   gradient="bg-gradient-to-br from-emerald-500 to-teal-600" />
         <StatCard title="Open Reports" value={stats.totalReports} change={stats.reportsChange} icon={Flag}  gradient="bg-gradient-to-br from-rose-500 to-red-600" />
       </div>
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {[
           { label: "Review Reports",  icon: Flag,          color: "text-red-600 bg-red-50 hover:bg-red-100",            section: "reports" },
           { label: "Manage Videos",   icon: Video,         color: "text-violet-600 bg-violet-50 hover:bg-violet-100",   section: "videos" },
@@ -592,7 +592,7 @@ const AdminDashboard = () => {
   const AnalyticsSection = () => (
     <div className="space-y-6">
       <div><h1 className={`text-2xl font-bold ${tp}`}>Analytics</h1><p className={`text-sm ${ts} mt-1`}>Platform performance overview</p></div>
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
         {[
           { label: "Total Views",  value: stats.totalViews.toLocaleString(),   icon: Eye,        g: "from-sky-500 to-blue-600" },
           { label: "Total Videos", value: stats.totalVideos.toLocaleString(),  icon: Video,      g: "from-violet-500 to-purple-700" },
@@ -694,8 +694,8 @@ const AdminDashboard = () => {
     <div className={`min-h-screen ${bg} transition-colors duration-200`}>
       <SidebarNav />
       <TopNavbar />
-      <main className={`transition-all duration-300 pt-16 min-h-screen ${sidebarCollapsed ? "pl-16" : "pl-64"}`}>
-        <div className="p-4 sm:p-6 lg:p-8 max-w-screen-2xl mx-auto overflow-x-hidden">
+      <main className={`transition-all duration-300 pt-16 min-h-screen ${sidebarCollapsed ? "pl-0 md:pl-16" : "pl-0 md:pl-64"}`}>
+        <div className="p-4 sm:p-6 lg:p-8 max-w-screen-2xl mx-auto overflow-x-hidden w-full">
           {renderSection()}
         </div>
       </main>
