@@ -1,10 +1,9 @@
 services:
-  # Backend Web Service
+  # Backend
   - type: web
     name: playvibe-backend
     env: node
     region: oregon
-    plan: free
     buildCommand: "cd backened && npm install"
     startCommand: "cd backened && npm start"
     envVars:
@@ -29,11 +28,10 @@ services:
       - key: CLOUDINARY_API_SECRET
         sync: false
 
-  # Frontend Static Site
+  # Frontend
   - type: web
     name: playvibe-frontend
     env: static
-    plan: free
     buildCommand: "cd frontened && npm install && npm run build"
     staticPublishPath: "./frontened/dist"
     envVars:
