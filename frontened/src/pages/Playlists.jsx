@@ -5,6 +5,7 @@ import { playlistService } from '../services/playlistService';
 import { videoService } from '../services/videoService';
 import { useAuth } from '../contexts/AuthContext';
 import Toast from '../components/Toast';
+import PageLoader from '../components/PageLoader';
 
 const Playlists = () => {
   const { user, isLoggedIn } = useAuth();

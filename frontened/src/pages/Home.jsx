@@ -4,6 +4,7 @@ import { videoService, transformVideosArray } from "../services/videoService.js"
 import { useAuth } from "../contexts/AuthContext.jsx";
 import streamService from "../services/streamService.js";
 import { formatTimeAgo, formatViews } from "../utils/formatters.js";
+import PageLoader from "../components/PageLoader.jsx";
 
 const CATEGORY_MAP = {
   "All":      "",

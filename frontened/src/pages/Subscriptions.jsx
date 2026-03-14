@@ -5,6 +5,7 @@ import { subscriptionService } from "../services/subscriptionService.js";
 import { videoService, transformVideosArray } from "../services/videoService.js";
 import { useAuth } from "../contexts/AuthContext.jsx";
 import { formatViews, formatTimeAgo, formatDuration } from "../utils/formatters.js";
+import PageLoader from "../components/PageLoader.jsx";
 
 const Subscriptions = ({ onVideoSelect }) => {
   const { user, isLoggedIn: isAuthenticated } = useAuth();

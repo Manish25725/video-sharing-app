@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import watchHistoryService from '../services/watchHistoryService';
 import { useAuth } from '../contexts/AuthContext';
 import { formatDuration, formatViews } from '../utils/formatters';
+import PageLoader from '../components/PageLoader';
 
 const WatchHistory = () => {
   const { user, isLoggedIn } = useAuth();

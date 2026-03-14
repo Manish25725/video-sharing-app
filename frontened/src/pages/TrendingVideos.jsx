@@ -3,6 +3,7 @@ import { TrendingUp, RefreshCw, AlertCircle, Flame, Play, Plus } from 'lucide-re
 import { useNavigate } from 'react-router-dom';
 import { videoService, transformVideosArray } from '../services/videoService';
 import { formatTimeAgo, formatViews, formatDuration } from '../utils/formatters';
+import PageLoader from '../components/PageLoader';
 
 const TABS = ['All', 'Music', 'Gaming', 'Movies'];
 
@@ -74,28 +75,8 @@ const TrendingVideos = ({ onVideoSelect }) => {
   // ──────────── LOADING ────────────
   if (loading) {
     return (
-      <div className="min-h-screen p-4 md:p-8" style={{ background: "#0a0a0a" }}>
-        <div className="max-w-7xl mx-auto">
-          <div className="flex items-center gap-3 mb-10">
-            <Flame className="w-8 h-8" style={{ color: "#ec5b13" }} />
-            <h2 className="text-4xl font-black tracking-tight text-white">Trending Now</h2>
-          </div>
-          {/* Hero skeleton */}
-          <div className="h-[420px] rounded-3xl mb-12 animate-pulse" style={{ background: "rgba(30,17,10,0.7)" }} />
-          {/* Grid skeleton */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {[...Array(8)].map((_, i) => (
-              <div key={i} className="rounded-2xl overflow-hidden animate-pulse"
-                style={{ background: "rgba(30,17,10,0.7)", border: "1px solid rgba(255,255,255,0.05)" }}>
-                <div className="aspect-video" style={{ background: "rgba(255,255,255,0.05)" }} />
-                <div className="p-3 space-y-2">
-                  <div className="h-3 rounded-full" style={{ background: "rgba(255,255,255,0.07)", width: "80%" }} />
-                  <div className="h-3 rounded-full" style={{ background: "rgba(255,255,255,0.05)", width: "50%" }} />
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
+      <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center pt-20">
+        <PageLoader message="Trending Now" />
       </div>
     );
   }

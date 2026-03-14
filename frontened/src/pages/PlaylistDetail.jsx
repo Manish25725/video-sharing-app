@@ -5,6 +5,7 @@ import { playlistService } from '../services/playlistService';
 import { videoService } from '../services/videoService';
 import { useAuth } from '../contexts/AuthContext';
 import Toast from '../components/Toast';
+import PageLoader from '../components/PageLoader';
 
 const PlaylistDetail = ({ onVideoSelect }) => {
   const { playlistId } = useParams();
@@ -143,14 +144,8 @@ const PlaylistDetail = ({ onVideoSelect }) => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: '#080808' }}>
-        <div className="flex flex-col items-center gap-4">
-          <div
-            className="w-12 h-12 rounded-full border-2 animate-spin"
-            style={{ borderColor: '#ec5b13', borderTopColor: 'transparent' }}
-          />
-          <p className="text-slate-400 text-sm">Loading playlist...</p>
-        </div>
+      <div className="flex-1 w-full bg-[#0a0a0a] flex items-center justify-center pt-20">
+        <PageLoader message="Loading playlist..." />
       </div>
     );
   }
