@@ -43,11 +43,11 @@ const Search = () => {
     <div className="max-w-7xl mx-auto px-4 py-6">
       {/* Search Header */}
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900 mb-2">
+        <h1 className="text-2xl font-bold text-white mb-2">
           Search Results
         </h1>
         {query && (
-          <p className="text-gray-600">
+          <p className="text-white/70">
             Showing results for: <span className="font-medium">"{query}"</span>
           </p>
         )}
@@ -70,11 +70,11 @@ const Search = () => {
       {/* No Query */}
       {!query.trim() && !loading && (
         <div className="flex flex-col items-center py-20 space-y-4">
-          <SearchX className="w-16 h-16 text-gray-300" />
-          <p className="text-gray-500 text-lg">Enter a search term to find videos</p>
+          <SearchX className="w-16 h-16 text-white/30" />
+          <p className="text-white/60 text-lg">Enter a search term to find videos</p>
           <button
             onClick={() => navigate('/')}
-            className="mt-2 inline-flex items-center space-x-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-full transition-colors"
+            className="mt-2 inline-flex items-center space-x-2 px-5 py-2.5 bg-[#ec5b13] hover:bg-[#ec5b13]/80 text-white text-sm font-medium rounded-full transition-colors"
           >
             <Home className="w-4 h-4" />
             <span>Go to Home</span>
@@ -85,13 +85,13 @@ const Search = () => {
       {/* No Results */}
       {query.trim() && !loading && !error && searchResults.length === 0 && (
         <div className="flex flex-col items-center py-20 space-y-3">
-          <SearchX className="w-16 h-16 text-gray-300" />
-          <p className="text-gray-800 text-xl font-semibold">No results found</p>
-          <p className="text-gray-500">No videos found for <span className="font-medium text-gray-700">"{query}"</span></p>
-          <p className="text-gray-400 text-sm">Try different keywords or check your spelling</p>
+          <SearchX className="w-16 h-16 text-white/30" />
+          <p className="text-white/90 text-xl font-semibold">No results found</p>
+          <p className="text-white/60">No videos found for <span className="font-medium text-white/80">"{query}"</span></p>
+          <p className="text-white/50 text-sm">Try different keywords or check your spelling</p>
           <button
             onClick={() => navigate('/')}
-            className="mt-3 inline-flex items-center space-x-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-full transition-colors"
+            className="mt-3 inline-flex items-center space-x-2 px-5 py-2.5 bg-[#ec5b13] hover:bg-[#ec5b13]/80 text-white text-sm font-medium rounded-full transition-colors"
           >
             <Home className="w-4 h-4" />
             <span>Go to Home</span>
@@ -111,7 +111,7 @@ const Search = () => {
       {/* Results Count */}
       {searchResults.length > 0 && (
         <div className="mt-6 text-center">
-          <p className="text-gray-500">
+          <p className="text-white/60">
             Found {searchResults.length} video{searchResults.length !== 1 ? 's' : ''}
           </p>
         </div>

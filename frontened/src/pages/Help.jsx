@@ -10,7 +10,7 @@ const faqs = [
   {
     category: 'Account',
     icon: User,
-    color: 'text-blue-600 bg-blue-50',
+    color: 'text-[#ec5b13] bg-blue-500/10',
     questions: [
       {
         q: 'How do I change my profile picture or cover image?',
@@ -33,7 +33,7 @@ const faqs = [
   {
     category: 'Videos',
     icon: Video,
-    color: 'text-red-600 bg-red-50',
+    color: 'text-red-400 bg-red-500/10',
     questions: [
       {
         q: 'How do I upload a video?',
@@ -75,7 +75,7 @@ const faqs = [
   {
     category: 'Notifications',
     icon: Bell,
-    color: 'text-yellow-600 bg-yellow-50',
+    color: 'text-yellow-400 bg-yellow-500/10',
     questions: [
       {
         q: 'How do I turn on notifications for a channel?',
@@ -94,7 +94,7 @@ const faqs = [
   {
     category: 'Privacy & Safety',
     icon: Shield,
-    color: 'text-purple-600 bg-purple-50',
+    color: 'text-purple-400 bg-purple-500/10',
     questions: [
       {
         q: 'How do I report a video or comment?',
@@ -115,21 +115,21 @@ const faqs = [
 const FAQItem = ({ question, answer }) => {
   const [open, setOpen] = useState(false);
   return (
-    <div className={`border-b border-gray-100 last:border-0 transition-colors ${open ? 'bg-blue-50/30' : ''}`}>
+    <div className={`border-b border-white/5 last:border-0 transition-colors ${open ? 'bg-white/5' : ''}`}>
       <button
         onClick={() => setOpen(v => !v)}
         className="w-full flex items-start justify-between gap-4 px-5 py-4 text-left"
       >
-        <span className={`text-sm font-medium leading-relaxed ${open ? 'text-blue-700' : 'text-gray-800'}`}>
+        <span className={`text-sm font-medium leading-relaxed ${open ? 'text-[#ec5b13]' : 'text-white/90'}`}>
           {question}
         </span>
         {open
-          ? <ChevronUp className="w-4 h-4 text-blue-500 flex-shrink-0 mt-0.5" />
-          : <ChevronDown className="w-4 h-4 text-gray-400 flex-shrink-0 mt-0.5" />}
+          ? <ChevronUp className="w-4 h-4 text-[#ec5b13]/80 flex-shrink-0 mt-0.5" />
+          : <ChevronDown className="w-4 h-4 text-white/50 flex-shrink-0 mt-0.5" />}
       </button>
       {open && (
         <div className="px-5 pb-4">
-          <p className="text-sm text-gray-600 leading-relaxed">{answer}</p>
+          <p className="text-sm text-white/70 leading-relaxed">{answer}</p>
         </div>
       )}
     </div>
@@ -149,9 +149,9 @@ const Help = () => {
   })).filter(cat => (activeCategory === 'all' || cat.category === activeCategory) && cat.questions.length > 0);
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[#0a0a0a]">
       {/* Hero */}
-      <div className="bg-gradient-to-br from-indigo-600 to-violet-700 text-white">
+      <div className="bg-gradient-to-br from-[#1c120d] to-[#0a0a0a] border-b border-white/5 text-white">
         <div className="max-w-3xl mx-auto px-4 py-12">
           <button
             onClick={() => navigate(-1)}
@@ -160,7 +160,7 @@ const Help = () => {
             <ArrowLeft className="w-4 h-4" /> Back
           </button>
           <div className="flex items-center gap-3 mb-4">
-            <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
+            <div className="w-10 h-10 bg-[#18110D]/20 rounded-xl flex items-center justify-center">
               <HelpCircle className="w-6 h-6" />
             </div>
             <h1 className="text-3xl font-bold">Help Centre</h1>
@@ -169,13 +169,13 @@ const Help = () => {
 
           {/* Search */}
           <div className="relative">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-white/50 w-5 h-5" />
             <input
               type="text"
               value={search}
               onChange={e => setSearch(e.target.value)}
               placeholder="Search for answers…"
-              className="w-full pl-12 pr-4 py-3.5 rounded-xl text-gray-800 bg-white shadow-lg focus:outline-none focus:ring-2 focus:ring-white/50 text-sm"
+              className="w-full pl-12 pr-4 py-3.5 rounded-xl text-white/90 bg-[#18110D] shadow-lg focus:outline-none focus:ring-2 focus:ring-white/50 text-sm"
             />
           </div>
         </div>
@@ -188,8 +188,8 @@ const Help = () => {
             onClick={() => setActiveCategory('all')}
             className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
               activeCategory === 'all'
-                ? 'bg-indigo-600 text-white'
-                : 'bg-white border border-gray-200 text-gray-600 hover:border-indigo-300 hover:text-indigo-600'
+                ? 'bg-[#ec5b13] text-white'
+                : 'bg-[#18110D] border border-white/10 text-white/70 hover:border-indigo-300 hover:text-[#ec5b13]'
             }`}
           >
             All topics
@@ -202,8 +202,8 @@ const Help = () => {
                 onClick={() => setActiveCategory(cat.category)}
                 className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
                   activeCategory === cat.category
-                    ? 'bg-indigo-600 text-white'
-                    : 'bg-white border border-gray-200 text-gray-600 hover:border-indigo-300 hover:text-indigo-600'
+                    ? 'bg-[#ec5b13] text-white'
+                    : 'bg-[#18110D] border border-white/10 text-white/70 hover:border-indigo-300 hover:text-[#ec5b13]'
                 }`}
               >
                 <Icon className="w-3.5 h-3.5" />
@@ -215,22 +215,22 @@ const Help = () => {
 
         {/* FAQ sections */}
         {filtered.length === 0 ? (
-          <div className="bg-white rounded-2xl border border-gray-100 p-12 text-center">
+          <div className="bg-[#18110D] rounded-2xl border border-white/5 p-12 text-center">
             <HelpCircle className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-            <p className="text-gray-500 font-medium">No results found for "{search}"</p>
-            <p className="text-gray-400 text-sm mt-1">Try a different search term or browse all topics.</p>
+            <p className="text-white/60 font-medium">No results found for "{search}"</p>
+            <p className="text-white/50 text-sm mt-1">Try a different search term or browse all topics.</p>
           </div>
         ) : (
           <div className="space-y-4">
             {filtered.map(cat => {
               const Icon = cat.icon;
               return (
-                <div key={cat.category} className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-                  <div className="flex items-center gap-3 px-5 py-4 border-b border-gray-100">
+                <div key={cat.category} className="bg-[#18110D] rounded-2xl border border-white/5 shadow-sm overflow-hidden">
+                  <div className="flex items-center gap-3 px-5 py-4 border-b border-white/5">
                     <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${cat.color}`}>
                       <Icon className="w-4 h-4" />
                     </div>
-                    <h2 className="font-semibold text-gray-900">{cat.category}</h2>
+                    <h2 className="font-semibold text-white">{cat.category}</h2>
                   </div>
                   {cat.questions.map((item, i) => (
                     <FAQItem key={i} question={item.q} answer={item.a} />
@@ -244,13 +244,13 @@ const Help = () => {
         {/* Still need help? */}
         <div className="mt-8 bg-gradient-to-r from-indigo-50 to-violet-50 border border-indigo-100 rounded-2xl p-6 text-center">
           <MessageSquare className="w-8 h-8 text-indigo-500 mx-auto mb-3" />
-          <h3 className="font-semibold text-gray-900 mb-1">Still need help?</h3>
-          <p className="text-gray-500 text-sm mb-4">
+          <h3 className="font-semibold text-white mb-1">Still need help?</h3>
+          <p className="text-white/60 text-sm mb-4">
             Can't find the answer you're looking for? Send us feedback and we'll get back to you.
           </p>
           <button
             onClick={() => navigate('/feedback')}
-            className="inline-flex items-center gap-2 px-5 py-2.5 bg-indigo-600 text-white text-sm font-medium rounded-full hover:bg-indigo-700 transition-colors"
+            className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#ec5b13] text-white text-sm font-medium rounded-full hover:bg-[#ec5b13]/80 transition-colors"
           >
             <MessageSquare className="w-4 h-4" />
             Send Feedback
