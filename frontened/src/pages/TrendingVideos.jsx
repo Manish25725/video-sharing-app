@@ -4,6 +4,97 @@ import { useNavigate } from 'react-router-dom';
 import { videoService, transformVideosArray } from '../services/videoService';
 import { formatTimeAgo, formatViews, formatDuration } from '../utils/formatters';
 import PageLoader from '../components/PageLoader';
+import { useAuth } from '../contexts/AuthContext';
+import { subscriptionService } from '../services/subscriptionService';
+
+const CreatorCard = ({ creator }) => {
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const [isSubscribed, setIsSubscribed] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const checkSub = async () => {
+      if (user && creator.id) {
+        setLoading(true);
+        const subStatus = await subscriptionService.isSubscribedToChannel(creator.id);
+        setIsSubscribed(subStatus);
+        setLoading(false);
+      } else {
+        setLoading(false);
+      }
+    };
+    checkSub();
+  }, [user, creator.id]);
+
+  const handleSubscribe = async (e) => {
+    e.stopPropagation();
+    if (!user) {
+      navigate('/login');
+      return;
+    }
+    const prev = isSubscribed;
+    setIsSubscribed(!prev);
+    const res = await subscriptionService.toggleSubscription(creator.id);
+    if (!res || res.success === false) {
+      setIsSubscribed(prev); // revert
+    }
+  };
+
+  return (
+    <div
+      onClick={() => navigate(`/profile/${creator.id}`)}
+      className="flex-shrink-0 flex flex-col items-center gap-3 p-5 rounded-2xl w-40 cursor-pointer transition-all hover:-translate-y-1"
+      style={{
+        background: "rgba(255,255,255,0.03)",
+        backdropFilter: "blur(12px)",
+        border: "1px solid rgba(255,255,255,0.05)",
+      }}
+      onMouseEnter={e => e.currentTarget.style.borderColor = "rgba(236,91,19,0.4)"}
+      onMouseLeave={e => e.currentTarget.style.borderColor = "rgba(255,255,255,0.05)"}
+    >
+      <div className="relative">
+        {creator.avatar ? (
+          <img src={creator.avatar} alt={creator.name}
+            className="w-16 h-16 rounded-full object-cover"
+            style={{ border: "3px solid rgba(255,255,255,0.1)" }} />
+        ) : (
+          <div className="w-16 h-16 rounded-full flex items-center justify-center text-xl font-black text-white"
+            style={{ background: "linear-gradient(135deg,#ec5b13,#8b5cf6)", border: "3px solid rgba(255,255,255,0.1)" }}>
+            {creator.name[0]?.toUpperCase()}
+          </div>
+        )}
+        <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-blue-500 flex items-center justify-center">
+          <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+          </svg>
+        </div>
+      </div>
+      <div className="text-center">
+        <p className="font-bold text-sm text-white truncate w-full">{creator.name}</p>
+        <p className="text-[11px] text-slate-500 mt-0.5">{formatViews(creator.views)} views</p>
+      </div>
+      <button
+        onClick={handleSubscribe}
+        disabled={loading || (user && user._id === creator.id)}
+        className="px-4 py-1.5 rounded-full text-[10px] font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+        style={isSubscribed ? {
+          background: "rgba(236,91,19,0.15)", color: "#ec5b13", border: "1px solid rgba(236,91,19,0.3)"
+        } : { border: "1px solid #ec5b13", color: "#ec5b13" }}
+        onMouseEnter={e => {
+          if(!isSubscribed && !(user && user._id === creator.id)) { e.currentTarget.style.background = "#ec5b13"; e.currentTarget.style.color = "#fff"; }
+          if(isSubscribed) { e.currentTarget.style.background = "rgba(239,68,68,0.15)"; e.currentTarget.style.color = "#ef4444"; e.currentTarget.style.borderColor = "rgba(239,68,68,0.3)"; e.currentTarget.innerText = "UNSUBSCRIBE"; }
+        }}
+        onMouseLeave={e => {
+          if(!isSubscribed) { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "#ec5b13"; }
+          if(isSubscribed) { e.currentTarget.style.background = "rgba(236,91,19,0.15)"; e.currentTarget.style.color = "#ec5b13"; e.currentTarget.style.borderColor = "rgba(236,91,19,0.3)"; e.currentTarget.innerText = "SUBSCRIBED"; }
+        }}
+      >
+        {isSubscribed ? 'SUBSCRIBED' : 'SUBSCRIBE'}
+      </button>
+    </div>
+  );
+};
 
 const TABS = ['All', 'Music', 'Gaming', 'Movies'];
 
@@ -235,48 +326,7 @@ const TrendingVideos = ({ onVideoSelect }) => {
                 </div>
                 <div className="flex gap-4 overflow-x-auto pb-3" style={{ scrollbarWidth: "none" }}>
                   {creators.map((creator) => (
-                    <div key={creator.id}
-                      onClick={() => navigate(`/profile/${creator.id}`)}
-                      className="flex-shrink-0 flex flex-col items-center gap-3 p-5 rounded-2xl w-40 cursor-pointer transition-all hover:-translate-y-1"
-                      style={{
-                        background: "rgba(255,255,255,0.03)",
-                        backdropFilter: "blur(12px)",
-                        border: "1px solid rgba(255,255,255,0.05)",
-                      }}
-                      onMouseEnter={e => e.currentTarget.style.borderColor = "rgba(236,91,19,0.4)"}
-                      onMouseLeave={e => e.currentTarget.style.borderColor = "rgba(255,255,255,0.05)"}
-                    >
-                      <div className="relative">
-                        {creator.avatar ? (
-                          <img src={creator.avatar} alt={creator.name}
-                            className="w-16 h-16 rounded-full object-cover"
-                            style={{ border: "3px solid rgba(255,255,255,0.1)" }} />
-                        ) : (
-                          <div className="w-16 h-16 rounded-full flex items-center justify-center text-xl font-black text-white"
-                            style={{ background: "linear-gradient(135deg,#ec5b13,#8b5cf6)", border: "3px solid rgba(255,255,255,0.1)" }}>
-                            {creator.name[0]?.toUpperCase()}
-                          </div>
-                        )}
-                        <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-blue-500 flex items-center justify-center">
-                          <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
-                          </svg>
-                        </div>
-                      </div>
-                      <div className="text-center">
-                        <p className="font-bold text-sm text-white truncate w-full">{creator.name}</p>
-                        <p className="text-[11px] text-slate-500 mt-0.5">{formatViews(creator.views)} views</p>
-                      </div>
-                      <button
-                        onClick={e => { e.stopPropagation(); navigate(`/profile/${creator.id}`); }}
-                        className="px-4 py-1.5 rounded-full text-[10px] font-bold transition-all"
-                        style={{ border: "1px solid #ec5b13", color: "#ec5b13" }}
-                        onMouseEnter={e => { e.currentTarget.style.background = "#ec5b13"; e.currentTarget.style.color = "#fff"; }}
-                        onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "#ec5b13"; }}
-                      >
-                        FOLLOW
-                      </button>
-                    </div>
+                    <CreatorCard key={creator.id} creator={creator} />
                   ))}
                 </div>
               </section>
