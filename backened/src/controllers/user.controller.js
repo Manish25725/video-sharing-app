@@ -44,8 +44,8 @@ const generateAccessAndRefreshToken = async (userOrId) => {
 
 const getCookieOptions = () => ({
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax"
+    secure: process.env.NODE_ENV === "production" || process.env.RENDER === "true",
+    sameSite: (process.env.NODE_ENV === "production" || process.env.RENDER === "true") ? "none" : "lax"
 });
 
 
