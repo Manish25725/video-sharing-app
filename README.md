@@ -1,10 +1,43 @@
-# Playvibe - Video Sharing & Live Streaming Platform
+<div align="center">
+  <img src="https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB" alt="React" />
+  <img src="https://img.shields.io/badge/Node.js-43853D?style=for-the-badge&logo=node.js&logoColor=white" alt="Node.js" />
+  <img src="https://img.shields.io/badge/Express.js-404D59?style=for-the-badge" alt="Express.js" />
+  <img src="https://img.shields.io/badge/MongoDB-4EA94B?style=for-the-badge&logo=mongodb&logoColor=white" alt="MongoDB" />
+  <img src="https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white" alt="Tailwind" />
+  <img src="https://img.shields.io/badge/Socket.io-black?style=for-the-badge&logo=socket.io&badgeColor=010101" alt="Socket.io" />
+  
+  <br />
+  <br />
 
-Playvibe is a fully-featured, full-stack video-sharing and live-streaming application built using the MERN stack (MongoDB, Express, React, Node.js). It provides a complete ecosystem for creators and viewers, encompassing video uploads, live streaming with real-time chat, subscriptions, playlists, and a fully robust admin dashboard.
+  <h1>🎬 Playvibe - Video Sharing & Live Streaming Platform</h1>
+  <p>
+    A fully-featured, full-stack video-sharing and live-streaming application built using the MERN stack. Playvibe provides a complete ecosystem for creators and viewers, encompassing video uploads, live streaming with real-time chat, subscriptions, playlists, and a fully robust admin dashboard.
+  </p>
+</div>
+
+<br />
 
 ## 🚀 Live Demo
-- **Frontend:** [https://video-sharing-app-rry8.onrender.com](https://video-sharing-app-rry8.onrender.com) (Update with your live frontend link)
-- **Backend API:** [https://video-sharing-app-backened.onrender.com/api/v1/health/check](https://video-sharing-app-backened.onrender.com/api/v1/health/check)
+- **Frontend Live App:** [https://video-sharing-app-rry8.onrender.com](https://video-sharing-app-rry8.onrender.com)
+- **Backend API Health Check:** [https://video-sharing-app-backened.onrender.com/api/v1/health/check](https://video-sharing-app-backened.onrender.com/api/v1/health/check)
+
+---
+
+## 🎨 User Interface Highlights
+> **Note:** You can upload your own screenshots and add them here to showcase the beautiful UI!
+> 
+> *Here are some placeholders for your project screenshots:*
+> 
+> <table>
+>   <tr>
+>     <td><img src="https://via.placeholder.com/400x225.png?text=Home+Feed+%2B+Dark+Mode" alt="Home Screen"/></td>
+>     <td><img src="https://via.placeholder.com/400x225.png?text=Video+Player+%2B+Comments" alt="Video Player"/></td>
+>   </tr>
+>   <tr>
+>     <td><img src="https://via.placeholder.com/400x225.png?text=Live+Stream+%2B+Realtime+Chat" alt="Live Stream"/></td>
+>     <td><img src="https://via.placeholder.com/400x225.png?text=Admin+Dashboard+%2B+Stats" alt="Admin Dashboard"/></td>
+>   </tr>
+> </table>
 
 ---
 
