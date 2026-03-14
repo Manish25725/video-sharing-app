@@ -145,6 +145,17 @@ const Report = ({ isDark = false }) => {
     }
   };
 
+  const banUser = async (id) => {
+    if (!window.confirm("Are you sure you want to ban the user who created this content?")) return;
+    try {
+      await reportService.banUserFromReport(id);
+      fetchReports();
+    } catch (err) {
+      console.error("Failed to ban user:", err);
+      alert(err.message || "Failed to ban user");
+    }
+  };
+
   const pendingCount = reports.filter((r) => r.status === "Pending").length;
   const reviewedCount = reports.filter((r) => r.status === "Reviewed").length;
   const resolvedCount = reports.filter((r) => r.status === "Resolved").length;
@@ -337,7 +348,7 @@ const Report = ({ isDark = false }) => {
                           {openMenu === report.id && (
                             <div className={`absolute right-0 top-8 z-50 w-40 ${dm ? "bg-[#1c120d] border-white/10" : "bg-white border-gray-200"} border rounded-xl shadow-lg py-1`}>
                               <button
-                                onClick={() => { setOpenMenu(null); }}
+                                onClick={() => { setOpenMenu(null); banUser(report.id); }}
                                 className={`w-full flex items-center gap-2 px-4 py-2 text-sm ${textPrimary} hover:bg-red-50 hover:text-red-600 transition-colors`}
                               >
                                 <UserX className="w-4 h-4" /> Ban User

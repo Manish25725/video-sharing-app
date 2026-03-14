@@ -2,6 +2,7 @@ import mongoose from "mongoose";
 import { Report } from "../models/report.model.js";
 import { Video } from "../models/video.model.js";
 import { Comment } from "../models/comment.model.js";
+import { User } from "../models/user.model.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/Apiresponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
@@ -129,4 +130,39 @@ const deleteReportedContent = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, report, "Content removed and report resolved"));
 });
 
-export { submitReport, getReports, updateReportStatus, deleteReportedContent };
+/* ─── Ban User from Report (Admin) ─────────────────────── */
+const banUserFromReport = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+
+  if (!mongoose.isValidObjectId(id)) throw new ApiError(400, "Invalid report ID");
+
+  const report = await Report.findById(id).populate("videoId").populate("commentId");
+  if (!report) throw new ApiError(404, "Report not found");
+
+  let ownerId = null;
+
+  if (report.reportType === "video" && report.videoId) {
+    ownerId = report.videoId.owner;
+  } else if (report.reportType === "comment" && report.commentId) {
+    ownerId = report.commentId.owner;
+  }
+
+  if (!ownerId) {
+    throw new ApiError(404, "Original content owner not found (content may have been deleted)");
+  }
+
+  const userToBan = await User.findById(ownerId);
+  if (!userToBan) throw new ApiError(404, "User not found");
+
+  userToBan.status = "Banned";
+  await userToBan.save({ validateModifiedOnly: true });
+
+  report.status = "resolved";
+  await report.save();
+
+  return res.status(200).json(
+    new ApiResponse(200, { user: userToBan, report }, "User banned successfully")
+  );
+});
+
+export { submitReport, getReports, updateReportStatus, deleteReportedContent, banUserFromReport };

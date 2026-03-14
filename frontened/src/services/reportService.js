@@ -11,6 +11,7 @@ const reportService = {
   getReports: (params = {}) => api.get("/reports", { params }),
   updateStatus: (id, status) => api.patch(`/reports/${id}/status`, { status }),
   deleteContent: (id) => api.delete(`/reports/${id}/content`),
+  banUserFromReport: (id) => api.post(`/reports/${id}/ban`),
 };
 
 export default reportService;

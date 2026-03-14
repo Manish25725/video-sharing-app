@@ -5,6 +5,7 @@ import {
   getReports,
   updateReportStatus,
   deleteReportedContent,
+  banUserFromReport,
 } from "../controllers/report.controller.js";
 
 const router = Router();
@@ -16,5 +17,6 @@ router.route("/").post(verifyJWT, submitReport);
 router.route("/").get(verifyAdmin, getReports);
 router.route("/:id/status").patch(verifyAdmin, updateReportStatus);
 router.route("/:id/content").delete(verifyAdmin, deleteReportedContent);
+router.route("/:id/ban").post(verifyAdmin, banUserFromReport);
 
 export default router;
