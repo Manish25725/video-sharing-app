@@ -23,6 +23,10 @@ const uploadOnCloudinary = async (localFilePath) =>{
         
         const response = await cloudinary.uploader.upload_large(localFilePath, { resource_type: "auto", chunk_size: 20000000 });
 
+        if (response && response.secure_url) {
+            response.url = response.secure_url;
+        }
+
         // Check if file exists before trying to delete it
         if(fs.existsSync(localFilePath) && !localFilePath.includes('recordings')) {
             fs.unlinkSync(localFilePath);
@@ -80,6 +84,10 @@ const uploadSubtitleToCloudinary = async (localFilePath) => {
             resource_type: "raw",
             format: "vtt",
         });
+
+        if (response && response.secure_url) {
+            response.url = response.secure_url;
+        }
 
         if (fs.existsSync(localFilePath)) fs.unlinkSync(localFilePath);
         return response;

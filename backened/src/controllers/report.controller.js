@@ -47,6 +47,7 @@ const submitReport = asyncHandler(async (req, res) => {
     videoId: reportType === "video" ? videoId : null,
     commentId: reportType === "comment" ? commentId : null,
     tweetId: reportType === "tweet" ? tweetId : null,
+    reportedBy: req.user._id,
     reason: reason.trim(),
     description: description?.trim() || "",
   });
