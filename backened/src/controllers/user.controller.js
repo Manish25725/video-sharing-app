@@ -171,6 +171,7 @@ const loginUser= asyncHandler( async(req,res)=>{
          });
 
         if(!userExist) throw new ApiError(404,"User does not exist");
+        if(userExist.status === "Banned") throw new ApiError(403,"Your account has been banned");
 
         const passwordCheck=await userExist.isPasswordCorrect(password);
         if(!passwordCheck) throw new ApiError(401,"Password is incorrect");

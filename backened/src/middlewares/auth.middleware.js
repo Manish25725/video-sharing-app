@@ -17,6 +17,7 @@ export const verifyJWT = asyncHandler(async (req, _, next) => {
 
     const user = await User.findById(decodedToken._id).select("-password -refreshToken -sessions");
     if (!user) throw new ApiError(401, "Invalid access token");
+    if (user.status === "Banned") throw new ApiError(403, "Your account has been banned");
 
     req.user = user;
     next();

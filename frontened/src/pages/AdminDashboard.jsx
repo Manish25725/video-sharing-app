@@ -97,18 +97,18 @@ const AdminDashboard = () => {
         api.get("/admin/comments?limit=50").catch(()=>null),
       ]);
 
-      if (statsRes?.data?.data) {
+      if (statsRes?.data) {
         setStats({
-          totalUsers: statsRes.data.data.totalUsers || 0,
-          totalVideos: statsRes.data.data.totalVideos || 0,
-          totalViews: statsRes.data.data.totalViews || 0,
-          totalReports: statsRes.data.data.totalReports || 0,
+          totalUsers: statsRes.data.totalUsers || 0,
+          totalVideos: statsRes.data.totalVideos || 0,
+          totalViews: statsRes.data.totalViews || 0,
+          totalReports: statsRes.data.totalReports || 0,
           usersChange: 0, videosChange: 0, viewsChange: 0, reportsChange: 0,
         });
       }
 
-      if (usersRes?.data?.data?.users) {
-        setUsers(usersRes.data.data.users.map(u => ({
+      if (usersRes?.data?.users) {
+        setUsers(usersRes.data.users.map(u => ({
           id: u._id,
           name: u.fullName || 'User',
           email: u.email,
@@ -120,8 +120,8 @@ const AdminDashboard = () => {
         })));
       }
 
-      if (videosRes?.data?.data?.videos) {
-        const v = videosRes.data.data.videos.map(vi => ({
+      if (videosRes?.data?.videos) {
+        const v = videosRes.data.videos.map(vi => ({
           id: vi._id,
           title: vi.title,
           thumbnail: vi.thumbnail,
@@ -133,9 +133,9 @@ const AdminDashboard = () => {
         setRecentVideos(v.slice(0, 5));
         setAllVideos(v);
       }
-      
-      if (commentsRes?.data?.data?.comments) {
-        setComments(commentsRes.data.data.comments.map(c => {
+
+      if (commentsRes?.data?.comments) {
+        setComments(commentsRes.data.comments.map(c => {
           const fn = c.owner?.fullName || 'Unknown';
           return {
             _id: c._id,

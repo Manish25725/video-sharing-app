@@ -57,6 +57,11 @@ const userSchema = new Schema(
             enum:["user","admin"],
             default:"user"
         },
+        status:{
+            type:String,
+            enum:["Active","Banned","Suspended"],
+            default:"Active"
+        },
         preferences:{
             darkTheme:{
                 type:Boolean,
