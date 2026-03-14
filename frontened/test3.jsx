@@ -1,1 +1,0 @@
-const a = <p className={	ext \}>hi</p>;
