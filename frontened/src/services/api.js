@@ -14,7 +14,12 @@ const axiosInstance = axios.create({
 
 // Request interceptor — kept for future auth header injection
 axiosInstance.interceptors.request.use(
-  (config) => config,
+  (config) => {
+    if (localStorage.getItem('isAdmin') === 'true') {
+      config.headers['x-admin-key'] = import.meta.env.VITE_ADMIN_KEY || 'playvibe_admin_2025';
+    }
+    return config;
+  },
   (error) => Promise.reject(error)
 );
 

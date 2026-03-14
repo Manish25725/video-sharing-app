@@ -13,8 +13,8 @@ const router = Router();
 router.route("/").post(verifyJWT, submitReport);
 
 // Admin routes (verifyJWT — extend with an admin-check middleware when needed)
-router.route("/").get(verifyJWT, getReports);
-router.route("/:id/status").patch(verifyJWT, updateReportStatus);
-router.route("/:id/content").delete(verifyJWT, deleteReportedContent);
+router.route("/").get(verifyAdmin, getReports);
+router.route("/:id/status").patch(verifyAdmin, updateReportStatus);
+router.route("/:id/content").delete(verifyAdmin, deleteReportedContent);
 
 export default router;
