@@ -43,12 +43,13 @@ const uploadOnCloudinary = async (localFilePath) =>{
     }
 }
 
-const extractPublicId = (url) => {
+const extractPublicId = (url, isRaw = false) => {
     try {
         const uploadIndex = url.indexOf('/upload/');
         if (uploadIndex === -1) return url;
         let path = url.slice(uploadIndex + 8);   // after '/upload/'
         path = path.replace(/^v\d+\//, '');       // strip version prefix e.g. v1234567/
+        if (isRaw) return path;                   // raw files keep extension in public_id
         return path.replace(/\.[^/.]+$/, '');     // strip file extension
     } catch {
         return url;
@@ -58,8 +59,12 @@ const extractPublicId = (url) => {
 const deleteOnCloudinary = async (url) => {
     if (!url) return;
     try {
-        const publicId = extractPublicId(url);
-        const response = await cloudinary.uploader.destroy(publicId);
+        let resourceType = "image";
+        if (url.includes("/video/upload/")) resourceType = "video";
+        else if (url.includes("/raw/upload/") || url.endsWith(".vtt")) resourceType = "raw";
+
+        const publicId = extractPublicId(url, resourceType === "raw");
+        const response = await cloudinary.uploader.destroy(publicId, { resource_type: resourceType });
         return response;
     } catch (error) {
         console.error("Cloudinary deletion error:", error.message);

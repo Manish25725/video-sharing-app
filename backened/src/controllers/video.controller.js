@@ -483,21 +483,45 @@ const updateVideo = asyncHandler(async (req, res) => {
 
 const deleteVideo = asyncHandler(async (req, res) => {
     const { videoId } = req.params
-    //TODO: delete video
 
     //user loggedin or not
     if(!req.user){
         throw new ApiError(404,"User must be loggedin")
     }
-    const vid=await Video.findByIdAndDelete(videoId);
-    if(!vid){
-        throw new ApiError(404,"Error while deleting a video");
+
+    if (!mongoose.isValidObjectId(videoId)) {
+        throw new ApiError(400, "Invalid video ID");
     }
+
+    const video = await Video.findById(videoId);
+    if (!video) {
+        throw new ApiError(404, "Video not found");
+    }
+
+    // Verify ownership
+    if (String(video.owner) !== String(req.user._id)) {
+        throw new ApiError(403, "You do not have permission to delete this video");
+    }
+
+    // Delete media assets from Cloudinary
+    if (video.videoFile) {
+        await deleteOnCloudinary(video.videoFile);
+    }
+    if (video.thumbnail) {
+        await deleteOnCloudinary(video.thumbnail);
+    }
+    if (video.subtitles && video.subtitles.length > 0) {
+        for (const sub of video.subtitles) {
+            if (sub.url) await deleteOnCloudinary(sub.url);
+        }
+    }
+
+    await Video.findByIdAndDelete(videoId);
 
     return res
     .status(202)
     .json(
-        new ApiResponse(202,vid,"Video deleted sucessfully")
+        new ApiResponse(202, {}, "Video deleted successfully")
     )
 })
 

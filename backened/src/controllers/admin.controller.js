@@ -6,6 +6,7 @@ import { Report } from "../models/report.model.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/Apiresponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
+import { deleteOnCloudinary } from "../utils/cloudinary.js";
 
 // Global Stats (Admin)
 const getGlobalStats = asyncHandler(async (req, res) => {
@@ -95,6 +96,19 @@ const deleteVideoAdmin = asyncHandler(async (req, res) => {
 
     const video = await Video.findById(videoId);
     if (!video) throw new ApiError(404, "Video not found");
+
+    // Delete media assets from Cloudinary
+    if (video.videoFile) {
+        await deleteOnCloudinary(video.videoFile);
+    }
+    if (video.thumbnail) {
+        await deleteOnCloudinary(video.thumbnail);
+    }
+    if (video.subtitles && video.subtitles.length > 0) {
+        for (const sub of video.subtitles) {
+            if (sub.url) await deleteOnCloudinary(sub.url);
+        }
+    }
 
     await Video.findByIdAndDelete(videoId);
 
