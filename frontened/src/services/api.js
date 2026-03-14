@@ -32,6 +32,7 @@ const NO_REFRESH_ENDPOINTS = [
   '/users/current-user',
   '/users/add-account',
   '/users/switch-account',
+  '/admin',
 ];
 
 // Response interceptor to handle token refresh
