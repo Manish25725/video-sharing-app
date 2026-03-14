@@ -3,7 +3,7 @@ services:
   - type: web
     name: playvibe-backend
     env: node
-    region: oregon # or your preferred region
+    region: oregon
     plan: free
     buildCommand: "cd backened && npm install"
     startCommand: "cd backened && npm start"
@@ -13,9 +13,9 @@ services:
       - key: PORT
         value: 8000
       - key: ALLOWED_ORIGINS
-        sync: false # Set to frontend URL in dashboard later
+        sync: false
       - key: MONGODB_URI
-        sync: false # You must set this manually in the Render Dashboard
+        sync: false
       - key: CORS_ORIGIN
         sync: false
       - key: ACCESS_TOKEN_SECRET
@@ -33,7 +33,6 @@ services:
   - type: web
     name: playvibe-frontend
     env: static
-    region: oregon
     plan: free
     buildCommand: "cd frontened && npm install && npm run build"
     staticPublishPath: "./frontened/dist"
@@ -41,7 +40,7 @@ services:
       - key: NODE_VERSION
         value: 18.18.0
       - key: VITE_API_URL
-        sync: false # Set to your deployed backend URL in Render dashboard
+        sync: false
     routes:
       - type: rewrite
         source: /*
