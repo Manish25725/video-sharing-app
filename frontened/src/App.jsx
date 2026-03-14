@@ -92,6 +92,7 @@ function AppContent() {
           <Route path="/verify-signup-email" element={<VerifySignupEmail />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password/:token" element={<ResetPassword />} />
+          <Route path="/support" element={<Support />} />   
           <Route path="*" element={<Login />} />
         </Routes>
       </SignupProvider>
@@ -157,6 +158,7 @@ function AppContent() {
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password/:token" element={<ResetPassword />} />
             <Route path="/help" element={<Help />} />
+            <Route path="/support" element={<Support />} />
             <Route path="/feedback" element={<Feedback />} />
             <Route path="/admin" element={user ? <MyChannel /> : <Navigate to="/" />} />
             <Route path="*" element={<Navigate to="/" />} />

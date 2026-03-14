@@ -158,11 +158,11 @@ const Signup = () => {
             PlayVibe
           </h1>
         </div>
-        <a href="#" className="text-sm font-semibold transition-colors" style={{ color: "#ec5b13" }}
+        <Link to="/support" className="text-sm font-semibold transition-colors" style={{ color: "#ec5b13" }}
           onMouseEnter={e => (e.target.style.color = "#fb923c")}
           onMouseLeave={e => (e.target.style.color = "#ec5b13")}>
           Support
-        </a>
+        </Link>
       </header>
 
       {/* Content */}
