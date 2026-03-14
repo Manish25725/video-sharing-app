@@ -21,7 +21,16 @@ const uploadOnCloudinary = async (localFilePath) =>{
             return null;
         }
         
-        const response = await cloudinary.uploader.upload_large(localFilePath, { resource_type: "auto", chunk_size: 20000000 });
+        const response = await new Promise((resolve, reject) => {
+            cloudinary.uploader.upload_large(
+                localFilePath, 
+                { resource_type: "auto", chunk_size: 20000000 }, 
+                (error, result) => {
+                    if (error) return reject(error);
+                    resolve(result);
+                }
+            );
+        });
 
         if (response && response.secure_url) {
             response.url = response.secure_url;
