@@ -207,11 +207,8 @@ const Home = ({ onVideoSelect }) => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center">
-        <div className="flex flex-col items-center gap-4">
-          <div className="w-12 h-12 rounded-full border-4 border-[#ec5b13] border-t-transparent animate-spin" />
-          <p className="text-slate-400 text-sm">Loading videos...</p>
-        </div>
+      <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center pt-20">
+        <PageLoader message="Loading videos..." />
       </div>
     );
   }

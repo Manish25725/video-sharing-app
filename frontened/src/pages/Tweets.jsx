@@ -1,3 +1,4 @@
+import PageLoader from '../components/PageLoader.jsx';
 import { useState, useEffect, useRef } from 'react';
 import {
   MessageSquare, Image, BarChart2, X, Send, Plus,
@@ -353,13 +354,7 @@ const Tweets = () => {
 
         {/* Loading */}
         {loading && (
-          <div className="flex flex-col items-center justify-center py-16 gap-4">
-            <div
-              className="w-10 h-10 rounded-full border-2 animate-spin"
-              style={{ borderColor: 'rgba(236,91,19,0.2)', borderTopColor: '#ec5b13' }}
-            />
-            <p className="text-slate-400 text-sm">Loading tweets…</p>
-          </div>
+          <PageLoader message="Loading tweets..." />
         )}
 
         {/* Error */}

@@ -37,81 +37,187 @@ const AdminLogin = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 flex items-center justify-center p-4">
-      {/* Background glow */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[500px] h-[300px] bg-indigo-600/20 rounded-full blur-3xl pointer-events-none" />
+    <div
+      className="min-h-screen flex flex-col justify-center py-12 sm:px-6 lg:px-8 relative overflow-hidden"
+      style={{
+        background: "#0a0a0a",
+        fontFamily: "'Public Sans', sans-serif",
+      }}
+    >
+      {/* Background Blobs (Similar to Login) */}
+      <div className="fixed inset-0 pointer-events-none overflow-hidden -z-0">
+        <div
+          className="absolute -top-[20%] -right-[10%] w-[70vw] h-[70vw] max-w-[800px] max-h-[800px] rounded-full blur-[120px] opacity-40 mix-blend-screen"
+          style={{
+            background:
+              "radial-gradient(circle, rgba(236,91,19,0.15) 0%, rgba(200,75,15,0.05) 40%, rgba(0,0,0,0) 70%)",
+          }}
+        ></div>
+        <div
+          className="absolute -bottom-[20%] -left-[10%] w-[60vw] h-[60vw] max-w-[600px] max-h-[600px] rounded-full blur-[100px] opacity-30 mix-blend-screen"
+          style={{
+            background:
+              "radial-gradient(circle, rgba(236,91,19,0.12) 0%, rgba(200,75,15,0.02) 40%, rgba(0,0,0,0) 70%)",
+          }}
+        ></div>
+      </div>
 
-      <div className="relative w-full max-w-sm">
-        {/* Back link */}
-        <Link to="/login" className="inline-flex items-center gap-2 text-slate-400 hover:text-slate-200 transition-colors text-sm mb-8">
-          <ArrowLeft className="w-4 h-4" />
-          Back to login
+      <div className="sm:mx-auto sm:w-full sm:max-w-md relative z-10 text-center">
+        <Link
+          to="/login"
+          className="inline-flex items-center text-sm font-medium transition-colors hover:text-white mb-6"
+          style={{ color: "#ec5b13" }}
+        >
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          Back to User Login
         </Link>
-
-        {/* Card */}
-        <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-8 shadow-2xl">
-          {/* Icon */}
-          <div className="flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-500 to-fuchsia-600 shadow-lg shadow-indigo-500/30 mx-auto mb-6">
-            <ShieldCheck className="w-7 h-7 text-white" />
+        <div className="flex justify-center mb-6">
+          <div
+            className="w-16 h-16 rounded-2xl flex items-center justify-center relative group"
+            style={{
+              background: "rgba(236,91,19,0.1)",
+              border: "1px solid rgba(236,91,19,0.2)",
+            }}
+          >
+            <div className="absolute inset-0 rounded-2xl bg-[#ec5b13] blur-xl opacity-20 group-hover:opacity-40 transition-opacity duration-500"></div>
+            <ShieldCheck
+              size={32}
+              style={{ color: "#ec5b13" }}
+              className="relative z-10"
+            />
           </div>
+        </div>
+        <h2 className="text-center text-3xl font-extrabold text-white tracking-tight">
+          Admin Portal
+        </h2>
+        <p className="mt-2 text-center text-sm text-gray-400">
+          Restricted access. Use your admin key to login.
+        </p>
+      </div>
 
-          <h1 className="text-xl font-bold text-white text-center mb-1">Admin Access</h1>
-          <p className="text-sm text-slate-400 text-center mb-8">Enter your administrator key to continue</p>
-
+      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md relative z-10">
+        <div
+          className="py-8 px-4 shadow sm:rounded-2xl sm:px-10 border relative overflow-hidden"
+          style={{
+            background: "rgba(28,18,13,0.4)",
+            backdropFilter: "blur(16px)",
+            WebkitBackdropFilter: "blur(16px)",
+            borderColor: "rgba(255,255,255,0.05)",
+            boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.5)",
+          }}
+        >
           {error && (
-            <div className="flex items-start gap-2.5 mb-5 p-3.5 rounded-xl bg-red-500/10 border border-red-500/20 text-sm text-red-400">
-              <AlertTriangle className="w-4 h-4 flex-shrink-0 mt-0.5" />
-              <span>{error}</span>
+            <div
+              className="mb-6 p-4 rounded-xl flex items-start gap-3 border"
+              style={{
+                background: "rgba(220,38,38,0.1)",
+                borderColor: "rgba(220,38,38,0.2)",
+                color: "#f87171",
+              }}
+            >
+              <AlertTriangle className="w-5 h-5 flex-shrink-0 mt-0.5" />
+              <span className="text-sm font-medium leading-relaxed">{error}</span>
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form className="space-y-6" onSubmit={handleSubmit}>
             <div>
-              <label htmlFor="adminKey" className="block text-xs font-medium text-slate-400 mb-1.5 uppercase tracking-wider">
-                Admin Key
+              <label
+                htmlFor="adminKey"
+                className="block text-sm font-medium text-gray-300 mb-2"
+              >
+                Administrator Key
               </label>
-              <div className="relative">
-                <KeyRound className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 pointer-events-none" />
+              <div className="relative group">
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                  <KeyRound className="h-5 w-5 text-gray-400 group-focus-within:text-[#ec5b13] transition-colors" />
+                </div>
                 <input
                   id="adminKey"
+                  name="adminKey"
                   type={showKey ? "text" : "password"}
-                  required
                   autoComplete="off"
-                  spellCheck={false}
-                  placeholder="Enter admin key"
+                  required
                   value={key}
                   onChange={(e) => setKey(e.target.value)}
-                  className="w-full pl-10 pr-10 py-2.5 bg-white/5 border border-white/10 rounded-xl text-sm text-white placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500/50 transition-all tracking-widest"
+                  className="appearance-none block w-full pl-11 pr-12 py-3.5 border rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-0 sm:text-sm transition-all duration-300"
+                  style={{
+                    background: "rgba(0,0,0,0.2)",
+                    borderColor: "rgba(255,255,255,0.1)",
+                  }}
+                  onFocus={(e) => {
+                    e.target.style.borderColor = "#ec5b13";
+                    e.target.style.boxShadow = "0 0 0 1px #ec5b13";
+                  }}
+                  onBlur={(e) => {
+                    e.target.style.borderColor = "rgba(255,255,255,0.1)";
+                    e.target.style.boxShadow = "none";
+                  }}
+                  placeholder="Enter secret key..."
                 />
-                <button
-                  type="button"
-                  onClick={() => setShowKey(!showKey)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors">
-                  {showKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                </button>
+                <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
+                  <button
+                    type="button"
+                    onClick={() => setShowKey(!showKey)}
+                    className="p-1 text-gray-400 hover:text-white focus:outline-none transition-colors"
+                  >
+                    {showKey ? (
+                      <EyeOff className="h-5 w-5" />
+                    ) : (
+                      <Eye className="h-5 w-5" />
+                    )}
+                  </button>
+                </div>
               </div>
             </div>
 
-            <button
-              type="submit"
-              disabled={loading || !key.trim()}
-              className="w-full py-2.5 mt-2 bg-gradient-to-r from-indigo-600 to-fuchsia-600 hover:from-indigo-500 hover:to-fuchsia-500 active:scale-[0.99] text-white rounded-xl text-sm font-semibold shadow-lg shadow-indigo-500/20 hover:shadow-indigo-500/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed">
-              {loading ? (
-                <span className="flex items-center justify-center gap-2">
-                  <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  Verifying...
+            <div className="pt-2">
+              <button
+                type="submit"
+                disabled={loading || !key.trim()}
+                className="w-full flex justify-center py-3.5 px-4 rounded-xl text-sm font-semibold text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[#0a0a0a] transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed relative overflow-hidden group"
+                style={{
+                  background: "#ec5b13",
+                  boxShadow: "0 4px 14px 0 rgba(236,91,19,0.39)",
+                }}
+              >
+                <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-in-out"></div>
+                <span className="relative z-10 flex items-center gap-2">
+                  {loading ? (
+                    <>
+                      <svg
+                        className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                      >
+                        <circle
+                          className="opacity-25"
+                          cx="12"
+                          cy="12"
+                          r="10"
+                          stroke="currentColor"
+                          strokeWidth="4"
+                        ></circle>
+                        <path
+                          className="opacity-75"
+                          fill="currentColor"
+                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                        ></path>
+                      </svg>
+                      Authenticating...
+                    </>
+                  ) : (
+                    "Login as Admin"
+                  )}
                 </span>
-              ) : "Access Admin Panel"}
-            </button>
+              </button>
+            </div>
           </form>
         </div>
-
-        <p className="mt-6 text-center text-xs text-slate-600">
-          This area is restricted to authorized administrators only.
-        </p>
       </div>
     </div>
   );
 };
 
 export default AdminLogin;
+ 

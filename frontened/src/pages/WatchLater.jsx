@@ -85,14 +85,8 @@ const WatchLater = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: '#080808' }}>
-        <div className="flex flex-col items-center gap-4">
-          <div
-            className="w-12 h-12 rounded-full border-2 animate-spin"
-            style={{ borderColor: '#ec5b13', borderTopColor: 'transparent' }}
-          />
-          <p className="text-slate-400 text-sm">Loading Watch Later...</p>
-        </div>
+      <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center pt-20">
+        <PageLoader message="Loading Watch Later..." />
       </div>
     );
   }

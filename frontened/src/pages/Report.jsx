@@ -1,3 +1,4 @@
+import PageLoader from '../components/PageLoader.jsx';
 import { useState, useEffect } from "react";
 import {
   Eye, Trash2, CheckCircle, UserX, Search, Filter, ChevronLeft,
@@ -254,8 +255,7 @@ const Report = ({ isDark = false }) => {
               {loading ? (
                 <tr>
                   <td colSpan={6} className={`px-6 py-14 text-center ${textSecondary}`}>
-                    <div className="w-8 h-8 border-2 border-indigo-500/30 border-t-indigo-500 rounded-full animate-spin mx-auto mb-3" />
-                    <p className="font-medium">Loading reports…</p>
+                    <PageLoader message="Loading reports..." />
                   </td>
                 </tr>
               ) : paginated.length === 0 ? (

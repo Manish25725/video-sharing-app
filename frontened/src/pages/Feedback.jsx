@@ -1,3 +1,4 @@
+import PageLoader from '../components/PageLoader.jsx';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -317,7 +318,7 @@ const Feedback = () => {
 
             {historyLoading ? (
               <div className="flex items-center justify-center py-12">
-                <div className="w-6 h-6 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+                <PageLoader message="" />
               </div>
             ) : history.length === 0 ? (
               <div className="text-center py-12">

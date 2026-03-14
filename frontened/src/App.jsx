@@ -1,4 +1,4 @@
-ï»¿import { useState, useEffect } from "react"
+import { useState, useEffect } from "react"
 import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate, useLocation } from "react-router-dom"
 import AdminDashboard from "./pages/AdminDashboard"
 import AdminLogin from "./pages/AdminLogin"
@@ -71,7 +71,7 @@ function AppContent() {
   // Show loading screen
   if (loading) return <AppLoader />;
 
-  // Admin login page â€” accessible without any login
+  // Admin login page — accessible without any login
   if (location.pathname === "/admin-login") {
     return (
       <Routes>
@@ -80,7 +80,7 @@ function AppContent() {
     );
   }
 
-  // Not logged in â€” show auth + signup flow
+  // Not logged in — show auth + signup flow
   if (!isLoggedIn && !location.pathname.startsWith('/admin-dashboard')) {
     return (
       <SignupProvider>
@@ -97,7 +97,7 @@ function AppContent() {
     );
   }
 
-  // Admin dashboard â€” requires admin auth
+  // Admin dashboard — requires admin auth
   if (location.pathname.startsWith("/admin-dashboard")) {
     return (
       <Routes>
@@ -180,3 +180,4 @@ function App() {
 }
 
 export default App
+ 

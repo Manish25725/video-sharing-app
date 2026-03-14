@@ -1,3 +1,4 @@
+import PageLoader from './PageLoader.jsx';
 import { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import VideoCard from './VideoCard';
@@ -55,7 +56,7 @@ const Search = () => {
       {/* Loading State */}
       {loading && (
         <div className="flex justify-center items-center py-12">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+          <PageLoader message="Searching..." />
         </div>
       )}
 

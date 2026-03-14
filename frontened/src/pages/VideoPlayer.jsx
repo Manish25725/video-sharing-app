@@ -1,4 +1,5 @@
 ﻿import { useState, useEffect, useRef } from 'react';
+import PageLoader from '../components/PageLoader.jsx';
 import { useParams, useNavigate } from 'react-router-dom';
 import { 
   Play, 
@@ -79,8 +80,7 @@ const ChatReplayPanel = ({ messages, allMessages, loading }) => {
       <div className="h-[520px] overflow-y-auto p-3">
         {loading ? (
           <div className="flex items-center justify-center h-full">
-            <div className="w-6 h-6 rounded-full animate-spin"
-              style={{ border: '2px solid rgba(236,91,19,0.15)', borderTopColor: '#ec5b13' }} />
+            <PageLoader message="" />
           </div>
         ) : allMessages.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full gap-2 text-center" style={{ color: '#64748b' }}>
@@ -736,14 +736,10 @@ const VideoPlayer = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen" style={{ background: '#141414' }}>
-        <div className="flex flex-col items-center gap-3">
-          <div className="w-10 h-10 rounded-full animate-spin"
-            style={{ border: '3px solid rgba(236,91,19,0.15)', borderTopColor: '#ec5b13' }} />
-          <span className="text-sm" style={{ color: '#94a3b8' }}>Loading video...</span>
-        </div>
+      <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center pt-20">
+        <PageLoader message="Loading video..." />
       </div>
-    )
+    );
   }
 
   if (error || !video) {
