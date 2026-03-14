@@ -1,11 +1,12 @@
 ﻿import { useState, useRef, useEffect } from 'react';
 import {
   Heart, MessageSquare, Trash2, Edit3, MoreVertical,
-  MessageCircleOff, MessageCircle, Send, Check, X, BarChart2
+  MessageCircleOff, MessageCircle, Send, Check, X, BarChart2, Flag
 } from 'lucide-react';
 import { tweetService } from '../services/tweetService';
 import { likeService } from '../services/likeService';
 import { formatTimeAgo } from '../utils/formatters';
+import ReportModal from './ReportModal';
 
 /* ─── Avatar helper ─────────────────────────────────────────── */
 const Avatar = ({ src, name, size = 'md' }) => {
@@ -168,6 +169,9 @@ const TweetCard = ({ tweet, currentUser, onDeleted, onUpdated }) => {
   const [commentInput, setCommentInput] = useState('');
   const [submittingComment, setSubmittingComment] = useState(false);
   const [likeLoading, setLikeLoading] = useState(false);
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [reportTargetType, setReportTargetType] = useState('tweet');
+  const [reportTargetId, setReportTargetId] = useState('');
   const menuRef = useRef(null);
 
   const isOwner = currentUser && localTweet.owner?.id === currentUser._id;
@@ -295,7 +299,7 @@ const TweetCard = ({ tweet, currentUser, onDeleted, onUpdated }) => {
             </div>
           </div>
 
-          {isOwner && (
+          {currentUser && (
             <div className="relative" ref={menuRef}>
               <button
                 onClick={() => setShowMenu(v => !v)}
@@ -306,27 +310,38 @@ const TweetCard = ({ tweet, currentUser, onDeleted, onUpdated }) => {
               {showMenu && (
                 <div className="absolute right-0 mt-1.5 bg-transparent border border-[#412e24] rounded-xl shadow-xl z-20 min-w-[190px] overflow-hidden">
                   <div className="py-1">
-                    <button
-                      onClick={openEdit}
-                      className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-slate-300 hover:bg-[#1b120c] transition-colors"
-                    >
-                      <Edit3 className="w-4 h-4 text-slate-500" /> Edit tweet
-                    </button>
-                    <button
-                      onClick={handleToggleComments}
-                      className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-slate-300 hover:bg-[#1b120c] transition-colors"
-                    >
-                      {localTweet.commentsEnabled
-                        ? <><MessageCircleOff className="w-4 h-4 text-slate-500" /> Disable comments</>
-                        : <><MessageCircle className="w-4 h-4 text-slate-500" /> Enable comments</>}
-                    </button>
-                    <div className="h-px bg-[#2a1b14] my-1" />
-                    <button
-                      onClick={handleDelete}
-                      className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-500 hover:bg-red-50 transition-colors"
-                    >
-                      <Trash2 className="w-4 h-4" /> Delete tweet
-                    </button>
+                    {isOwner ? (
+                      <>
+                        <button
+                          onClick={openEdit}
+                          className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-slate-300 hover:bg-[#1b120c] transition-colors"
+                        >
+                          <Edit3 className="w-4 h-4 text-slate-500" /> Edit tweet
+                        </button>
+                        <button
+                          onClick={handleToggleComments}
+                          className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-slate-300 hover:bg-[#1b120c] transition-colors"
+                        >
+                          {localTweet.commentsEnabled
+                            ? <><MessageCircleOff className="w-4 h-4 text-slate-500" /> Disable comments</>
+                            : <><MessageCircle className="w-4 h-4 text-slate-500" /> Enable comments</>}
+                        </button>
+                        <div className="h-px bg-[#2a1b14] my-1" />
+                        <button
+                          onClick={handleDelete}
+                          className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-500 hover:bg-red-50 transition-colors"
+                        >
+                          <Trash2 className="w-4 h-4" /> Delete tweet
+                        </button>
+                      </>
+                    ) : (
+                      <button
+                        onClick={() => { setShowReportModal(true); setReportTargetType('tweet'); setReportTargetId(localTweet._id); setShowMenu(false); }}
+                        className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-slate-300 hover:bg-[#1b120c] transition-colors"
+                      >
+                        <Flag className="w-4 h-4 text-slate-500" /> Report tweet
+                      </button>
+                    )}
                   </div>
                 </div>
               )}
@@ -471,14 +486,22 @@ const TweetCard = ({ tweet, currentUser, onDeleted, onUpdated }) => {
                           </p>
                           <p className="text-sm text-slate-300 leading-relaxed">{comment.content}</p>
                         </div>
-                        {isCommentOwner && (
+                        {isCommentOwner ? (
                           <button
                             onClick={() => handleDeleteComment(comment._id)}
                             className="opacity-0 group-hover:opacity-100 text-gray-300 hover:text-red-400 mt-1 flex-shrink-0 transition-all"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
                           </button>
-                        )}
+                        ) : currentUser ? (
+                          <button
+                            onClick={() => { setShowReportModal(true); setReportTargetType('comment'); setReportTargetId(comment._id); }}
+                            className="opacity-0 group-hover:opacity-100 text-gray-300 hover:text-[#ec5b13] mt-1 flex-shrink-0 transition-all"
+                            title="Report Comment"
+                          >
+                            <Flag className="w-3.5 h-3.5" />
+                          </button>
+                        ) : null}
                       </div>
                     );
                   })}
@@ -488,6 +511,15 @@ const TweetCard = ({ tweet, currentUser, onDeleted, onUpdated }) => {
           )}
         </div>
       )}
+
+      {/* Report Modal */}
+      <ReportModal
+        isOpen={showReportModal}
+        onClose={() => setShowReportModal(false)}
+        targetType={reportTargetType}
+        targetId={reportTargetId}
+        onSuccess={() => alert('Report submitted successfully')}
+      />
     </article>
   );
 };

@@ -4,7 +4,7 @@ import {
   Settings, Bell, Search, ChevronLeft, ChevronRight, Eye, Trash2,
   Edit, Shield, LogOut, Moon, Sun, CheckCircle,
   ArrowUp, ArrowDown, TrendingUp, ThumbsUp,
-  RefreshCw, Ban, Upload, AlertTriangle,
+  RefreshCw, Ban, Upload, AlertTriangle, Menu, X
 } from "lucide-react";
 import { videoService, transformVideosArray } from "../services/videoService";
 import { dashboardService } from "../services/dashboardService";
@@ -56,7 +56,7 @@ const AdminDashboard = () => {
   const navigate = useNavigate();
 
   const [activeSection, setActiveSection] = useState("overview");
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(() => window.innerWidth < 768);
   const [isDark, setIsDark] = useState(true);
   const [topSearch, setTopSearch] = useState("");
   const [showNotifications, setShowNotifications] = useState(false);
@@ -91,10 +91,10 @@ const AdminDashboard = () => {
     setDataLoading(true);
     try {
       const [statsRes, usersRes, videosRes, commentsRes] = await Promise.all([
-        api.get("/admin/stats").catch(()=>null),
-        api.get("/admin/users?limit=50").catch(()=>null),
-        api.get("/admin/videos?limit=50").catch(()=>null),
-        api.get("/admin/comments?limit=50").catch(()=>null),
+        api.get("/admin/stats").catch(e => { console.error("Stats Error:", e); return null; }),
+        api.get("/admin/users?limit=50").catch(e => { console.error("Users Error:", e); return null; }),
+        api.get("/admin/videos?limit=50").catch(e => { console.error("Videos Error:", e); return null; }),
+        api.get("/admin/comments?limit=50").catch(e => { console.error("Comments Error:", e); return null; }),
       ]);
 
       if (statsRes?.data) {
@@ -182,7 +182,12 @@ const AdminDashboard = () => {
 
   /* sidebar */
   const SidebarNav = () => (
-    <aside className={`${sidebarBg} fixed left-0 top-0 h-full z-50 flex flex-col transition-all duration-300 ${sidebarCollapsed ? "w-16" : "w-64"}`}>
+    <>
+      <div 
+        className={`fixed inset-0 bg-black/50 z-40 md:hidden transition-opacity duration-300 ${!sidebarCollapsed ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
+        onClick={() => setSidebarCollapsed(true)}
+      />
+      <aside className={`${sidebarBg} fixed left-0 top-0 h-full z-50 flex flex-col transition-all duration-300 ${sidebarCollapsed ? "-translate-x-full md:translate-x-0 md:w-16" : "w-64 translate-x-0"}`}>
       <div className={`flex items-center ${sidebarCollapsed ? "justify-center" : "px-6"} h-16 border-b border-white/10 flex-shrink-0`}>
         <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-accent-purple flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
           PV
@@ -193,8 +198,8 @@ const AdminDashboard = () => {
         {navItems.map(({ id, icon: Icon, label, badge }) => {
           const active = activeSection === id;
           return (
-            <button key={id} onClick={() => setActiveSection(id)} title={sidebarCollapsed ? label : undefined}
-              className={`w-full flex items-center ${sidebarCollapsed ? "justify-center px-0" : "px-5"} py-3 text-sm font-medium transition-all relative ${
+            <button key={id} onClick={() => { setActiveSection(id); if (window.innerWidth < 768) setSidebarCollapsed(true); }} title={sidebarCollapsed ? label : undefined}
+              className={`w-full flex items-center ${sidebarCollapsed ? "justify-center px-0 md:justify-center md:px-0 px-5" : "px-5"} py-3 text-sm font-medium transition-all relative ${
                 active ? "text-white bg-primary/20 border-r-2 border-indigo-500" : "text-slate-400 hover:text-white hover:bg-slate-800"
               }`}>
               <Icon className={`w-5 h-5 flex-shrink-0 ${active ? "text-primary" : ""}`} />
@@ -215,18 +220,22 @@ const AdminDashboard = () => {
           {sidebarCollapsed ? <ChevronRight className="w-5 h-5" /> : <><ChevronLeft className="w-5 h-5" /><span className="ml-3">Collapse</span></>}
         </button>
         <button onClick={() => { adminLogout(); navigate("/admin-login"); }}
-          className={`w-full flex items-center ${sidebarCollapsed ? "justify-center" : "px-5"} py-2.5 text-slate-400 hover:text-red-400 hover:bg-slate-800 transition-colors text-sm`}>
+          className={`w-full flex items-center ${sidebarCollapsed ? "justify-center md:justify-center" : "px-5"} py-2.5 text-slate-400 hover:text-red-400 hover:bg-slate-800 transition-colors text-sm`}>
           <LogOut className="w-5 h-5 flex-shrink-0" />
           {!sidebarCollapsed && <span className="ml-3">Sign out</span>}
         </button>
       </div>
     </aside>
+    </>
   );
 
   /* top navbar - clean, no clutter */
   const TopNavbar = () => (
-    <header className={`${navbarBg} border-b fixed top-0 right-0 z-40 flex items-center px-5 h-16 gap-3 transition-all duration-300 ${sidebarCollapsed ? "left-16" : "left-64"}`}>
-      <div className="relative flex-1 max-w-md">
+    <header className={`${navbarBg} border-b fixed top-0 right-0 z-30 flex items-center px-4 md:px-5 h-16 gap-3 transition-all duration-300 ${sidebarCollapsed ? "left-0 md:left-16" : "left-0 md:left-64"}`}>
+      <button onClick={() => setSidebarCollapsed(!sidebarCollapsed)} className={`p-2 -ml-2 rounded-xl transition-colors md:hidden ${d ? "text-gray-300 hover:bg-[#291a13]" : "text-gray-600 hover:bg-gray-100"}`}>
+        <Menu className="w-5 h-5" />
+      </button>
+      <div className="relative flex-1 max-w-md hidden sm:block">
         <Search className={`absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 ${ts}`} />
         <input type="text" placeholder="Search..." value={topSearch} onChange={(e) => setTopSearch(e.target.value)}
           className={`w-full pl-9 pr-4 py-2 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 ${inputCls}`} />
@@ -605,10 +614,33 @@ const AdminDashboard = () => {
           </div>
         ))}
       </div>
-      <div className={`${cardBg} border rounded-2xl p-10 shadow-sm text-center ${ts}`}>
-        <BarChart3 className="w-12 h-12 mx-auto mb-3 opacity-20" />
-        <p className="font-medium text-sm">Detailed analytics coming soon</p>
-        <p className="text-xs mt-2 opacity-70">Connect your analytics API to see charts and trends</p>
+      <div className={`${cardBg} border rounded-2xl p-6 shadow-sm`}>
+        <h2 className={`font-semibold ${tp} mb-6`}>Top Videos Performance</h2>
+        {allVideos && allVideos.length > 0 ? (
+          <div className="space-y-4">
+            {[...allVideos].sort((a, b) => (b.views || 0) - (a.views || 0)).slice(0, 5).map((v, i) => {
+              const maxViews = Math.max(...allVideos.map(x => x.views || 0), 1);
+              const pct = Math.max(2, ((v.views || 0) / maxViews) * 100);
+              return (
+                <div key={v.id} className="relative">
+                  <div className="flex justify-between text-xs mb-1">
+                    <span className={`font-medium ${tp} truncate max-w-[70%]`}>{v.title || 'Untitled'}</span>
+                    <span className={ts}>{(v.views || 0).toLocaleString()} views</span>
+                  </div>
+                  <div className={`w-full h-3 ${d ? "bg-gray-800" : "bg-gray-100"} rounded-full overflow-hidden`}>
+                    <div className="h-full bg-primary rounded-full transition-all duration-1000" style={{ width: `${pct}%` }}></div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <div className={`text-center py-10 ${ts}`}>
+            <BarChart3 className="w-12 h-12 mx-auto mb-3 opacity-20" />
+            <p className="font-medium text-sm">No data available yet</p>
+            <p className="text-xs mt-2 opacity-70">Video metrics will appear here once content is published</p>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -663,7 +695,7 @@ const AdminDashboard = () => {
       <SidebarNav />
       <TopNavbar />
       <main className={`transition-all duration-300 pt-16 min-h-screen ${sidebarCollapsed ? "pl-16" : "pl-64"}`}>
-        <div className="p-6 lg:p-8 max-w-screen-2xl mx-auto">
+        <div className="p-4 sm:p-6 lg:p-8 max-w-screen-2xl mx-auto overflow-x-hidden">
           {renderSection()}
         </div>
       </main>

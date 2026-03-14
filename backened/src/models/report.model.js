@@ -4,7 +4,7 @@ const reportSchema = new Schema(
   {
     reportType: {
       type: String,
-      enum: ["video", "comment"],
+      enum: ["video", "comment", "tweet"],
       required: true,
     },
     videoId: {
@@ -15,6 +15,11 @@ const reportSchema = new Schema(
     commentId: {
       type: Schema.Types.ObjectId,
       ref: "Comment",
+      default: null,
+    },
+    tweetId: {
+      type: Schema.Types.ObjectId,
+      ref: "Tweet",
       default: null,
     },
     reportedBy: {

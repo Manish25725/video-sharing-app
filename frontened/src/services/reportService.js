@@ -1,17 +1,16 @@
-import api from "./api.js";
+import api from './api.js';
 
 const reportService = {
-  reportVideo: (videoId, reason, description) =>
-    api.post("/reports", { reportType: "video", videoId, reason, description }),
+  reportVideo: (videoId, reason, description) => api.post('/reports', { reportType: 'video', videoId, reason, description }),
 
-  reportComment: (commentId, reason, description) =>
-    api.post("/reports", { reportType: "comment", commentId, reason, description }),
+  reportComment: (commentId, reason, description) => api.post('/reports', { reportType: 'comment', commentId, reason, description }),
 
-  // Admin
-  getReports: (params = {}) => api.get("/reports", { params }),
-  updateStatus: (id, status) => api.patch(`/reports/${id}/status`, { status }),
-  deleteContent: (id) => api.delete(`/reports/${id}/content`),
-  banUserFromReport: (id) => api.post(`/reports/${id}/ban`),
+  reportTweet: (tweetId, reason, description) => api.post('/reports', { reportType: 'tweet', tweetId, reason, description }),
+
+  getReports: (params = {}) => api.get('/reports', { params }),
+  updateStatus: (id, status) => api.patch(/reports//status, { status }),
+  deleteContent: (id) => api.delete(/reports//content),
+  banUserFromReport: (id) => api.post(/reports//ban),
 };
 
 export default reportService;

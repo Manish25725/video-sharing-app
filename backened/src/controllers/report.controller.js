@@ -3,19 +3,20 @@ import { Report } from "../models/report.model.js";
 import { Video } from "../models/video.model.js";
 import { Comment } from "../models/comment.model.js";
 import { User } from "../models/user.model.js";
+import { Tweet } from "../models/tweet.model.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/Apiresponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 
 /* ─── Submit Report ────────────────────────────────────────── */
 const submitReport = asyncHandler(async (req, res) => {
-  const { reportType, videoId, commentId, reason, description } = req.body;
+  const { reportType, videoId, commentId, tweetId, reason, description } = req.body;     
 
   if (!reportType || !reason?.trim()) {
     throw new ApiError(400, "Report type and reason are required");
   }
 
-  if (!["video", "comment"].includes(reportType)) {
+  if (!["video", "comment", "tweet"].includes(reportType)) {
     throw new ApiError(400, "Invalid report type");
   }
 
@@ -24,13 +25,17 @@ const submitReport = asyncHandler(async (req, res) => {
   }
 
   if (reportType === "comment" && !commentId) {
-    throw new ApiError(400, "commentId is required for comment reports");
+    throw new ApiError(400, "commentId is required for comment reports");       
+  }
+  
+  if (reportType === "tweet" && !tweetId) {
+    throw new ApiError(400, "tweetId is required for tweet reports");       
   }
 
   // Prevent duplicate reports from the same user for the same content
   const existing = await Report.findOne({
     reportedBy: req.user._id,
-    ...(reportType === "video" ? { videoId } : { commentId }),
+    ...(reportType === "video" ? { videoId } : reportType === "tweet" ? { tweetId } : { commentId }),
   });
 
   if (existing) {
@@ -41,7 +46,7 @@ const submitReport = asyncHandler(async (req, res) => {
     reportType,
     videoId: reportType === "video" ? videoId : null,
     commentId: reportType === "comment" ? commentId : null,
-    reportedBy: req.user._id,
+    tweetId: reportType === "tweet" ? tweetId : null,
     reason: reason.trim(),
     description: description?.trim() || "",
   });
@@ -67,6 +72,7 @@ const getReports = asyncHandler(async (req, res) => {
       .limit(parseInt(limit))
       .populate("reportedBy", "fullName userName avatar")
       .populate("videoId", "title thumbnail owner")
+      .populate("tweetId", "content owner")
       .populate({
         path: "commentId",
         select: "content owner",
@@ -120,6 +126,8 @@ const deleteReportedContent = asyncHandler(async (req, res) => {
     await Video.findByIdAndDelete(report.videoId);
   } else if (report.reportType === "comment" && report.commentId) {
     await Comment.findByIdAndDelete(report.commentId);
+  } else if (report.reportType === "tweet" && report.tweetId) {
+    await Tweet.findByIdAndDelete(report.tweetId);
   }
 
   report.status = "resolved";
@@ -136,7 +144,7 @@ const banUserFromReport = asyncHandler(async (req, res) => {
 
   if (!mongoose.isValidObjectId(id)) throw new ApiError(400, "Invalid report ID");
 
-  const report = await Report.findById(id).populate("videoId").populate("commentId");
+  const report = await Report.findById(id).populate("videoId").populate("commentId").populate("tweetId");
   if (!report) throw new ApiError(404, "Report not found");
 
   let ownerId = null;
@@ -145,6 +153,8 @@ const banUserFromReport = asyncHandler(async (req, res) => {
     ownerId = report.videoId.owner;
   } else if (report.reportType === "comment" && report.commentId) {
     ownerId = report.commentId.owner;
+  } else if (report.reportType === "tweet" && report.tweetId) {
+    ownerId = report.tweetId.owner;
   }
 
   if (!ownerId) {

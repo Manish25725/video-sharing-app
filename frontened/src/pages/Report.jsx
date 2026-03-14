@@ -8,7 +8,7 @@ import reportService from "../services/reportService.js";
 
 const REASONS = ["All Reasons", "Spam or misleading", "Harassment or bullying", "Hate speech", "Violence", "Copyright violation", "Other"];
 const STATUSES = ["All Status", "Pending", "Reviewed", "Resolved"];
-const TYPES = ["All Types", "Video", "Comment"];
+const TYPES = ["All Types", "Video", "Comment", "Tweet"];
 const PAGE_SIZE = 8;
 
 const StatusBadge = ({ status }) => {
@@ -56,9 +56,17 @@ const Report = ({ isDark = false }) => {
   const mapReport = (r) => {
     const reporterName = r.reportedBy?.fullName || r.reportedBy?.userName || "Unknown";
     const isVideo = r.reportType === "video";
-    const contentTitle = isVideo
-      ? (r.videoId?.title || "Deleted video")
-      : ("Comment: " + (r.commentId?.content?.substring(0, 60) || "Deleted comment") + (r.commentId?.content?.length > 60 ? "…" : ""));
+    const isTweet = r.reportType === "tweet";
+    
+    let contentTitle = "Unknown Content";
+    if (isVideo) {
+      contentTitle = r.videoId?.title || "Deleted video";
+    } else if (isTweet) {
+      contentTitle = "Tweet: " + (r.tweetId?.content?.substring(0, 60) || "Deleted tweet") + (r.tweetId?.content?.length > 60 ? "…" : "");
+    } else {
+      contentTitle = "Comment: " + (r.commentId?.content?.substring(0, 60) || "Deleted comment") + (r.commentId?.content?.length > 60 ? "…" : "");
+    }
+
     const thumbnail = isVideo ? r.videoId?.thumbnail : null;
     const capitalizeFirst = (s) => s ? s.charAt(0).toUpperCase() + s.slice(1) : "Pending";
     return {

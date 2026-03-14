@@ -19,8 +19,8 @@ const REASONS = [
  *   isOpen      {boolean}        — whether the modal is visible
  *   onClose     {() => void}     — called when the user cancels or closes
  *   onSuccess   {() => void}     — called after a successful submission
- *   targetType  {"video"|"comment"}
- *   targetId    {string}         — videoId or commentId
+ *   targetType  {"video"|"comment"|"tweet"}
+ *   targetId    {string}         — videoId, commentId, or tweetId
  */
 const ReportModal = ({ isOpen, onClose, onSuccess, targetType = "video", targetId }) => {
   const [reason, setReason] = useState("");
@@ -59,8 +59,8 @@ const ReportModal = ({ isOpen, onClose, onSuccess, targetType = "video", targetI
     setError("");
     try {
       if (targetType === "video") {
-        await reportService.reportVideo(targetId, reason, description);
-      } else {
+        await reportService.reportVideo(targetId, reason, description);      } else if (targetType === "tweet") {
+        await reportService.reportTweet(targetId, reason, description);      } else {
         await reportService.reportComment(targetId, reason, description);
       }
       onClose();
@@ -79,7 +79,7 @@ const ReportModal = ({ isOpen, onClose, onSuccess, targetType = "video", targetI
 
   if (!isOpen) return null;
 
-  const label = targetType === "video" ? "video" : "comment";
+  const label = targetType === "video" ? "video" : targetType === "tweet" ? "tweet" : "comment";
 
   const modal = (
     <div
