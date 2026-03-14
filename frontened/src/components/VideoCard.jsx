@@ -248,85 +248,106 @@ const VideoCard = ({ video, onVideoSelect }) => {
   const channelOwnerId = getOwnerId();
 
   return (
-    <div className="bg-white rounded-lg hover:shadow-lg transition-shadow duration-200 cursor-pointer group relative video-card-container" style={{ overflow: 'visible' }}>
+    <div className="group cursor-pointer relative video-card-container" style={{ transition: 'transform 0.3s cubic-bezier(.4,0,.2,1)', overflow: 'visible' }}>
       {/* Video Thumbnail */}
-      <div className="relative aspect-video bg-gray-200" onClick={handleVideoClick}>
+      <div className="relative aspect-video rounded-2xl overflow-hidden mb-3 bg-[#1c120d]" onClick={handleVideoClick}>
         <img
           src={thumbnailSrc}
           alt={video.title}
-          className="w-full h-full object-cover"
+          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
           onError={handleImageError}
           loading="lazy"
         />
-        
+
+        {/* Play overlay */}
+        <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+          <div className="w-14 h-14 text-white flex items-center justify-center scale-75 group-hover:scale-100 transition-transform duration-300">
+            <svg className="w-12 h-12" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"/>
+            </svg>
+          </div>
+        </div>
+
         {/* Duration Badge */}
         {video.duration && (
-          <div className="absolute bottom-2 right-2 bg-black bg-opacity-80 text-white text-xs px-2 py-1 rounded">
+          <div className="absolute bottom-2 right-2 px-1.5 py-0.5 rounded bg-black/70 text-[10px] font-bold text-white backdrop-blur-sm">
             {formatDuration(video.duration)}
           </div>
         )}
       </div>
 
       {/* Video Info */}
-      <div className="p-3 video-card-info" style={{ overflow: 'visible', position: 'relative' }}>
-        <div className="flex items-start justify-between">
+      <div className="flex gap-3 video-card-info" style={{ overflow: 'visible', position: 'relative' }}>
+        <div className="w-9 h-9 rounded-full flex-shrink-0 bg-[#1c120d] overflow-hidden">
+          {channelAvatar ? (
+            <button
+              type="button"
+              className="w-full h-full cursor-pointer hover:opacity-80 transition-opacity disabled:cursor-default"
+              onClick={handleChannelClick}
+              disabled={!channelOwnerId}
+            >
+              <img
+                src={channelAvatar}
+                alt={channelName}
+                className="w-full h-full object-cover rounded-full"
+              />
+            </button>
+          ) : (
+            <button
+              type="button"
+              className="w-full h-full flex items-center justify-center text-slate-500 text-xs font-bold bg-[#1c120d] cursor-pointer"
+              onClick={handleChannelClick}
+              disabled={!channelOwnerId}
+            >
+              {(channelName || "?")[0].toUpperCase()}
+            </button>
+          )}
+        </div>
+
+        <div className="flex items-start justify-between flex-1 min-w-0">
           <div className="flex-1 min-w-0">
             {/* Title */}
-            <h3 
-              className="font-medium text-gray-900 text-sm mb-2 line-clamp-2 cursor-pointer hover:text-gray-700 transition-colors"
+            <h4
+              className="font-bold text-sm line-clamp-2 text-slate-100 group-hover:text-[#ec5b13] transition-colors cursor-pointer"
               onClick={handleVideoClick}
               title={video.title}
             >
               {video.title}
-            </h3>
+            </h4>
 
             {/* Channel Info */}
-            <div className="flex items-center mb-2 gap-2">
-              {channelAvatar && (
-                <button
-                  type="button"
-                  className="rounded-full cursor-pointer hover:opacity-80 transition-opacity disabled:cursor-default"
-                  onClick={handleChannelClick}
-                  disabled={!channelOwnerId}
-                >
-                  <img
-                    src={channelAvatar}
-                    alt={channelName}
-                    className="w-6 h-6 rounded-full"
-                  />
-                </button>
-              )}
+            <p className="text-xs text-slate-500 mt-0.5 truncate">
               <button
                 type="button"
-                className="text-sm text-gray-600 hover:text-gray-800 transition-colors disabled:cursor-default disabled:hover:text-gray-600"
+                className="hover:text-slate-300 transition-colors disabled:cursor-default disabled:hover:text-slate-500"
                 onClick={handleChannelClick}
                 disabled={!channelOwnerId}
               >
                 {channelName}
               </button>
-            </div>
+            </p>
 
             {/* Video Stats */}
-            <div className="flex items-center text-xs text-gray-500 space-x-2">
-              <span>{formatViews(video.views || 0)} views</span>
-              <span>•</span>
-              <span>{formatTimeAgo(video.createdAt || video.uploadDate)}</span>
-            </div>
+            <p className="text-[11px] text-slate-600">
+              {formatViews(video.views || 0)} views
+              <span> • </span>
+              {formatTimeAgo(video.createdAt || video.uploadDate)}
+            </p>
           </div>
 
           {/* Three-dot menu positioned in bottom right of info section */}
           <div className="relative ml-2 dropdown-menu-container" ref={dropdownRef}>
             <button
               onClick={handleDropdownToggle}
-              className="opacity-0 group-hover:opacity-100 p-1 hover:bg-gray-100 rounded transition-opacity"
+              className="opacity-0 group-hover:opacity-100 p-1 hover:bg-white/10 rounded transition-opacity"
             >
-              <MoreVertical size={16} className="text-gray-600" />
+              <MoreVertical size={16} className="text-slate-400" />
             </button>
-            
+
             {/* Dropdown Menu */}
             {showDropdown && (
-              <div className="absolute right-0 top-8 w-56 bg-white rounded-lg shadow-xl border border-gray-200 z-[9999] py-2 test-dropdown-menu max-h-none overflow-visible"
-                style={{ 
+              <div className="absolute right-0 top-8 w-56 bg-[#18110D] rounded-xl shadow-2xl border border-white/5 z-[9999] py-2 test-dropdown-menu max-h-none overflow-visible"
+                style={{
                   position: 'absolute',
                   top: '100%',
                   right: 0,
@@ -337,15 +358,15 @@ const VideoCard = ({ video, onVideoSelect }) => {
                 <button
                   onClick={handleSaveToWatchLater}
                   disabled={isWatchLaterLoading}
-                  className={`w-full flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors ${
+                  className={`w-full flex items-center px-4 py-3 text-sm text-slate-200 hover:bg-white/5 transition-colors ${
                     isWatchLaterLoading ? 'opacity-50 cursor-not-allowed' : ''
                   }`}
                 >
-                  <Bookmark className="w-4 h-4 mr-3" />
-                  {isWatchLaterLoading 
-                    ? 'Processing...' 
-                    : isInWatchLater 
-                      ? 'Remove from Watch Later' 
+                  <Bookmark className="w-5 h-5 mr-3 text-slate-400" />
+                  {isWatchLaterLoading
+                    ? 'Processing...'
+                    : isInWatchLater
+                      ? 'Remove from Watch Later'
                       : 'Save to Watch Later'
                   }
                 </button>
@@ -356,35 +377,35 @@ const VideoCard = ({ video, onVideoSelect }) => {
                     setShowPlaylistModal(true);
                     setShowDropdown(false);
                   }}
-                  className="w-full flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
+                  className="w-full flex items-center px-4 py-3 text-sm text-slate-200 hover:bg-white/5 transition-colors"
                 >
-                  <Plus className="w-4 h-4 mr-3" />
+                  <Plus className="w-5 h-5 mr-3 text-slate-400" />
                   Add to Playlist
                 </button>
-                
+
                 <button
                   onClick={handleDownload}
-                  className="w-full flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
+                  className="w-full flex items-center px-4 py-3 text-sm text-slate-200 hover:bg-white/5 transition-colors"
                 >
-                  <Download className="w-4 h-4 mr-3" />
+                  <Download className="w-5 h-5 mr-3 text-slate-400" />
                   Download
                 </button>
-                
+
                 <button
                   onClick={handleShare}
-                  className="w-full flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
+                  className="w-full flex items-center px-4 py-3 text-sm text-slate-200 hover:bg-white/5 transition-colors"
                 >
-                  <Share className="w-4 h-4 mr-3" />
+                  <Share className="w-5 h-5 mr-3 text-slate-400" />
                   Share
                 </button>
-                
-                <hr className="my-1" />
-                
+
+                <hr className="my-1.5 border-white/5" />
+
                 <button
                   onClick={handleReport}
-                  className="w-full flex items-center px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                  className="w-full flex items-center px-4 py-3 text-sm text-red-400 hover:bg-red-500/10 transition-colors"
                 >
-                  <Flag className="w-4 h-4 mr-3" />
+                  <Flag className="w-5 h-5 mr-3 text-red-500/70" />
                   Report
                 </button>
               </div>
