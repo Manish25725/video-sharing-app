@@ -4,7 +4,8 @@
   "description": "a backened project",
   "main": "index.js",
   "scripts": {
-    "dev": "nodemon --ignore public/ --delay 1500ms -r dotenv/config --experimental-json-modules src/index.js"
+    "dev": "nodemon --ignore public/ --delay 1500ms -r dotenv/config --experimental-json-modules src/index.js",
+    "start": "node src/index.js"
   },
   "type": "module",
   "keywords": [
