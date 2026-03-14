@@ -249,7 +249,10 @@ const refreshAccessToken=asyncHandler(async(req,res)=>{
      if(!user){
          throw new ApiError(400,"Invalid refresh token");
      }
- 
+     if(user.status === "Banned") {
+         throw new ApiError(403,"Your account has been banned");
+     }
+
      if(incomingRefreshToken !==user?.refreshToken){
          throw new ApiError(400,"Refresh token is expired or used");
      }
@@ -761,6 +764,7 @@ const addAccount = asyncHandler(async (req, res) => {
 
     const userExist = await User.findOne({ $or: [{ userName }, { email }] });
     if (!userExist) throw new ApiError(404, "User does not exist");
+    if (userExist.status === "Banned") throw new ApiError(403, "Your account has been banned");
 
     const passwordCheck = await userExist.isPasswordCorrect(password);
     if (!passwordCheck) throw new ApiError(401, "Password is incorrect");
@@ -806,6 +810,7 @@ const switchAccount = asyncHandler(async (req, res) => {
 
     const targetUser = await User.findById(targetUserId);
     if (!targetUser) throw new ApiError(404, "User not found");
+    if (targetUser.status === "Banned") throw new ApiError(403, "Your account has been banned");
 
     // Keep the current account in the saved list (so we can switch back)
     let updatedSavedIds = [...savedIds];
@@ -1131,6 +1136,9 @@ const googleAuth = asyncHandler(async (req, res) => {
 
     // ── 3. Find-or-create user ────────────────────────────────────────────────
     let user = await User.findOne({ email: email.toLowerCase() });
+    if (user && user.status === "Banned") {
+        throw new ApiError(403, "Your account has been banned");
+    }
     let isNewUser = false;
 
     if (!user) {

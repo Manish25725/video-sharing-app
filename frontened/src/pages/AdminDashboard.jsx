@@ -111,6 +111,7 @@ const AdminDashboard = () => {
         setUsers(usersRes.data.users.map(u => ({
           id: u._id,
           name: u.fullName || 'User',
+          userName: u.userName,
           email: u.email,
           role: "User",
           videos: 0,
@@ -448,8 +449,7 @@ const AdminDashboard = () => {
                     <td className={`px-5 py-4 text-sm ${ts}`}>{u.joined}</td>
                     <td className="px-5 py-4">
                       <div className="flex items-center gap-1">
-                        <button className="p-1.5 rounded-lg text-blue-500 hover:bg-blue-50 transition-colors" title="View"><Eye className="w-4 h-4" /></button>
-                        <button className="p-1.5 rounded-lg text-amber-500 hover:bg-amber-50 transition-colors" title="Edit"><Edit className="w-4 h-4" /></button>
+                        <button onClick={() => window.open(`/@${u.userName}`, '_blank')} className="p-1.5 rounded-lg text-blue-500 hover:bg-blue-50 transition-colors" title="View Channel / Videos"><Eye className="w-4 h-4" /></button>
                         <button onClick={() => banUser(u.id)} className={`p-1.5 rounded-lg transition-colors ${u.status==="Banned"?"text-emerald-500 hover:bg-emerald-50":"text-red-500 hover:bg-red-50"}`} title={u.status==="Banned"?"Unban":"Ban"}>
                           {u.status==="Banned"?<CheckCircle className="w-4 h-4"/>:<Ban className="w-4 h-4"/>}
                         </button>
@@ -522,9 +522,8 @@ const AdminDashboard = () => {
                     <td className={`px-5 py-4 text-sm ${ts}`}>{v.uploadTime ? new Date(v.uploadTime).toLocaleDateString() : "—"}</td>
                     <td className="px-5 py-4">
                       <div className="flex items-center gap-1">
-                        <button className="p-1.5 rounded-lg text-blue-500 hover:bg-blue-50 transition-colors"><Eye className="w-4 h-4"/></button>
-                        <button className="p-1.5 rounded-lg text-amber-500 hover:bg-amber-50 transition-colors"><Edit className="w-4 h-4"/></button>
-                        <button onClick={() => deleteVideo(v.id)} className="p-1.5 rounded-lg text-red-500 hover:bg-red-50 transition-colors"><Trash2 className="w-4 h-4"/></button>
+                        <button onClick={() => window.open(`/watch/${v.id}`, '_blank')} className="p-1.5 rounded-lg text-blue-500 hover:bg-blue-50 transition-colors" title="Watch Video"><Eye className="w-4 h-4"/></button>
+                        <button onClick={() => deleteVideo(v.id)} className="p-1.5 rounded-lg text-red-500 hover:bg-red-50 transition-colors" title="Delete Video"><Trash2 className="w-4 h-4"/></button>
                       </div>
                     </td>
                   </tr>

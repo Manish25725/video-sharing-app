@@ -29,7 +29,7 @@ export const optionalAuth = asyncHandler(async (req, _, next) => {
         if (token) {
             const decodedToken = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
             const user = await User.findById(decodedToken._id).select("-password -refreshToken -sessions");
-            if (user) req.user = user;
+            if (user && user.status !== "Banned") req.user = user;
         }
     } catch {
         // No-op: optional auth — proceed without user
