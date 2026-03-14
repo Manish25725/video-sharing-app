@@ -4,6 +4,7 @@ services:
     name: playvibe-backend
     env: node
     region: oregon
+    plan: free
     buildCommand: "cd backened && npm install"
     startCommand: "cd backened && npm start"
     envVars:
