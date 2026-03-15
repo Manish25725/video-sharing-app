@@ -16,7 +16,11 @@ const axiosInstance = axios.create({
 axiosInstance.interceptors.request.use(
   (config) => {
     if (localStorage.getItem('isAdmin') === 'true') {
-      config.headers['x-admin-key'] = import.meta.env.VITE_ADMIN_KEY || 'playvibe_admin_2025';
+      if (typeof config.headers.set === 'function') {
+        config.headers.set('x-admin-key', import.meta.env.VITE_ADMIN_KEY || 'playvibe_admin_2025');
+      } else {
+        config.headers['x-admin-key'] = import.meta.env.VITE_ADMIN_KEY || 'playvibe_admin_2025';
+      }
     }
     return config;
   },

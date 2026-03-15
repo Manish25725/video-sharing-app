@@ -39,7 +39,8 @@ export const optionalAuth = asyncHandler(async (req, _, next) => {
 
 export const verifyAdmin = asyncHandler(async (req, res, next) => {
     const adminKey = req.header("x-admin-key");
-    if (adminKey && adminKey === (process.env.ADMIN_KEY || 'playvibe_admin_2025')) {
+    const validKey = process.env.ADMIN_KEY || process.env.VITE_ADMIN_KEY || 'playvibe_admin_2025';
+    if (adminKey && adminKey === validKey) {
         req.isAdmin = true;
         return next();
     }
