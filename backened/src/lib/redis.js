@@ -5,14 +5,8 @@
  */
 
 import Redis from "ioredis";
-import RedisMock from "ioredis-mock";
-
-const useMock = process.env.NODE_ENV === "production" && !process.env.REDIS_URL;
 
 const redisConfig = {
-    host:     process.env.REDIS_HOST     || "127.0.0.1",
-    port:     parseInt(process.env.REDIS_PORT  || "6379"),
-    password: process.env.REDIS_PASSWORD || undefined, 
     retryStrategy: (times) => {
         if (times > 10) {
             console.error("[redis] Max reconnect attempts reached. Giving up.");
@@ -20,24 +14,20 @@ const redisConfig = {
         }
         return Math.min(times * 300, 5_000);
     },
-    maxRetriesPerRequest: null,
+    maxRetriesPerRequest: null, // Required by BullMQ
 };
 
-let pub;
-let sub;
+// Use Upstash REDIS_URL if provided, else fallback to local redis
+const pub = process.env.REDIS_URL
+    ? new Redis(process.env.REDIS_URL, redisConfig)
+    : new Redis({
+        host: process.env.REDIS_HOST || "127.0.0.1",
+        port: parseInt(process.env.REDIS_PORT || "6379"),
+        password: process.env.REDIS_PASSWORD || undefined,
+        ...redisConfig
+    });
 
-if (useMock) {
-    console.log("[redis] Using MOCK Redis instance for free tier compatibility.");
-    pub = new RedisMock();
-    sub = pub.duplicate();
-} else {
-    if (process.env.REDIS_URL) {
-        pub = new Redis(process.env.REDIS_URL, redisConfig);
-    } else {
-        pub = new Redis(redisConfig);
-    }
-    sub = pub.duplicate();
-}
+const sub = pub.duplicate();
 
 pub.on("error",   (err) => console.error("[redis:pub]", err.message));
 sub.on("error",   (err) => console.error("[redis:sub]", err.message));
